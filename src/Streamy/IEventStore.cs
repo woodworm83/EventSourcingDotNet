@@ -3,9 +3,14 @@
 public interface IEventStore<TAggregateId>
     where TAggregateId : IAggregateId
 {
-    IAsyncEnumerable<IResolvedEvent<TAggregateId>> ReadEvents(
+    IAsyncEnumerable<IResolvedEvent<TAggregateId>> ReadEventsAsync(
         TAggregateId aggregateId,
         AggregateVersion fromVersion);
+
+    Task<AggregateVersion> AppendEventsAsync(
+        TAggregateId aggregateId, 
+        IEnumerable<IDomainEvent> events, 
+        AggregateVersion expectedVersion);
 }
 
 public interface IResolvedEvent<out TAggregateId>

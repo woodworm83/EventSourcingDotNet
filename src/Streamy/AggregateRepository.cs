@@ -1,9 +1,13 @@
-﻿namespace Streamy;
+﻿using System.Collections.Immutable;
+
+namespace Streamy;
 
 public interface IAggregateRepository<TAggregateId, TState>
     where TState : IAggregateState<TState, TAggregateId>
 {
-    Task<Aggregate<TAggregateId, TState>> GetById(TAggregateId id);
+    Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id);
+
+    Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate);
 }
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
@@ -21,11 +25,11 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         _snapshotProvider = snapshotProvider;
     }
 
-    public async Task<Aggregate<TAggregateId, TState>> GetById(TAggregateId id)
+    public async Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id)
     {
-        var aggregate = await GetSnapshot(id) ?? new Aggregate<TAggregateId, TState>(id);
+        var aggregate = await GetSnapshotAsync(id) ?? new Aggregate<TAggregateId, TState>(id);
 
-        await foreach (var resolvedEvent in _eventStore.ReadEvents(aggregate.Id, aggregate.Version))
+        await foreach (var resolvedEvent in _eventStore.ReadEventsAsync(aggregate.Id, aggregate.Version))
         {
             aggregate = ApplyEvent(resolvedEvent, aggregate);
         }
@@ -33,11 +37,11 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         return aggregate;
     }
 
-    private async Task<Aggregate<TAggregateId, TState>?> GetSnapshot(TAggregateId aggregateId)
+    private async Task<Aggregate<TAggregateId, TState>?> GetSnapshotAsync(TAggregateId aggregateId)
     {
         if (_snapshotProvider is null) return null;
 
-        return await _snapshotProvider.GetLatestSnapshot(aggregateId);
+        return await _snapshotProvider.GetLatestSnapshotAsync(aggregateId);
     }
 
     private static Aggregate<TAggregateId, TState> ApplyEvent(IResolvedEvent<TAggregateId> resolvedEvent,
@@ -55,5 +59,16 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         }
 
         return aggregate;
+    }
+
+    public async Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate)
+    {
+        var version = await _eventStore.AppendEventsAsync(aggregate.Id, aggregate.UncommittedEvents, aggregate.Version);
+        
+        return aggregate with
+        {
+            UncommittedEvents = ImmutableList<IDomainEvent<TState>>.Empty,
+            Version = version
+        };
     }
 }

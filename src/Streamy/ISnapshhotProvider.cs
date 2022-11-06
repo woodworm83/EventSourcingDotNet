@@ -3,6 +3,6 @@
 public interface ISnapshotProvider<TAggregateId, TState> 
     where TState : IAggregateState<TState, TAggregateId>
 {
-    Task<Aggregate<TAggregateId, TState>?> GetLatestSnapshot(
+    Task<Aggregate<TAggregateId, TState>?> GetLatestSnapshotAsync(
         TAggregateId aggregateId);
 }
