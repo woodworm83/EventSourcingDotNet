@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{093BA0AA-083A-4612-A2F5-A01B0C756125}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{41B61C0A-2E17-4B3D-867E-18F9B897D1B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "unit-tests", "unit-tests", "{3E70E2F2-859F-4D09-8FAF-893599FED3E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy", "src\Streamy\Streamy.csproj", "{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy.UnitTests", "test\unit-tests\Streamy.UnitTests\Streamy.UnitTests.csproj", "{9A1E9CD1-1212-4B9F-AE08-618B59B50303}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{596691AE-B80A-4AEF-B1B6-932761F753B2}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A1E9CD1-1212-4B9F-AE08-618B59B50303}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A1E9CD1-1212-4B9F-AE08-618B59B50303}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A1E9CD1-1212-4B9F-AE08-618B59B50303}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A1E9CD1-1212-4B9F-AE08-618B59B50303}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3E70E2F2-859F-4D09-8FAF-893599FED3E6} = {41B61C0A-2E17-4B3D-867E-18F9B897D1B2}
+		{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD} = {093BA0AA-083A-4612-A2F5-A01B0C756125}
+		{9A1E9CD1-1212-4B9F-AE08-618B59B50303} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
+	EndGlobalSection
+EndGlobal
