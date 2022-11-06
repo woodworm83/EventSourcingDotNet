@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Streamy\Streamy.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DynamicData" Version="7.12.1" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+  </ItemGroup>
+</Project>
