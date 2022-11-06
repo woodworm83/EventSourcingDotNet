@@ -30,6 +30,21 @@ public class AggregateRepositoryTests
         result.State.Value.Should().Be(@event.NewValue);
     }
 
+    [Fact]
+    public async Task ShouldGetSnapshotFromSnapshotProvider()
+    {
+        var snapshot = new Aggregate<TestId, TestState>(new TestId());
+        var snapshotProviderMock = new Mock<ISnapshotProvider<TestId, TestState>>();
+        snapshotProviderMock.Setup(x => x.GetLatestSnapshot(It.IsAny<TestId>()))
+            .ReturnsAsync(snapshot);
+        var eventStore = MockEventStore();
+        var repository = new AggregateRepository<TestId, TestState>(eventStore, snapshotProviderMock.Object);
+
+        var aggregate = await repository.GetById(snapshot.Id);
+
+        aggregate.Should().BeSameAs(snapshot);
+    }
+
     private static IEventStore<TestId> MockEventStore(params IDomainEvent[] events)
     {
         var mock = new Mock<IEventStore<TestId>>();

@@ -11,15 +11,19 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
     where TState : IAggregateState<TState, TAggregateId>
 {
     private readonly IEventStore<TAggregateId> _eventStore;
+    private readonly ISnapshotProvider<TAggregateId, TState>? _snapshotProvider;
 
-    public AggregateRepository(IEventStore<TAggregateId> eventStore)
+    public AggregateRepository(
+        IEventStore<TAggregateId> eventStore,
+        ISnapshotProvider<TAggregateId, TState>? snapshotProvider = null)
     {
         _eventStore = eventStore;
+        _snapshotProvider = snapshotProvider;
     }
 
     public async Task<Aggregate<TAggregateId, TState>> GetById(TAggregateId id)
     {
-        var aggregate = new Aggregate<TAggregateId, TState>(id);
+        var aggregate = await GetSnapshot(id) ?? new Aggregate<TAggregateId, TState>(id);
 
         await foreach (var resolvedEvent in _eventStore.ReadEvents(aggregate.Id, aggregate.Version))
         {
@@ -27,6 +31,13 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         }
 
         return aggregate;
+    }
+
+    private async Task<Aggregate<TAggregateId, TState>?> GetSnapshot(TAggregateId aggregateId)
+    {
+        if (_snapshotProvider is null) return null;
+
+        return await _snapshotProvider.GetLatestSnapshot(aggregateId);
     }
 
     private static Aggregate<TAggregateId, TState> ApplyEvent(IResolvedEvent<TAggregateId> resolvedEvent,
