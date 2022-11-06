@@ -65,6 +65,6 @@ public class AggregateTests
 
         aggregate.Invoking(x => x.AddEvent(@event))
             .Should()
-            .Throw<InvalidOperationException>();
+            .Throw<NotSupportedException>();
     }
 }

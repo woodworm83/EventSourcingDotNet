@@ -8,6 +8,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{41B61C0A-2E17-4B3D-867E-18F9B897D1B2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "unit-tests", "unit-tests", "{3E70E2F2-859F-4D09-8FAF-893599FED3E6}"
+	ProjectSection(SolutionItems) = preProject
+		test\unit-tests\Directory.Build.props = test\unit-tests\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy", "src\Streamy\Streamy.csproj", "{6BADCF67-8626-4EE6-A599-AC0B3D56D1DD}"
 EndProject

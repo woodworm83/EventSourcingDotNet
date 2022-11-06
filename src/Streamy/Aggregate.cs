@@ -20,6 +20,12 @@ public sealed record Aggregate<TId, TState>(
     where TState : IAggregateState<TState, TId>
 {
     /// <summary>
+    /// Current version of the aggregate
+    /// This property is set by aggregate repository when events are replayed
+    /// </summary>
+    public AggregateVersion Version { get; internal init; }
+    
+    /// <summary>
     /// Collection of uncommitted events.
     /// Use <see cref="IAggregateRepository&lt;TId, TState&gt;"/>.Save to store the events in the event stream
     /// </summary>
@@ -44,7 +50,7 @@ public sealed record Aggregate<TId, TState>(
             EventValidationResult.Skipped => this,
             EventValidationResult.Failed failed => throw failed.Exception,
             var unexpectedResult => throw new NotSupportedException(
-                $"Validation result {unexpectedResult.GetType()} is not supported")
+                $"Validation result {unexpectedResult?.GetType()} is not supported")
         };
 
     /// <summary>
