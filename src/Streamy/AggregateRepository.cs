@@ -40,7 +40,7 @@ public interface IAggregateRepository<TAggregateId, TState>
                 (aggregate, @event) => aggregate.AddEvent(@event)));
 }
 
-public sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
+internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
     where TState : IAggregateState<TState, TAggregateId>
 {

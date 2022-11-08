@@ -3,7 +3,7 @@ using DynamicData;
 
 namespace Streamy.InMemory;
 
-public sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventPublisher<TAggregateId>
+internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventPublisher<TAggregateId>
     where TAggregateId : IAggregateId
 {
     private readonly SourceList<IResolvedEvent<TAggregateId>> _events = new();
