@@ -20,6 +20,7 @@ public sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>
         await _semaphore.WaitAsync();
         try
         {
+            CheckVersion(aggregateId, expectedVersion);
             return AppendEventsUnsafe(aggregateId, events, expectedVersion);
         }
         finally
@@ -28,26 +29,42 @@ public sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>
         }
     }
 
+    private void CheckVersion(TAggregateId aggregateId, AggregateVersion expectedVersion)
+    {
+        var actualVersion = GetAggregateVersion(aggregateId);
+        
+        if (actualVersion != expectedVersion)
+        {
+            throw new OptimisticConcurrencyException(expectedVersion, actualVersion);
+        }
+    }
+
+    private AggregateVersion GetAggregateVersion(TAggregateId aggregateId)
+        => _events
+            .Items
+            .Where(x => x.AggregateId.Equals(aggregateId))
+            .Select(x => x.AggregateVersion)
+            .LastOrDefault();
+
     private AggregateVersion AppendEventsUnsafe(
         TAggregateId aggregateId,
         IEnumerable<IDomainEvent> events,
-        AggregateVersion expectedVersion)
+        AggregateVersion currentVersion)
     {
         var streamPosition = (ulong) _events.Count;
-        var version = expectedVersion.Version;
         
         foreach (var @event in events)
         {
             _events.Add(
                 new ResolvedEvent(
                     aggregateId, 
-                    new AggregateVersion(++version),
+                    ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,
                     DateTime.UtcNow));
         }
 
-        return expectedVersion;
+        return currentVersion;
     }
 
     public IObservable<IResolvedEvent<TAggregateId>> Listen(

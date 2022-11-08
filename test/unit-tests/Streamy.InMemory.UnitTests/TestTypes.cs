@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-namespace Streamy.InMemory.UnitTests;
+﻿namespace Streamy.InMemory.UnitTests;
 
 internal sealed record TestEvent : IDomainEvent<TestState>
 {

@@ -23,6 +23,16 @@ public class InMemoryEventStoreTests
     }
 
     [Fact]
+    public async Task ShouldThrowOptimisticConcurrencyException()
+    {
+        var eventStore = new InMemoryEventStore<TestId>();
+
+        await eventStore.Awaiting(x => x.AppendEventsAsync(new TestId(), new[] {new TestEvent()}, new AggregateVersion(42)))
+            .Should()
+            .ThrowAsync<OptimisticConcurrencyException>();
+    }
+
+    [Fact]
     public async Task ShouldYieldAddedEventByAggregateId()
     {
         var aggregateId = new TestId();
@@ -48,7 +58,7 @@ public class InMemoryEventStoreTests
         var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
-        using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
+        using (eventStore.Listen<TestEvent>().Subscribe(observerMock.Object))
         {
             await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
         }

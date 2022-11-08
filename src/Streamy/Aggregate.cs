@@ -49,8 +49,7 @@ public sealed record Aggregate<TId, TState>(
                 },
             EventValidationResult.Skipped => this,
             EventValidationResult.Failed failed => throw failed.Exception,
-            var unexpectedResult => throw new NotSupportedException(
-                $"Validation result {unexpectedResult?.GetType()} is not supported")
+            _ => throw new NotSupportedException($"Validation result is not supported")
         };
 
     /// <summary>
