@@ -1,8 +1,9 @@
-﻿using DynamicData;
+﻿using System.Reactive.Linq;
+using DynamicData;
 
 namespace Streamy.InMemory;
 
-public sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>
+public sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventPublisher<TAggregateId>
     where TAggregateId : IAggregateId
 {
     private readonly SourceList<IResolvedEvent<TAggregateId>> _events = new();
@@ -48,6 +49,25 @@ public sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>
 
         return expectedVersion;
     }
+
+    public IObservable<IResolvedEvent<TAggregateId>> Listen(
+        TAggregateId aggregateId,
+        StreamPosition fromStreamPosition = default)
+        => Listen(fromStreamPosition)
+            .Where(x => x.AggregateId.Equals(aggregateId));
+
+    public IObservable<IResolvedEvent<TAggregateId>> Listen(
+        StreamPosition fromStreamPosition = default)
+        => Observable.Create<IResolvedEvent<TAggregateId>>(
+                observer => _events.Connect()
+                    .OnItemAdded(observer.OnNext)
+                    .Subscribe())
+            .SkipWhile(x => x.StreamPosition.Position < fromStreamPosition.Position);
+
+    public IObservable<IResolvedEvent<TAggregateId>> Listen<TEvent>(
+        StreamPosition fromStreamPosition = default)
+        => Listen(fromStreamPosition)
+            .Where(x => x.Event is TEvent);
 
     private readonly record struct ResolvedEvent(
             TAggregateId AggregateId,

@@ -2,15 +2,45 @@
 
 namespace Streamy;
 
+/// <summary>
+/// Provides functionality to load an aggregate form the event stream
+/// </summary>
+/// <typeparam name="TAggregateId">The aggregate identifier</typeparam>
+/// <typeparam name="TState">The aggregate state</typeparam>
 public interface IAggregateRepository<TAggregateId, TState>
     where TState : IAggregateState<TState, TAggregateId>
 {
+    /// <summary>
+    /// Creates an aggregate and replays the events from the event store
+    /// </summary>
+    /// <param name="id">The id of the aggregate</param>
+    /// <returns>The aggregate with all stored events replayed</returns>
     Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id);
 
+    /// <summary>
+    /// Save uncommitted events of an aggregate to an event store
+    /// </summary>
+    /// <param name="aggregate">The aggregate with zero to many uncommitted events</param>
+    /// <returns>The aggregate with Version updated to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that there was any other change storing new events to the stream.
+    /// </exception>
     Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate);
+
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="id">The id of the aggregate</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    sealed async Task UpdateAsync(TAggregateId id, params IDomainEvent<TState>[] events)
+        => await SaveAsync(
+            events.Aggregate(
+                await GetByIdAsync(id), 
+                (aggregate, @event) => aggregate.AddEvent(@event)));
 }
 
-internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
+public sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
     where TState : IAggregateState<TState, TAggregateId>
 {

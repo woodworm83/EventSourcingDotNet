@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Moq;
 using Xunit;
 
 namespace Streamy.InMemory.UnitTests;
@@ -21,15 +22,77 @@ public class InMemoryEventStoreTests
             .Equal(@event);
     }
 
-    private readonly record struct TestId : IAggregateId
+    [Fact]
+    public async Task ShouldYieldAddedEventByAggregateId()
     {
-        public static string AggregateName => "test";
-
-        public string AsString() => string.Empty;
+        var aggregateId = new TestId();
+        var eventStore = new InMemoryEventStore<TestId>();
+        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var @event = new TestEvent();
+        
+        using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
+        {
+            await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
+        }
+        
+        observerMock.Verify(
+            x => x.OnNext(
+                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))));
     }
 
-    private sealed record TestEvent : IDomainEvent<object>
+    [Fact]
+    public async Task ShouldYieldAddedEventsByEventType()
     {
-        public object Apply(object state) => state;
+        var aggregateId = new TestId();
+        var eventStore = new InMemoryEventStore<TestId>();
+        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var @event = new TestEvent();
+        
+        using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
+        {
+            await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
+        }
+        
+        observerMock.Verify(
+            x => x.OnNext(
+                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))));
+    }
+
+    [Fact]
+    public async Task ShouldNotYieldAddedEventWhenAggregateIdDoesNotMatch()
+    {
+        var aggregateId = new TestId(42);
+        var eventStore = new InMemoryEventStore<TestId>();
+        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var @event = new TestEvent();
+        
+        using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
+        {
+            await eventStore.AppendEventsAsync(new TestId(), new [] {@event}, default);
+        }
+        
+        observerMock.Verify(
+            x => x.OnNext(
+                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ShouldNotYieldAddedEventWhenEventTypeIdDoesNotMatch()
+    {
+        var aggregateId = new TestId(42);
+        var eventStore = new InMemoryEventStore<TestId>();
+        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var @event = new TestEvent();
+        
+        using (eventStore.Listen<OtherTestEvent>().Subscribe(observerMock.Object))
+        {
+            await eventStore.AppendEventsAsync(aggregateId, new [] {@event}, default);
+        }
+        
+        observerMock.Verify(
+            x => x.OnNext(
+                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))),
+            Times.Never);
     }
 }

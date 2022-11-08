@@ -20,11 +20,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy.InMemory", "src\Streamy.InMemory\Streamy.InMemory.csproj", "{CA32380B-BCEE-4279-B275-EBBA896327D7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy.InMemory.UnitTests", "test\unit-tests\Streamy.InMemory.UnitTests\Streamy.InMemory.UnitTests.csproj", "{28B304D8-2FDD-47D7-9C08-96263E8E82EC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{CF328221-34D7-463C-BAE1-A079F10A4D3D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{0D583DC0-E466-45BF-8889-DCBDB1C41BB3}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,5 +63,6 @@ Global
 		{9A1E9CD1-1212-4B9F-AE08-618B59B50303} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
 		{CA32380B-BCEE-4279-B275-EBBA896327D7} = {093BA0AA-083A-4612-A2F5-A01B0C756125}
 		{28B304D8-2FDD-47D7-9C08-96263E8E82EC} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
+		{0D583DC0-E466-45BF-8889-DCBDB1C41BB3} = {CF328221-34D7-463C-BAE1-A079F10A4D3D}
 	EndGlobalSection
 EndGlobal
