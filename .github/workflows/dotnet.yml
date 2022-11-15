@@ -44,4 +44,4 @@ jobs:
       - name: Pack nuget packages
         run: dotnet pack --no-restore -c Release
       - name: Push nuget package
-        run: dotnet nuget push src/**/*.nupkg
+        run: dotnet nuget push -s github src/**/*.nupkg
