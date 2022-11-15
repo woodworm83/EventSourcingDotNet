@@ -3,6 +3,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <VersionPrefix>0.1.0</VersionPrefix>
     </PropertyGroup>
     
     <ItemGroup>

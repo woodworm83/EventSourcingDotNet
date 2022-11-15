@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -26,3 +25,23 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+
+  push:
+    if: github.repository == 'woodworm83/streamy' && github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Add NuGet Push Target
+        run: dotnet nuget add source --username woodworm83 --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/woodworm83/index.json"
+      - name: Pack nuget packages
+        run: dotnet pack --no-restore -c Release
+      - name: Push nuget package
+        run: dotnet nuget push src/**/*.nupkg
