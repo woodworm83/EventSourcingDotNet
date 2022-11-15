@@ -4,6 +4,8 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <VersionPrefix>0.1.0</VersionPrefix>
+        <RepositoryUrl>https://github.com/woodworm83/streamy.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
     
     <ItemGroup>
