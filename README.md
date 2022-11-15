@@ -5,7 +5,7 @@ Event Sourcing made easy
 
 * In-Memory
 
-## Planned Event Store Providers
+## Experimental Event Store Providers
 
 * [Event Store DB](https://www.eventstore.com/)
 
