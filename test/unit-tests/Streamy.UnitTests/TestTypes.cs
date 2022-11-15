@@ -9,22 +9,18 @@ internal readonly record struct TestId(int Id = default) : IAggregateId
     public string AsString() => Id.ToString();
 }
 
-internal sealed record TestState(int Value) : IAggregateState<TestState, TestId>
+internal sealed record TestState(int Value)
 {
-    public static TestState New { get; } = new(0);
-
-    public static string AggregateName => "test";
-
-    public static string GetIdAsString(TestId id) => id.Id.ToString();
+    public TestState() : this(0) { }
 }
 
-internal sealed record TestEvent : IDomainEvent<TestState>
+internal sealed record TestEvent : IDomainEvent<TestId, TestState>
 {
     public TestState Apply(TestState state) => state;
 }
 
 [SuppressMessage("ReSharper", "WithExpressionModifiesAllMembers")]
-internal sealed record ValueUpdatedEvent(int NewValue) : IDomainEvent<TestState>
+internal sealed record ValueUpdatedEvent(int NewValue) : IDomainEvent<TestId, TestState>
 {
     public EventValidationResult ValidationResult { get; init; } = EventValidationResult.Fire;
     

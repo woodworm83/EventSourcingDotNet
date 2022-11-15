@@ -1,6 +1,7 @@
 ﻿namespace Streamy;
 
-public interface IEventPublisher<TAggregateId>
+public interface IEventPublisher<TAggregateId> 
+    where TAggregateId : IAggregateId
 {
     IObservable<IResolvedEvent<TAggregateId>> Listen(
         TAggregateId aggregateId,

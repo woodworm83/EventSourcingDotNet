@@ -1,11 +1,11 @@
 ﻿namespace Streamy.InMemory.UnitTests;
 
-internal sealed record TestEvent : IDomainEvent<TestState>
+internal sealed record TestEvent : IDomainEvent<TestId, TestState>
 {
     public TestState Apply(TestState state) => state;
 }
 
-internal sealed record OtherTestEvent : IDomainEvent<TestState>
+internal sealed record OtherTestEvent : IDomainEvent<TestId, TestState>
 {
     public TestState Apply(TestState state) => state;
 }
@@ -17,7 +17,4 @@ internal readonly record struct TestId(int Id = default) : IAggregateId
     public string AsString() => string.Empty;
 }
 
-internal sealed record TestState: IAggregateState<TestState, TestId>
-{
-    public static TestState New { get; } = new TestState();
-}
+internal sealed record TestState;

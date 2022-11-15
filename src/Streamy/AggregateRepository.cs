@@ -7,8 +7,9 @@ namespace Streamy;
 /// </summary>
 /// <typeparam name="TAggregateId">The aggregate identifier</typeparam>
 /// <typeparam name="TState">The aggregate state</typeparam>
-public interface IAggregateRepository<TAggregateId, TState>
-    where TState : IAggregateState<TState, TAggregateId>
+public interface IAggregateRepository<TAggregateId, TState> 
+    where TAggregateId : IAggregateId
+    where TState : new()
 {
     /// <summary>
     /// Creates an aggregate and replays the events from the event store
@@ -33,7 +34,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// </summary>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="events">The events to be appended to the event store</param>
-    sealed async Task UpdateAsync(TAggregateId id, params IDomainEvent<TState>[] events)
+    sealed async Task UpdateAsync(TAggregateId id, params IDomainEvent<TAggregateId, TState>[] events)
         => await SaveAsync(
             events.Aggregate(
                 await GetByIdAsync(id), 
@@ -42,7 +43,7 @@ public interface IAggregateRepository<TAggregateId, TState>
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState, TAggregateId>
+    where TState : new()
 {
     private readonly IEventStore<TAggregateId> _eventStore;
     private readonly ISnapshotProvider<TAggregateId, TState>? _snapshotProvider;
@@ -79,7 +80,7 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
     {
         aggregate = aggregate with {Version = resolvedEvent.AggregateVersion};
 
-        if (resolvedEvent.Event is IDomainEvent<TState> @event)
+        if (resolvedEvent.Event is IDomainEvent<TAggregateId, TState> @event)
         {
             aggregate = aggregate with
             {
@@ -97,7 +98,7 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         
         return aggregate with
         {
-            UncommittedEvents = ImmutableList<IDomainEvent<TState>>.Empty,
+            UncommittedEvents = ImmutableList<IDomainEvent<TAggregateId, TState>>.Empty,
             Version = version
         };
     }

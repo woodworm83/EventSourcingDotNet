@@ -15,7 +15,10 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         => _events.Items
             .ToAsyncEnumerable();
 
-    public async Task<AggregateVersion> AppendEventsAsync(TAggregateId aggregateId, IEnumerable<IDomainEvent> events, AggregateVersion expectedVersion)
+    public async Task<AggregateVersion> AppendEventsAsync(
+        TAggregateId aggregateId,
+        IEnumerable<IDomainEvent<TAggregateId>> events, 
+        AggregateVersion expectedVersion)
     {
         await _semaphore.WaitAsync();
         try
@@ -32,7 +35,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
     private void CheckVersion(TAggregateId aggregateId, AggregateVersion expectedVersion)
     {
         var actualVersion = GetAggregateVersion(aggregateId);
-        
+
         if (actualVersion != expectedVersion)
         {
             throw new OptimisticConcurrencyException(expectedVersion, actualVersion);
@@ -48,16 +51,16 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
 
     private AggregateVersion AppendEventsUnsafe(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         AggregateVersion currentVersion)
     {
         var streamPosition = (ulong) _events.Count;
-        
+
         foreach (var @event in events)
         {
             _events.Add(
                 new ResolvedEvent(
-                    aggregateId, 
+                    aggregateId,
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,
@@ -90,7 +93,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
             TAggregateId AggregateId,
             AggregateVersion AggregateVersion,
             StreamPosition StreamPosition,
-            IDomainEvent Event,
+            IDomainEvent<TAggregateId> Event,
             DateTime Timestamp)
         : IResolvedEvent<TAggregateId>;
 }

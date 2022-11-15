@@ -2,12 +2,6 @@ using System.Collections.Immutable;
 
 namespace Streamy;
 
-public interface IAggregateState<out TSelf, in TId>
-    where TSelf : IAggregateState<TSelf, TId>
-{
-    static abstract TSelf New { get; }
-}
-
 public interface IAggregateId
 {
     static abstract string AggregateName { get; }
@@ -16,8 +10,9 @@ public interface IAggregateId
 }
 
 public sealed record Aggregate<TId, TState>(
-    TId Id)
-    where TState : IAggregateState<TState, TId>
+    TId Id) 
+    where TId : IAggregateId
+    where TState : new()
 {
     /// <summary>
     /// Current version of the aggregate
@@ -29,8 +24,8 @@ public sealed record Aggregate<TId, TState>(
     /// Collection of uncommitted events.
     /// Use <see cref="IAggregateRepository&lt;TId, TState&gt;"/>.Save to store the events in the event stream
     /// </summary>
-    public ImmutableList<IDomainEvent<TState>> UncommittedEvents { get; internal init; } 
-        = ImmutableList<IDomainEvent<TState>>.Empty;
+    public ImmutableList<IDomainEvent<TId, TState>> UncommittedEvents { get; internal init; } 
+        = ImmutableList<IDomainEvent<TId, TState>>.Empty;
 
     /// <summary>
     /// Adds an event to the collection of uncommitted events
@@ -38,7 +33,7 @@ public sealed record Aggregate<TId, TState>(
     /// </summary>
     /// <param name="event">The event to apply and to be added to the collection of uncommitted events</param>
     /// <returns></returns>
-    public Aggregate<TId, TState> AddEvent(IDomainEvent<TState> @event)
+    public Aggregate<TId, TState> AddEvent(IDomainEvent<TId, TState> @event)
         => @event.Validate(State) switch
         {
             EventValidationResult.Fired 
@@ -56,5 +51,5 @@ public sealed record Aggregate<TId, TState>(
     /// The current state of the aggregate.
     /// You can update the state by adding new events.
     /// </summary>
-    public TState State { get; internal init; } = TState.New;
+    public TState State { get; internal init; } = new TState();
 }

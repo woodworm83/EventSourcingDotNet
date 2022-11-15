@@ -1,10 +1,11 @@
 ﻿namespace Streamy;
 
-public interface IResolvedEvent<out TAggregateId>
+public interface IResolvedEvent<TAggregateId> 
+    where TAggregateId : IAggregateId
 {
     TAggregateId AggregateId { get; }
     AggregateVersion AggregateVersion { get; }
     StreamPosition StreamPosition { get; }
-    IDomainEvent Event { get; }
+    IDomainEvent<TAggregateId> Event { get; }
     DateTime Timestamp { get; }
 }

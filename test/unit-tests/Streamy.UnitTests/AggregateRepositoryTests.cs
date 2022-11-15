@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Moq;
 using Xunit;
+
 #pragma warning disable CS1998
 
 namespace Streamy.UnitTests;
@@ -59,7 +60,7 @@ public class AggregateRepositoryTests
         eventStoreMock.Verify(
             x => x.AppendEventsAsync(
                 aggregate.Id, 
-                It.Is<IEnumerable<IDomainEvent>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
+                It.Is<IEnumerable<IDomainEvent<TestId>>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
                 aggregate.Version));
     }
 
@@ -83,7 +84,7 @@ public class AggregateRepositoryTests
         eventStoreMock.Setup(
                 x => x.AppendEventsAsync(
                     It.IsAny<TestId>(), 
-                    It.IsAny<IEnumerable<IDomainEvent>>(),
+                    It.IsAny<IEnumerable<IDomainEvent<TestId>>>(),
                     It.IsAny<AggregateVersion>()))
             .ReturnsAsync(new AggregateVersion(42));
         var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object);
@@ -93,7 +94,7 @@ public class AggregateRepositoryTests
         result.Version.Version.Should().Be(42);
     }
     
-    private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent[] events)
+    private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent<TestId>[] events)
     {
         var mock = new Mock<IEventStore<TestId>>();
         mock.Setup(x => x.ReadEventsAsync(It.IsAny<TestId>(), It.IsAny<AggregateVersion>()))
@@ -119,7 +120,7 @@ public class AggregateRepositoryTests
             TestId AggregateId,
             AggregateVersion AggregateVersion,
             StreamPosition StreamPosition,
-            IDomainEvent Event,
+            IDomainEvent<TestId> Event,
             DateTime Timestamp)
         : IResolvedEvent<TestId>;
 }

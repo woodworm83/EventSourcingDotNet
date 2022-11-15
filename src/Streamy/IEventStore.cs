@@ -9,7 +9,7 @@ public interface IEventStore<TAggregateId>
 
     Task<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId, 
-        IEnumerable<IDomainEvent> events, 
+        IEnumerable<IDomainEvent<TAggregateId>> events, 
         AggregateVersion expectedVersion);
 }
 

@@ -34,6 +34,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy.EventStore", "src\Streamy.EventStore\Streamy.EventStore.csproj", "{0B20EA7A-11EC-429A-B6AC-136003D89DA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamy.EventStore.UnitTests", "test\unit-tests\Streamy.EventStore.UnitTests\Streamy.EventStore.UnitTests.csproj", "{2734617D-70D4-41F1-953B-1519931ECF99}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +60,14 @@ Global
 		{28B304D8-2FDD-47D7-9C08-96263E8E82EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28B304D8-2FDD-47D7-9C08-96263E8E82EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28B304D8-2FDD-47D7-9C08-96263E8E82EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B20EA7A-11EC-429A-B6AC-136003D89DA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B20EA7A-11EC-429A-B6AC-136003D89DA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B20EA7A-11EC-429A-B6AC-136003D89DA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B20EA7A-11EC-429A-B6AC-136003D89DA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2734617D-70D4-41F1-953B-1519931ECF99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2734617D-70D4-41F1-953B-1519931ECF99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2734617D-70D4-41F1-953B-1519931ECF99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2734617D-70D4-41F1-953B-1519931ECF99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3E70E2F2-859F-4D09-8FAF-893599FED3E6} = {41B61C0A-2E17-4B3D-867E-18F9B897D1B2}
@@ -64,5 +76,7 @@ Global
 		{CA32380B-BCEE-4279-B275-EBBA896327D7} = {093BA0AA-083A-4612-A2F5-A01B0C756125}
 		{28B304D8-2FDD-47D7-9C08-96263E8E82EC} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
 		{0D583DC0-E466-45BF-8889-DCBDB1C41BB3} = {CF328221-34D7-463C-BAE1-A079F10A4D3D}
+		{0B20EA7A-11EC-429A-B6AC-136003D89DA7} = {093BA0AA-083A-4612-A2F5-A01B0C756125}
+		{2734617D-70D4-41F1-953B-1519931ECF99} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
 	EndGlobalSection
 EndGlobal

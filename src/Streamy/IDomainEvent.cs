@@ -1,8 +1,11 @@
 namespace Streamy;
 
-public interface IDomainEvent { }
+public interface IDomainEvent<TAggregateId> 
+    where TAggregateId : IAggregateId
+{ }
 
-public interface IDomainEvent<TState> : IDomainEvent
+public interface IDomainEvent<TAggregateId, TState> : IDomainEvent<TAggregateId>
+    where TAggregateId : IAggregateId
 {
     TState Apply(TState state);
 
