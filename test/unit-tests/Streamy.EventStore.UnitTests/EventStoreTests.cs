@@ -1,8 +1,5 @@
-using System.Text;
-using EventStore.Client;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Streamy.EventStore.UnitTests;
@@ -26,9 +23,9 @@ public class EventStoreTests
     {
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
-        var eventData = CreateEventData(aggregateId, @event);
+        var eventData = EventDataHelper.CreateEventData(aggregateId, @event);
         await _container.AppendEvents(_streamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
-        var eventStore = CreateEventStore();
+        await using var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
 
@@ -40,7 +37,7 @@ public class EventStoreTests
     {
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
-        var eventStore = CreateEventStore();
+        await using var eventStore = CreateEventStore();
 
         await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
 
@@ -53,7 +50,7 @@ public class EventStoreTests
     public async Task ShouldReturnCurrentAggregateVersionWhenAddingZeroEvents()
     {
         var aggregateId = new TestId();
-        var eventStore = CreateEventStore();
+        await using var eventStore = CreateEventStore();
 
         var result = await eventStore.AppendEventsAsync(aggregateId, Array.Empty<IDomainEvent<TestId>>(), default);
 
@@ -64,20 +61,13 @@ public class EventStoreTests
     public async Task ShouldReturnNextExpectedAggregateVersionWhenAddingEvents()
     {
         var aggregateId = new TestId();
-        var eventStore = CreateEventStore();
+        await using var eventStore = CreateEventStore();
         var events = Enumerable.Range(0, 5).Select(i => new TestEvent(i)).ToList();
 
         var result = await eventStore.AppendEventsAsync(aggregateId, events, default);
 
         result.Version.Should().Be(5);
     }
-
-    private static EventData CreateEventData(TestId aggregateId, TestEvent? @event = null, Guid? eventId = null)
-        => new(
-            eventId is null ? Uuid.NewUuid() : Uuid.FromGuid(eventId.Value),
-            nameof(TestEvent),
-            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event ?? new TestEvent())),
-            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new EventMetadata<TestId>(aggregateId))));
 
     private EventStore<TestId> CreateEventStore() 
         => new(

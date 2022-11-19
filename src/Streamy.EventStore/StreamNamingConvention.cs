@@ -1,6 +1,6 @@
 ﻿namespace Streamy.EventStore;
 
-public interface IStreamNamingConvention<TAggregateId>
+internal interface IStreamNamingConvention<TAggregateId>
     where TAggregateId : IAggregateId
 {
     string GetAggregateStreamName(TAggregateId aggregateId);

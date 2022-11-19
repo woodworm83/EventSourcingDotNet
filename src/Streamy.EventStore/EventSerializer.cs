@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Streamy.EventStore;
 
-public interface IEventSerializer<TAggregateId> 
+internal interface IEventSerializer<TAggregateId> 
     where TAggregateId : IAggregateId
 {
     EventData Serialize(TAggregateId aggregateId, IDomainEvent<TAggregateId> @event);
@@ -35,20 +35,20 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
 
     public IResolvedEvent<TAggregateId>? Deserialize(ResolvedEvent resolvedEvent)
     {
-        if (DeserializeEventMetadata(resolvedEvent) is not { } metadata) return null;
-        if (DeserializeEventData(resolvedEvent.OriginalEvent) is not { } @event) return null;
+        if (DeserializeEventMetadata(resolvedEvent.Event) is not { } metadata) return null;
+        if (DeserializeEventData(resolvedEvent.Event) is not { } @event) return null;
 
         return new ResolvedEvent<TAggregateId>(
             metadata.AggregateId,
-            new AggregateVersion(resolvedEvent.OriginalEvent.EventNumber.ToUInt64() + 1), 
-            new StreamPosition(resolvedEvent.Event.EventNumber.ToUInt64()), 
+            new AggregateVersion(resolvedEvent.Event.EventNumber.ToUInt64() + 1), 
+            new StreamPosition(resolvedEvent.OriginalEvent.EventNumber.ToUInt64()), 
             @event, 
             resolvedEvent.Event.Created);
     }
 
-    private static EventMetadata<TAggregateId>? DeserializeEventMetadata(ResolvedEvent resolvedEvent)
+    private static EventMetadata<TAggregateId>? DeserializeEventMetadata(EventRecord eventRecord)
         => JsonConvert.DeserializeObject<EventMetadata<TAggregateId>>(
-            Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span));
+            Encoding.UTF8.GetString(eventRecord.Metadata.Span));
 
     private IDomainEvent<TAggregateId>? DeserializeEventData(EventRecord eventRecord)
     {

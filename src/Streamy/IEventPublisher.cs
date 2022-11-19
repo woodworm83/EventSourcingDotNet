@@ -11,5 +11,6 @@ public interface IEventPublisher<TAggregateId>
         StreamPosition fromStreamPosition = default);
 
     IObservable<IResolvedEvent<TAggregateId>> Listen<TEvent>(
-        StreamPosition fromStreamPosition = default);
+        StreamPosition fromStreamPosition = default)
+        where TEvent : IDomainEvent<TAggregateId>;
 }

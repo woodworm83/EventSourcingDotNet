@@ -13,7 +13,7 @@ public class EventStoreFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await Container.StopAsync();
+        await Container.DisposeAsync();
     }
 }
 

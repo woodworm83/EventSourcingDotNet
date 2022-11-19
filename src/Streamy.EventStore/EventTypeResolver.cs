@@ -1,6 +1,7 @@
 ﻿namespace Streamy.EventStore;
 
-public interface IEventTypeResolver<TAggregateId>
+// ReSharper disable once UnusedTypeParameter
+internal interface IEventTypeResolver<TAggregateId>
 {
     Type? GetEventType(string eventName);
 }

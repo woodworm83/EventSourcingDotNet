@@ -85,7 +85,8 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
             .SkipWhile(x => x.StreamPosition.Position < fromStreamPosition.Position);
 
     public IObservable<IResolvedEvent<TAggregateId>> Listen<TEvent>(
-        StreamPosition fromStreamPosition = default)
+        StreamPosition fromStreamPosition = default) 
+        where TEvent : IDomainEvent<TAggregateId> 
         => Listen(fromStreamPosition)
             .Where(x => x.Event is TEvent);
 
