@@ -1,4 +1,4 @@
-# streamy
+# EventSourcingDotNet
 Event Sourcing made easy
 
 ## Available Event Store Providers

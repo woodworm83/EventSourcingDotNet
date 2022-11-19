@@ -25,7 +25,7 @@ jobs:
       run: dotnet test --no-restore --verbosity normal
 
   push:
-    if: github.repository == 'woodworm83/streamy' && github.ref_name == 'main'
+    if: github.repository == 'woodworm83/EventSourcingDotNet' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     needs: test
 

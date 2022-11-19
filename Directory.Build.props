@@ -3,8 +3,11 @@
         <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <VersionPrefix>0.2.0</VersionPrefix>
-        <RepositoryUrl>https://github.com/woodworm83/streamy.git</RepositoryUrl>
+        <VersionPrefix>0.0.1</VersionPrefix>
+        
+        <Authors>Reto Kühni</Authors>
+        <ProductName>EventSourcingDotNet</ProductName>
+        <RepositoryUrl>https://github.com/woodworm83/EventSourcingDotNet.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
     
