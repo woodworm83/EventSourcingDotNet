@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using EventSourcingDotNet.Providers.EventStore;
 using EventStore.Client;
 using FluentAssertions;
 using Moq;

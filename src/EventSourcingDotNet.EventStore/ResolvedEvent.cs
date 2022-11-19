@@ -1,4 +1,4 @@
-﻿namespace EventSourcingDotNet.Providers.EventStore;
+﻿namespace EventSourcingDotNet.EventStore;
 
 internal readonly record struct ResolvedEvent<TAggregateId>(
         TAggregateId AggregateId, 

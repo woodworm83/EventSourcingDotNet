@@ -1,22 +1,19 @@
 ﻿using EventStore.Client;
 using Microsoft.Extensions.Options;
 
-namespace EventSourcingDotNet.Providers.EventStore;
+namespace EventSourcingDotNet.EventStore;
 
 internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsyncDisposable
     where TAggregateId : IAggregateId
 {
     private readonly EventStoreClient _client;
     private readonly IEventSerializer<TAggregateId> _eventSerializer;
-    private readonly IStreamNamingConvention<TAggregateId> _streamNamingConvention;
 
     public EventStore(
         IOptions<EventStoreClientSettings> clientSettings, 
-        IEventSerializer<TAggregateId> eventSerializer, 
-        IStreamNamingConvention<TAggregateId> streamNamingConvention)
+        IEventSerializer<TAggregateId> eventSerializer)
     {
         _eventSerializer = eventSerializer;
-        _streamNamingConvention = streamNamingConvention;
         _client = new EventStoreClient(clientSettings);
     }
 
@@ -24,7 +21,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
     {
         var result = _client.ReadStreamAsync(
             Direction.Forwards,
-            _streamNamingConvention.GetAggregateStreamName(aggregateId),
+            StreamNamingConvention.GetAggregateStreamName(aggregateId),
             new global::EventStore.Client.StreamPosition(fromVersion.Version));
 
         if (await result.ReadState == ReadState.StreamNotFound) yield break;
@@ -40,7 +37,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
     public async Task<AggregateVersion> AppendEventsAsync(TAggregateId aggregateId, IEnumerable<IDomainEvent<TAggregateId>> events, AggregateVersion expectedVersion)
     {
         var result = await _client.AppendToStreamAsync(
-            _streamNamingConvention.GetAggregateStreamName(aggregateId),
+            StreamNamingConvention.GetAggregateStreamName(aggregateId),
             new StreamRevision(expectedVersion.Version - 1),
             SerializeEvents(aggregateId, events));
 

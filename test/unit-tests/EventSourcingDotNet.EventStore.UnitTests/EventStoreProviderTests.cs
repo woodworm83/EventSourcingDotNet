@@ -1,5 +1,4 @@
-﻿using EventSourcingDotNet.Providers.EventStore;
-using EventStore.Client;
+﻿using EventStore.Client;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

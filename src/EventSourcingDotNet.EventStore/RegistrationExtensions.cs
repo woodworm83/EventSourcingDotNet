@@ -1,4 +1,4 @@
-﻿using EventSourcingDotNet.Providers.EventStore;
+﻿using EventSourcingDotNet.EventStore;
 using EventStore.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

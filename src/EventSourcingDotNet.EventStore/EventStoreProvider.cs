@@ -1,7 +1,6 @@
-﻿using EventSourcingDotNet.EventStore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace EventSourcingDotNet.Providers.EventStore;
+namespace EventSourcingDotNet.EventStore;
 
 internal sealed class EventStoreProvider : IEventStoreProvider
 {
@@ -18,8 +17,5 @@ internal sealed class EventStoreProvider : IEventStoreProvider
                 typeof(EventSerializer<>).MakeGenericType(aggregateIdType))
             .AddSingleton(
                 typeof(IEventTypeResolver<>).MakeGenericType(aggregateIdType),
-                typeof(EventTypeResolver<>).MakeGenericType(aggregateIdType))
-            .AddTransient(
-                typeof(IStreamNamingConvention<>).MakeGenericType(aggregateIdType),
-                typeof(StreamNamingConvention<>).MakeGenericType(aggregateIdType));
+                typeof(EventTypeResolver<>).MakeGenericType(aggregateIdType));
 }

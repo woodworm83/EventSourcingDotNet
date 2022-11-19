@@ -1,4 +1,3 @@
-using EventSourcingDotNet.Providers.EventStore;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -9,10 +8,9 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 public class EventStoreTests
 {
     private static readonly EventTypeResolver<TestId> _eventTypeResolver = new();
-    
+
     private readonly EventStoreTestContainer _container;
     private readonly EventSerializer<TestId> _eventSerializer = new(_eventTypeResolver);
-    private readonly StreamNamingConvention<TestId> _streamNamingConvention = new();
 
     public EventStoreTests(EventStoreFixture fixture)
     {
@@ -25,7 +23,7 @@ public class EventStoreTests
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event);
-        await _container.AppendEvents(_streamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
+        await _container.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
         await using var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
@@ -42,7 +40,8 @@ public class EventStoreTests
 
         await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
 
-        var appendedEvents = await _container.ReadEvents(_streamNamingConvention.GetAggregateStreamName(aggregateId)).ToListAsync();
+        var appendedEvents = await _container.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
+            .ToListAsync();
 
         appendedEvents.Count.Should().Be(1);
     }
@@ -70,9 +69,8 @@ public class EventStoreTests
         result.Version.Should().Be(5);
     }
 
-    private EventStore<TestId> CreateEventStore() 
+    private EventStore<TestId> CreateEventStore()
         => new(
             Options.Create(_container.ClientSettings),
-            (IEventSerializer<TestId>) _eventSerializer,
-            _streamNamingConvention);
+            _eventSerializer);
 }

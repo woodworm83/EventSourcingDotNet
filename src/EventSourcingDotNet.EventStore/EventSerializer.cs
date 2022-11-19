@@ -2,7 +2,7 @@
 using EventStore.Client;
 using Newtonsoft.Json;
 
-namespace EventSourcingDotNet.Providers.EventStore;
+namespace EventSourcingDotNet.EventStore;
 
 internal interface IEventSerializer<TAggregateId> 
     where TAggregateId : IAggregateId

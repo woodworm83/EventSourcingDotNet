@@ -1,26 +1,25 @@
-﻿namespace EventSourcingDotNet.Providers.EventStore;
+﻿namespace EventSourcingDotNet.EventStore;
 
-internal interface IStreamNamingConvention<TAggregateId>
-    where TAggregateId : IAggregateId
+internal static class StreamNamingConvention
 {
-    string GetAggregateStreamName(TAggregateId aggregateId);
-
-    string GetByCategoryStreamName();
-    
-    string GetByEventStreamName<TEvent>()
-        where TEvent : IDomainEvent<TAggregateId>;
-}
-
-internal sealed class StreamNamingConvention<TAggregateId> : IStreamNamingConvention<TAggregateId>
-    where TAggregateId : IAggregateId
-{
-    public string GetAggregateStreamName(TAggregateId aggregateId)
+    public static string GetAggregateStreamName<TAggregateId>(TAggregateId aggregateId)
+        where TAggregateId : IAggregateId
         => $"{TAggregateId.AggregateName}-{aggregateId.AsString()}";
 
-    public string GetByCategoryStreamName()
+    public static string GetByCategoryStreamName<TAggregateId>()
+        where TAggregateId : IAggregateId
         => $"$ce-{TAggregateId.AggregateName}";
 
-    public string GetByEventStreamName<TEvent>() 
+    public static string GetByEventStreamName<TAggregateId, TEvent>()
+        where TAggregateId : IAggregateId 
         where TEvent : IDomainEvent<TAggregateId>
-        => $"$et-{typeof(TEvent).Name}";
+        => $"$et-{TAggregateId.AggregateName}-{typeof(TEvent).Name}";
+
+    public static string GetEventTypeName<TAggregateId>(IDomainEvent<TAggregateId> @event)
+        where TAggregateId : IAggregateId
+        => GetEventTypeName<TAggregateId>(@event.GetType());
+            
+    public static string GetEventTypeName<TAggregateId>(Type eventType)
+        where TAggregateId : IAggregateId
+        => $"{TAggregateId.AggregateName}-{eventType.Name}";
 }

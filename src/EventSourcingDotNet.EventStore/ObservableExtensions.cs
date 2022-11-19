@@ -1,6 +1,6 @@
 ﻿using System.Reactive.Linq;
 
-namespace EventSourcingDotNet.Providers.EventStore;
+namespace EventSourcingDotNet.EventStore;
 
 public static class ObservableExtensions
 {

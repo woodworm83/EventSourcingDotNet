@@ -1,5 +1,4 @@
 ﻿using System.Reactive.Linq;
-using EventSourcingDotNet.Providers.EventStore;
 using EventStore.Client;
 using Microsoft.Extensions.Options;
 
@@ -10,15 +9,12 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
 {
     private readonly EventStoreClient _client;
     private readonly IEventSerializer<TAggregateId> _eventSerializer;
-    private readonly IStreamNamingConvention<TAggregateId> _streamNamingConvention;
-
+    
     public EventPublisher(
         IOptions<EventStoreClientSettings> options,
-        IEventSerializer<TAggregateId> eventSerializer,
-        IStreamNamingConvention<TAggregateId> streamNamingConvention)
+        IEventSerializer<TAggregateId> eventSerializer)
     {
         _eventSerializer = eventSerializer;
-        _streamNamingConvention = streamNamingConvention;
         _client = new EventStoreClient(options);
     }
 
@@ -27,7 +23,7 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
         StreamPosition fromStreamPosition = default)
         => Observable.Create<IResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
-                _streamNamingConvention.GetAggregateStreamName(aggregateId),
+                StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 fromStreamPosition,
                 false,
                 observer));
@@ -35,7 +31,7 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
     public IObservable<IResolvedEvent<TAggregateId>> Listen(StreamPosition fromStreamPosition = default)
         => Observable.Create<IResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
-                _streamNamingConvention.GetByCategoryStreamName(),
+                StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
                 fromStreamPosition,
                 true,
                 observer));
@@ -44,7 +40,7 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
         where TEvent : IDomainEvent<TAggregateId>
         => Observable.Create<IResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
-                _streamNamingConvention.GetByEventStreamName<TEvent>(),
+                StreamNamingConvention.GetByEventStreamName<TAggregateId, TEvent>(),
                 fromStreamPosition,
                 true,
                 observer));

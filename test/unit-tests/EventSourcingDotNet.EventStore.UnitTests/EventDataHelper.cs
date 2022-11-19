@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using EventSourcingDotNet.Providers.EventStore;
 using EventStore.Client;
 using Newtonsoft.Json;
 
@@ -14,7 +13,7 @@ internal static class EventDataHelper
         where TAggregateId : IAggregateId
         => new(
             eventId is null ? Uuid.NewUuid() : Uuid.FromGuid(eventId.Value),
-            @event.GetType().Name,
+            StreamNamingConvention.GetEventTypeName(@event),
             Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event)),
             Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new EventMetadata<TAggregateId>(aggregateId))));
 }
