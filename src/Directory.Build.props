@@ -6,6 +6,7 @@
         <ProductName>EventSourcingDotNet</ProductName>
         <RepositoryUrl>https://github.com/woodworm83/EventSourcingDotNet.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
     
     <ItemGroup>
