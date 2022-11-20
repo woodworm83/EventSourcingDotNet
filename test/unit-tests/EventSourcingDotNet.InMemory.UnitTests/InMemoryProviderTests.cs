@@ -4,21 +4,26 @@ using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;
 
-public class EventStoreProviderTests
+public class InMemoryRegistrationTests
 {
-    private readonly IServiceProvider _serviceProvider = new ServiceCollection()
-        .AddEventSourcing(
-            builder =>
+    private static ServiceProvider CreateServiceProvider(Action<AggregateBuilder>? configureAggregate = null)
+    {
+        return new ServiceCollection()
+            .AddEventSourcing(builder =>
             {
-                builder.AddAggregate<TestId>()
+                var aggregateBuilder = builder.AddAggregate<TestId, TestState>()
                     .UseInMemoryEventStore();
+                configureAggregate?.Invoke(aggregateBuilder);
             })
-        .BuildServiceProvider();
-    
+            .BuildServiceProvider();
+    }
+
     [Fact]
     public void EventStoreCanBeResolved()
     {
-        _serviceProvider.GetService<IEventStore<TestId>>()
+        var serviceProvider = CreateServiceProvider();
+        
+        serviceProvider.GetService<IEventStore<TestId>>()
             .Should()
             .BeOfType<InMemoryEventStore<TestId>>();
     }
@@ -26,8 +31,20 @@ public class EventStoreProviderTests
     [Fact]
     public void EventPublisherCanBeResolved()
     {
-        _serviceProvider.GetService<IEventPublisher<TestId>>()
+        var serviceProvider = CreateServiceProvider();
+        
+        serviceProvider.GetService<IEventPublisher<TestId>>()
             .Should()
             .BeOfType<InMemoryEventStore<TestId>>();
+    }
+
+    [Fact]
+    public void SnapshotCanBeResolved()
+    {
+        var serviceProvider = CreateServiceProvider(builder => builder.UseInMemorySnapshot());
+
+        serviceProvider.GetService<ISnapshotStore<TestId, TestState>>()
+            .Should()
+            .BeOfType<InMemorySnapshot<TestId, TestState>>();
     }
 }

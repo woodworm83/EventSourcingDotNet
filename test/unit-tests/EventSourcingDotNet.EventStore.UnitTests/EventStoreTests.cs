@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 namespace EventSourcingDotNet.EventStore.UnitTests;
@@ -8,9 +9,7 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 public class EventStoreTests
 {
     private static readonly EventTypeResolver<TestId> _eventTypeResolver = new();
-
     private readonly EventStoreTestContainer _container;
-    private readonly EventSerializer<TestId> _eventSerializer = new(_eventTypeResolver);
 
     public EventStoreTests(EventStoreFixture fixture)
     {
@@ -69,8 +68,34 @@ public class EventStoreTests
         result.Version.Should().Be(5);
     }
 
-    private EventStore<TestId> CreateEventStore()
+    [Fact]
+    public async Task ShouldReturnEmptyEnumerableWhenStreamDoesNotExist()
+    {
+        var aggregateId = new TestId();
+        await using var eventStore = CreateEventStore();
+
+        var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
+
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ShouldSkipUnknownEvents()
+    {
+        var aggregateId = new TestId();
+        await _container.AppendEvents(
+            StreamNamingConvention.GetAggregateStreamName(aggregateId),
+            EventDataHelper.CreateEventData(aggregateId, new TestEvent()));
+        var eventSerializerMock = new Mock<IEventSerializer<TestId>>();
+        await using var eventStore = CreateEventStore(eventSerializerMock.Object);
+
+        var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
+
+        result.Should().BeEmpty();
+    }
+
+    private EventStore<TestId> CreateEventStore(IEventSerializer<TestId>? eventSerializer = null)
         => new(
             Options.Create(_container.ClientSettings),
-            _eventSerializer);
+            eventSerializer ?? new EventSerializer<TestId>(_eventTypeResolver));
 }

@@ -9,8 +9,13 @@ public interface IAggregateId
     string AsString();
 }
 
+public interface IAggregateState<TAggregateId>
+{
+    
+}
+
 public sealed record Aggregate<TId, TState>(
-    TId Id) 
+    TId Id)
     where TId : IAggregateId
     where TState : new()
 {
@@ -19,12 +24,12 @@ public sealed record Aggregate<TId, TState>(
     /// This property is set by aggregate repository when events are replayed
     /// </summary>
     public AggregateVersion Version { get; internal init; }
-    
+
     /// <summary>
     /// Collection of uncommitted events.
     /// Use <see cref="IAggregateRepository&lt;TId, TState&gt;"/>.Save to store the events in the event stream
     /// </summary>
-    public ImmutableList<IDomainEvent<TId, TState>> UncommittedEvents { get; internal init; } 
+    public ImmutableList<IDomainEvent<TId, TState>> UncommittedEvents { get; internal init; }
         = ImmutableList<IDomainEvent<TId, TState>>.Empty;
 
     /// <summary>
@@ -36,7 +41,7 @@ public sealed record Aggregate<TId, TState>(
     public Aggregate<TId, TState> AddEvent(IDomainEvent<TId, TState> @event)
         => @event.Validate(State) switch
         {
-            EventValidationResult.Fired 
+            EventValidationResult.Fired
                 => this with
                 {
                     State = @event.Apply(State),
@@ -46,6 +51,15 @@ public sealed record Aggregate<TId, TState>(
             EventValidationResult.Failed failed => throw failed.Exception,
             _ => throw new NotSupportedException($"Validation result is not supported")
         };
+
+    public Aggregate<TId, TState> ApplyEvent(IResolvedEvent<TId> resolvedEvent)
+        => resolvedEvent.Event is IDomainEvent<TId, TState> @event
+            ? this with
+            {
+                State = @event.Apply(State),
+                Version = resolvedEvent.AggregateVersion
+            }
+            : this;
 
     /// <summary>
     /// The current state of the aggregate.

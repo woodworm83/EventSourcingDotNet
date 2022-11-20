@@ -9,14 +9,14 @@ internal readonly record struct TestId(int Id = default) : IAggregateId
     public string AsString() => Id.ToString();
 }
 
-internal sealed record TestState(int Value)
+internal sealed record TestState(int Value) : IAggregateState<TestId>
 {
     public TestState() : this(0) { }
 }
 
-internal sealed record TestEvent : IDomainEvent<TestId, TestState>
+internal sealed record TestEvent(int NewValue = default) : IDomainEvent<TestId, TestState>
 {
-    public TestState Apply(TestState state) => state;
+    public TestState Apply(TestState state) => state with { Value = NewValue };
 }
 
 [SuppressMessage("ReSharper", "WithExpressionModifiesAllMembers")]

@@ -35,7 +35,7 @@ public class AggregateRepositoryTests
     public async Task ShouldGetSnapshotFromSnapshotProvider()
     {
         var snapshot = new Aggregate<TestId, TestState>(new TestId());
-        var snapshotProviderMock = new Mock<ISnapshotProvider<TestId, TestState>>();
+        var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
         snapshotProviderMock.Setup(x => x.GetLatestSnapshotAsync(It.IsAny<TestId>()))
             .ReturnsAsync(snapshot);
         var eventStoreMock = MockEventStore();

@@ -5,9 +5,11 @@ namespace EventSourcingDotNet;
 
 public static class RegistrationExtensions
 {
+    public delegate void ConfigureEventSourcing(EventSourcingBuilder builder);
+    
     public static IServiceCollection AddEventSourcing(
         this IServiceCollection services,
-        Action<EventSourcingBuilder> configure)
+        ConfigureEventSourcing configure)
     {
         var builder = new EventSourcingBuilder();
         configure(builder);
@@ -19,13 +21,47 @@ public static class RegistrationExtensions
 
 public sealed class EventSourcingBuilder
 {
-    private readonly Dictionary<Type, AggregateBuilder> _aggregates = new();
+    private readonly Dictionary<Type, (IReadOnlyList<Type> StateType, AggregateBuilder Builder)> _aggregates = new();
 
-    public AggregateBuilder AddAggregate<TAggregateId>()
+    public AggregateBuilder AddAggregate<TAggregateId, TState>()
+        where TAggregateId : IAggregateId
+        where TState : IAggregateState<TAggregateId>
     {
         var builder = new AggregateBuilder();
-        _aggregates[typeof(TAggregateId)] = builder;
+        _aggregates[typeof(TAggregateId)] = (new List<Type>(){ typeof(TState) }, builder);
         return builder;
+    }
+
+    public AggregateBuilder AddAggregate<TAggregateId>(params Type[] stateTypes)
+        where TAggregateId : IAggregateId
+    {
+        CheckStateTypes(stateTypes, typeof(TAggregateId));
+        var builder = new AggregateBuilder();
+        _aggregates[typeof(TAggregateId)] = (stateTypes.ToList(), builder);
+        return builder;
+    }
+
+    private static void CheckStateTypes(IEnumerable<Type> stateTypes, Type aggregateIdType)
+    {
+        var expectedStateType = typeof(IAggregateState<>).MakeGenericType(aggregateIdType);
+        var invalidTypes = stateTypes
+            .Where(t => !t.IsAssignableTo(expectedStateType))
+            .ToList();
+
+        switch (invalidTypes)
+        {
+            case [var stateType]:
+                throw GetInsvalidStateTypeException(stateType);
+
+            case {Count: > 1}:
+                throw new AggregateException(invalidTypes.Select(GetInsvalidStateTypeException));
+        }
+
+        InvalidOperationException GetInsvalidStateTypeException(Type stateType1)
+        {
+            return new InvalidOperationException(
+                $"Type {stateType1.Name} is not assignable to type {expectedStateType.Name}");
+        }
     }
 
     public AggregateBuilder Scan(params Assembly[] assemblies)
@@ -33,14 +69,25 @@ public sealed class EventSourcingBuilder
         var builder = new AggregateBuilder();
         var aggregateIdTypes = assemblies
             .SelectMany(assembly => assembly.GetTypes())
-            .Where(type => !type.IsAbstract && type.IsAssignableTo(typeof(IAggregateId)));
+            .Where(type => !type.IsAbstract && type.IsAssignableTo(typeof(IAggregateId)))
+            .Select(idType => (idType, FindAggregateStates(idType, assemblies)));
 
-        foreach (var type in aggregateIdTypes)
+        foreach (var (idType, stateTypes) in aggregateIdTypes)
         {
-            _aggregates[type] = builder;
+            _aggregates[idType] = (stateTypes, builder);
         }
 
         return builder;
+    }
+
+    private IReadOnlyList<Type> FindAggregateStates(Type aggregateIdType, IEnumerable<Assembly> assemblies)
+    {
+        var expectedType = typeof(IAggregateState<>).MakeGenericType(aggregateIdType);
+
+        return assemblies
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(type => !type.IsAbstract && type.IsAssignableTo(expectedType))
+            .ToList();
     }
 
     public AggregateBuilder Scan(params Type[] assemblyMarkerTypes)
@@ -50,18 +97,27 @@ public sealed class EventSourcingBuilder
                 .Distinct()
                 .ToArray());
 
-    internal void ConfigureServices(IServiceCollection serviceCollection)
+    internal void ConfigureServices(
+        IServiceCollection serviceCollection)
     {
-        foreach (var (aggregateIdType, builder) in _aggregates)
+        foreach (var (aggregateIdType, (stateTypes, builder)) in _aggregates)
         {
-            builder.ConfigureServices(serviceCollection, aggregateIdType);
+            builder.ConfigureServices(serviceCollection, aggregateIdType, stateTypes);
         }
     }
 }
 
 public interface ISnapshotProvider
 {
-    public void RegisterServices(IServiceCollection services, Type aggregateIdType);
+    public void RegisterServices(IServiceCollection services, Type aggregateIdType, Type stateType);
+
+    public sealed void RegisterServices(IServiceCollection services, Type aggregateIdType, IEnumerable<Type> stateTypes)
+    {
+        foreach (var stateType in stateTypes)
+        {
+            RegisterServices(services, aggregateIdType, stateType);
+        }
+    }
 }
 
 public interface IEventStoreProvider
@@ -86,16 +142,16 @@ public sealed class AggregateBuilder
         return this;
     }
 
-    internal void ConfigureServices(IServiceCollection services, Type aggregateIdType)
+    internal void ConfigureServices(IServiceCollection services, Type aggregateIdType, IEnumerable<Type> stateTypes)
     {
         if (_eventStoreProvider is not { } eventStoreProvider)
             throw new InvalidOperationException($"Event store provider was not specified");
-            
+
         eventStoreProvider.RegisterServices(services, aggregateIdType);
 
         if (_snapshotProvider is { } snapshotProvider)
         {
-            snapshotProvider.RegisterServices(services, aggregateIdType);
+            snapshotProvider.RegisterServices(services, aggregateIdType, stateTypes);
         }
     }
 }

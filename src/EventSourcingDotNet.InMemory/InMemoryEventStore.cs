@@ -59,7 +59,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         foreach (var @event in events)
         {
             _events.Add(
-                new ResolvedEvent(
+                new ResolvedEvent<TAggregateId>(
                     aggregateId,
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
@@ -89,12 +89,4 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         where TEvent : IDomainEvent<TAggregateId> 
         => Listen(fromStreamPosition)
             .Where(x => x.Event is TEvent);
-
-    private readonly record struct ResolvedEvent(
-            TAggregateId AggregateId,
-            AggregateVersion AggregateVersion,
-            StreamPosition StreamPosition,
-            IDomainEvent<TAggregateId> Event,
-            DateTime Timestamp)
-        : IResolvedEvent<TAggregateId>;
 }

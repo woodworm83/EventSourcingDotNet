@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Serialization;
 
 namespace EventSourcingDotNet;
 
@@ -12,6 +13,7 @@ public sealed class OptimisticConcurrencyException : Exception
         ActualVersion = actualVersion;
     }
 
+    [ExcludeFromCodeCoverage]
     private OptimisticConcurrencyException(SerializationInfo info, StreamingContext context)
         : base(info, context)
     {
@@ -19,6 +21,7 @@ public sealed class OptimisticConcurrencyException : Exception
         ActualVersion = new AggregateVersion(info.GetUInt64(nameof(ActualVersion)));
     }
 
+    [ExcludeFromCodeCoverage]
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
     {
         base.GetObjectData(info, context);

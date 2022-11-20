@@ -9,11 +9,12 @@ public class InMemoryEventStoreTests
     [Fact]
     public async Task ShouldReturnAppendedEvents()
     {
+        var aggregateId = new TestId();
         var @event = new TestEvent();
         var eventStore = new InMemoryEventStore<TestId>();
-        await eventStore.AppendEventsAsync(default, new[] {@event}, default);
+        await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
 
-        var events = await eventStore.ReadEventsAsync(default, default)
+        var events = await eventStore.ReadEventsAsync(aggregateId, default)
             .Select(x => x.Event)
             .ToListAsync();
             
@@ -25,11 +26,25 @@ public class InMemoryEventStoreTests
     [Fact]
     public async Task ShouldThrowOptimisticConcurrencyException()
     {
+        var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
+        var actualVersion = await eventStore.AppendEventsAsync(aggregateId, new[] {new TestEvent()}, default);
 
-        await eventStore.Awaiting(x => x.AppendEventsAsync(new TestId(), new[] {new TestEvent()}, new AggregateVersion(42)))
+        await eventStore.Awaiting(x => x.AppendEventsAsync(aggregateId, new[] {new TestEvent()}, new AggregateVersion(42)))
             .Should()
-            .ThrowAsync<OptimisticConcurrencyException>();
+            .ThrowAsync<OptimisticConcurrencyException>()
+            .Where(exception => exception.ActualVersion == actualVersion);
+    }
+
+    [Fact]
+    public async Task ShouldIgnoreOtherStreamsForAggregateVersion()
+    {
+        var eventStore = new InMemoryEventStore<TestId>();
+        await eventStore.AppendEventsAsync(new TestId(), new[] {new TestEvent()}, default);
+
+        await eventStore.Awaiting(x => x.AppendEventsAsync(new TestId(), new[] {new TestEvent()}, default))
+            .Should()
+            .NotThrowAsync();
     }
 
     [Fact]
@@ -71,7 +86,7 @@ public class InMemoryEventStoreTests
     [Fact]
     public async Task ShouldNotYieldAddedEventWhenAggregateIdDoesNotMatch()
     {
-        var aggregateId = new TestId(42);
+        var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
         var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
         var @event = new TestEvent();
@@ -90,7 +105,7 @@ public class InMemoryEventStoreTests
     [Fact]
     public async Task ShouldNotYieldAddedEventWhenEventTypeIdDoesNotMatch()
     {
-        var aggregateId = new TestId(42);
+        var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
         var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
         var @event = new TestEvent();

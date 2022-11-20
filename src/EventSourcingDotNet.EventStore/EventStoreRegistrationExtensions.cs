@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 // ReSharper disable once CheckNamespace
 namespace EventSourcingDotNet;
 
-public static class RegistrationExtensions
+public static class EventStoreRegistrationExtensions
 {
     public static IServiceCollection ConfigureEventStore(this IServiceCollection services, Uri connectionString)
         => services

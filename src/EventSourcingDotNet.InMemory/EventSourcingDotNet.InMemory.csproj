@@ -9,6 +9,7 @@
   
   <ItemGroup>
     <PackageReference Include="DynamicData" Version="7.12.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@ namespace EventSourcingDotNet;
 /// <typeparam name="TState">The aggregate state</typeparam>
 public interface IAggregateRepository<TAggregateId, TState> 
     where TAggregateId : IAggregateId
-    where TState : new()
+    where TState : IAggregateState<TAggregateId>, new()
 {
     /// <summary>
     /// Creates an aggregate and replays the events from the event store
@@ -43,14 +43,14 @@ public interface IAggregateRepository<TAggregateId, TState>
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : new()
+    where TState : IAggregateState<TAggregateId>, new()
 {
     private readonly IEventStore<TAggregateId> _eventStore;
-    private readonly ISnapshotProvider<TAggregateId, TState>? _snapshotProvider;
+    private readonly ISnapshotStore<TAggregateId, TState>? _snapshotProvider;
 
     public AggregateRepository(
         IEventStore<TAggregateId> eventStore,
-        ISnapshotProvider<TAggregateId, TState>? snapshotProvider = null)
+        ISnapshotStore<TAggregateId, TState>? snapshotProvider = null)
     {
         _eventStore = eventStore;
         _snapshotProvider = snapshotProvider;
@@ -62,7 +62,7 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
 
         await foreach (var resolvedEvent in _eventStore.ReadEventsAsync(aggregate.Id, aggregate.Version))
         {
-            aggregate = ApplyEvent(resolvedEvent, aggregate);
+            aggregate = aggregate.ApplyEvent(resolvedEvent);
         }
 
         return aggregate;
@@ -73,23 +73,6 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         if (_snapshotProvider is null) return null;
 
         return await _snapshotProvider.GetLatestSnapshotAsync(aggregateId);
-    }
-
-    private static Aggregate<TAggregateId, TState> ApplyEvent(IResolvedEvent<TAggregateId> resolvedEvent,
-        Aggregate<TAggregateId, TState> aggregate)
-    {
-        aggregate = aggregate with {Version = resolvedEvent.AggregateVersion};
-
-        if (resolvedEvent.Event is IDomainEvent<TAggregateId, TState> @event)
-        {
-            aggregate = aggregate with
-            {
-                State = @event.Apply(aggregate.State),
-                Version = resolvedEvent.AggregateVersion
-            };
-        }
-
-        return aggregate;
     }
 
     public async Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate)

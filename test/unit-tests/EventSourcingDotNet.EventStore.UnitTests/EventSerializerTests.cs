@@ -41,7 +41,7 @@ public class EventSerializerTests
         var serializer = new EventSerializer<TestId>(_eventTypeResolver);
         var @event = new TestEvent();
         var aggregateId = new TestId();
-        
+
         var result = serializer.Serialize(aggregateId, @event);
 
         (Deserialize<EventMetadata<TestId>>(result.Metadata)?.AggregateId)
@@ -55,9 +55,9 @@ public class EventSerializerTests
         var aggregateId = new TestId();
         var resolvedEvent = CreateResolvedEvent(aggregateId: aggregateId);
         var serializer = new EventSerializer<TestId>(_eventTypeResolver);
-        
+
         var result = serializer.Deserialize(resolvedEvent)?.AggregateId;
-            
+
         result.Should().Be(aggregateId);
     }
 
@@ -69,7 +69,7 @@ public class EventSerializerTests
         var serializer = new EventSerializer<TestId>(_eventTypeResolver);
 
         var result = serializer.Deserialize(resolvedEvent)?.Event;
-            
+
         result.Should().Be(@event);
     }
 
@@ -107,14 +107,43 @@ public class EventSerializerTests
         result?.StreamPosition.Position.Should().Be(5);
     }
 
+    [Fact]
+    public void ShouldReturnNullWhenEventTypeIsUnknown()
+    {
+        var resolvedEvent = CreateResolvedEvent();
+        var eventTypeResolverMock = new Mock<IEventTypeResolver<TestId>>();
+        var serializer = new EventSerializer<TestId>(eventTypeResolverMock.Object);
+
+        var result = serializer.Deserialize(resolvedEvent);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ShouldReturnNullWhenEventMetadataCannotBeDeserialized()
+    {
+        var resolvedEvent = CreateResolvedEvent(invalidMetadata: true);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+
+        var result = serializer.Deserialize(resolvedEvent);
+
+        result.Should().BeNull();
+    }
+
     private static T? Deserialize<T>(ReadOnlyMemory<byte> data)
         => JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(data.Span));
 
     private static ReadOnlyMemory<byte> Serialize(object value)
         => Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value));
 
-    private ResolvedEvent CreateResolvedEvent(string eventStreamId = "", Uuid? uuid = null, ulong streamPosition = 0,
-        TestEvent? @event = null, TestId? aggregateId = null, DateTime? created = null)
+    private ResolvedEvent CreateResolvedEvent(
+        string eventStreamId = "",
+        Uuid? uuid = null,
+        ulong streamPosition = 0,
+        TestEvent? @event = null,
+        TestId? aggregateId = null,
+        DateTime? created = null,
+        bool invalidMetadata = false)
         => new(
             new EventRecord(
                 eventStreamId,
@@ -128,7 +157,9 @@ public class EventSerializerTests
                     {"content-type", "application/json"}
                 },
                 Serialize(@event ?? new TestEvent()),
-                Serialize(new EventMetadata<TestId>(aggregateId ?? new TestId()))),
+                invalidMetadata
+                    ? new ReadOnlyMemory<byte>()
+                    : Serialize(new EventMetadata<TestId>(aggregateId ?? new TestId()))),
             null,
             null);
 
@@ -139,7 +170,7 @@ public class EventSerializerTests
             .Returns(typeof(TestEvent));
         return eventTypeResolverMock.Object;
     }
-    
+
     private static long ToUnixEpochTime(DateTime dateTime)
         => dateTime.Ticks - DateTime.UnixEpoch.Ticks;
 }
