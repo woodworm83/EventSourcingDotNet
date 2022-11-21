@@ -37,12 +37,8 @@ jobs:
           dotnet-version: 7.0.x
       - name: Restore dependencies
         run: dotnet restore
-      - name: Add GitHub Push Target
-        run: dotnet nuget add source --username woodworm83 --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/woodworm83/index.json"
       - name: Pack nuget packages
         run: dotnet pack --no-restore -c Release -p Version=0.${{ github.run_number }}.0
-      - name: Push nuget package (github)
-        run: dotnet nuget push -s github --skip-duplicate src/**/*.nupkg
-      - name: Push nuget package (nuget.org)
+      - name: Push nuget package
         run: dotnet nuget push -s nuget.org --api-key ${{ secrets.nugetApiKey }} --skip-duplicate src/**/*.nupkg
         
