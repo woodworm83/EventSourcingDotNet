@@ -51,20 +51,27 @@ public sealed class EventSourcingBuilder
         switch (invalidTypes)
         {
             case [var stateType]:
-                throw GetInsvalidStateTypeException(stateType);
+                throw GetInvalidStateTypeException(stateType);
 
             case {Count: > 1}:
-                throw new AggregateException(invalidTypes.Select(GetInsvalidStateTypeException));
+                throw new AggregateException(invalidTypes.Select(GetInvalidStateTypeException));
         }
 
-        InvalidOperationException GetInsvalidStateTypeException(Type stateType1)
+        InvalidOperationException GetInvalidStateTypeException(Type stateType)
         {
             return new InvalidOperationException(
-                $"Type {stateType1.Name} is not assignable to type {expectedStateType.Name}");
+                $"Type {stateType.Name} is not assignable to type {expectedStateType.Name}");
         }
     }
+    
+    public AggregateBuilder Scan(params Type[] assemblyMarkerTypes)
+        => Scan(
+            assemblyMarkerTypes
+                .Select(type => type.Assembly)
+                .Distinct()
+                .ToArray());
 
-    public AggregateBuilder Scan(params Assembly[] assemblies)
+    private AggregateBuilder Scan(params Assembly[] assemblies)
     {
         var builder = new AggregateBuilder();
         var aggregateIdTypes = assemblies
@@ -89,13 +96,6 @@ public sealed class EventSourcingBuilder
             .Where(type => !type.IsAbstract && type.IsAssignableTo(expectedType))
             .ToList();
     }
-
-    public AggregateBuilder Scan(params Type[] assemblyMarkerTypes)
-        => Scan(
-            assemblyMarkerTypes
-                .Select(type => type.Assembly)
-                .Distinct()
-                .ToArray());
 
     internal void ConfigureServices(
         IServiceCollection serviceCollection)
