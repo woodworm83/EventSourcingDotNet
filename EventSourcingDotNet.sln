@@ -28,6 +28,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.InMemory.UnitTests", "test\unit-tests\EventSourcingDotNet.InMemory.UnitTests\EventSourcingDotNet.InMemory.UnitTests.csproj", "{28B304D8-2FDD-47D7-9C08-96263E8E82EC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{CF328221-34D7-463C-BAE1-A079F10A4D3D}"
+	ProjectSection(SolutionItems) = preProject
+		.github\CODEOWNERS = .github\CODEOWNERS
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{0D583DC0-E466-45BF-8889-DCBDB1C41BB3}"
 	ProjectSection(SolutionItems) = preProject
