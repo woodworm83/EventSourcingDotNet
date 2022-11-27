@@ -1,6 +1,8 @@
 ﻿using System.Text;
+using EventSourcingDotNet.Serialization.Json;
 using EventStore.Client;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
@@ -11,24 +13,26 @@ public class EventSerializerTests
 {
     private readonly IEventTypeResolver<TestId> _eventTypeResolver = CreateEventTypeResolver();
 
+    private readonly JsonSerializerSettingsFactory<TestId> _serializerSettingsFactory = new(NullLoggerFactory.Instance);
+
     [Fact]
-    public void ShouldSetEventType()
+    public async Task ShouldSetEventType()
     {
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
         var @event = new TestEvent();
 
-        var result = serializer.Serialize(new TestId(), @event);
+        var result = await serializer.SerializeAsync(new TestId(), @event);
 
         result.Type.Should().Be(nameof(TestEvent));
     }
 
     [Fact]
-    public void ShouldSerializeEventData()
+    public async Task ShouldSerializeEventData()
     {
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
         var @event = new TestEvent(42);
 
-        var result = serializer.Serialize(new TestId(), @event);
+        var result = await serializer.SerializeAsync(new TestId(), @event);
 
         Deserialize<TestEvent>(result.Data)
             .Should()
@@ -36,13 +40,13 @@ public class EventSerializerTests
     }
 
     [Fact]
-    public void ShouldSerializeAggregateIdInEventMetadata()
+    public async Task ShouldSerializeAggregateIdInEventMetadata()
     {
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
         var @event = new TestEvent();
         var aggregateId = new TestId();
 
-        var result = serializer.Serialize(aggregateId, @event);
+        var result = await serializer.SerializeAsync(aggregateId, @event);
 
         (Deserialize<EventMetadata<TestId>>(result.Metadata)?.AggregateId)
             .Should()
@@ -50,84 +54,118 @@ public class EventSerializerTests
     }
 
     [Fact]
-    public void ShouldDeserializeAggregateIdFromMetadata()
+    public async Task ShouldDeserializeAggregateIdFromMetadata()
     {
         var aggregateId = new TestId();
         var resolvedEvent = CreateResolvedEvent(aggregateId: aggregateId);
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent)?.AggregateId;
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().Be(aggregateId);
+        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+            .Which
+            .AggregateId.Should().Be(aggregateId);
     }
 
     [Fact]
-    public void ShouldDeserializeEventData()
+    public async Task ShouldDeserializeEventData()
     {
         var @event = new TestEvent(42);
         var resolvedEvent = CreateResolvedEvent(@event: @event);
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent)?.Event;
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().Be(@event);
+        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+            .Which
+            .Event.Should().Be(@event);
     }
 
     [Fact]
-    public void ShouldSetTimestamp()
+    public async Task ShouldSetTimestamp()
     {
         var timestamp = DateTime.UtcNow;
         var resolvedEvent = CreateResolvedEvent(created: timestamp);
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result?.Timestamp.Should().Be(timestamp);
+        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+            .Which
+            .Timestamp.Should().Be(timestamp);
     }
 
     [Fact]
-    public void ShouldSetAggregateVersion()
+    public async Task ShouldSetAggregateVersion()
     {
         var resolvedEvent = CreateResolvedEvent(streamPosition: 5);
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result?.AggregateVersion.Version.Should().Be(6);
+        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+            .Which
+            .AggregateVersion.Version.Should().Be(6);
     }
 
     [Fact]
-    public void ShouldSetStreamPosition()
+    public async Task ShouldSetStreamPosition()
     {
         var resolvedEvent = CreateResolvedEvent(streamPosition: 5);
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result?.StreamPosition.Position.Should().Be(5);
+        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+            .Which
+            .StreamPosition.Position.Should().Be(5);
     }
 
     [Fact]
-    public void ShouldReturnNullWhenEventTypeIsUnknown()
+    public async Task ShouldReturnNullWhenEventTypeIsUnknown()
     {
         var resolvedEvent = CreateResolvedEvent();
         var eventTypeResolverMock = new Mock<IEventTypeResolver<TestId>>();
-        var serializer = new EventSerializer<TestId>(eventTypeResolverMock.Object);
+        var serializer = new EventSerializer<TestId>(eventTypeResolverMock.Object, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
         result.Should().BeNull();
     }
 
     [Fact]
-    public void ShouldReturnNullWhenEventMetadataCannotBeDeserialized()
+    public async Task ShouldReturnNullWhenEventMetadataCannotBeDeserialized()
     {
         var resolvedEvent = CreateResolvedEvent(invalidMetadata: true);
-        var serializer = new EventSerializer<TestId>(_eventTypeResolver);
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = serializer.Deserialize(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ShouldGetSerializationOptionsFromFactory()
+    {
+        var aggregateId = new TestId();
+        var serializerSettingsFactoryMock = new Mock<IJsonSerializerSettingsFactory<TestId>>();
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, serializerSettingsFactoryMock.Object);
+
+        await serializer.SerializeAsync(aggregateId, new EncryptedTestEvent("value"));
+        
+        serializerSettingsFactoryMock.Verify(x => x.CreateForSerializationAsync(aggregateId, It.IsAny<Type>()));
+    }
+
+    [Fact]
+    public async Task ShouldGetDeserializationOptionsFromFactory()
+    {
+        var aggregateId = new TestId();
+        var serializerSettingsFactoryMock = new Mock<IJsonSerializerSettingsFactory<TestId>>();
+        var serializer = new EventSerializer<TestId>(_eventTypeResolver, serializerSettingsFactoryMock.Object);
+
+        await serializer.DeserializeAsync(CreateResolvedEvent(aggregateId: aggregateId, @event: new EncryptedTestEvent("value")));
+        
+        serializerSettingsFactoryMock.Verify(x => x.CreateForDeserializationAsync(aggregateId));
     }
 
     private static T? Deserialize<T>(ReadOnlyMemory<byte> data)
@@ -140,7 +178,7 @@ public class EventSerializerTests
         string eventStreamId = "",
         Uuid? uuid = null,
         ulong streamPosition = 0,
-        TestEvent? @event = null,
+        IDomainEvent<TestId>? @event = null,
         TestId? aggregateId = null,
         DateTime? created = null,
         bool invalidMetadata = false)
@@ -152,7 +190,7 @@ public class EventSerializerTests
                 new Position(streamPosition, streamPosition),
                 new Dictionary<string, string>
                 {
-                    {"type", nameof(TestEvent)},
+                    {"type", @event?.GetType().Name ?? nameof(TestEvent)},
                     {"created", ToUnixEpochTime(created ?? DateTime.UtcNow).ToString()},
                     {"content-type", "application/json"}
                 },
@@ -168,6 +206,8 @@ public class EventSerializerTests
         var eventTypeResolverMock = new Mock<IEventTypeResolver<TestId>>();
         eventTypeResolverMock.Setup(x => x.GetEventType(nameof(TestEvent)))
             .Returns(typeof(TestEvent));
+        eventTypeResolverMock.Setup(x => x.GetEventType(nameof(EncryptedTestEvent)))
+            .Returns(typeof(EncryptedTestEvent));
         return eventTypeResolverMock.Object;
     }
 

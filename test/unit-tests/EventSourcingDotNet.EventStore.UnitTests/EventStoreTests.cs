@@ -1,4 +1,6 @@
+using EventSourcingDotNet.Serialization.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Xunit;
@@ -10,6 +12,7 @@ public class EventStoreTests
 {
     private static readonly EventTypeResolver<TestId> _eventTypeResolver = new();
     private readonly EventStoreTestContainer _container;
+    private readonly JsonSerializerSettingsFactory<TestId> _serializerSettingsFactory = new(NullLoggerFactory.Instance);
 
     public EventStoreTests(EventStoreFixture fixture)
     {
@@ -97,5 +100,5 @@ public class EventStoreTests
     private EventStore<TestId> CreateEventStore(IEventSerializer<TestId>? eventSerializer = null)
         => new(
             Options.Create(_container.ClientSettings),
-            eventSerializer ?? new EventSerializer<TestId>(_eventTypeResolver));
+            eventSerializer ?? new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory));
 }

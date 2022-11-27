@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   
   <ItemGroup>
+    <ProjectReference Include="..\EventSourcingDotNet.Serialization.Json\EventSourcingDotNet.Serialization.Json.csproj" />
     <ProjectReference Include="..\EventSourcingDotNet\EventSourcingDotNet.csproj" />
   </ItemGroup>
   

@@ -1,6 +1,8 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using EventSourcingDotNet.Serialization.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -90,7 +92,9 @@ public class EventPublisherTests
         where TAggregateId : IAggregateId
         => new(
             Options.Create(_container.ClientSettings),
-            new EventSerializer<TAggregateId>(new EventTypeResolver<TAggregateId>()));
+            new EventSerializer<TAggregateId>(
+                new EventTypeResolver<TAggregateId>(),
+                new JsonSerializerSettingsFactory<TAggregateId>(NullLoggerFactory.Instance)));
 
     private static async Task<IReadOnlyList<IResolvedEvent<TAggregateId>>> WaitForEvents<TAggregateId>(
         IObservable<IResolvedEvent<TAggregateId>> source,
@@ -102,6 +106,7 @@ public class EventPublisherTests
             .ToAsyncEnumerable()
             .ToListAsync();
 
+    // ReSharper disable once MemberCanBePrivate.Global
     internal readonly record struct AggregateId(Guid Id) : IAggregateId
     {
         public AggregateId() : this(Guid.NewGuid())
@@ -112,6 +117,7 @@ public class EventPublisherTests
         public string AsString() => Id.ToString();
     }
 
+    // ReSharper disable once MemberCanBePrivate.Global
     internal readonly record struct ByCategoryId(Guid Id) : IAggregateId
     {
         public ByCategoryId() : this(Guid.NewGuid())
@@ -123,6 +129,7 @@ public class EventPublisherTests
         public string AsString() => Id.ToString();
     }
 
+    // ReSharper disable once MemberCanBePrivate.Global
     internal readonly record struct ByEventTypeId(Guid Id) : IAggregateId
     {
         public ByEventTypeId() : this(Guid.NewGuid())
@@ -134,6 +141,7 @@ public class EventPublisherTests
         public string AsString() => Id.ToString();
     }
 
+    // ReSharper disable once NotAccessedPositionalProperty.Local
     private sealed record TestEvent(Guid Id)
         : IDomainEvent<AggregateId>, IDomainEvent<ByCategoryId>, IDomainEvent<ByEventTypeId>
     {
@@ -142,6 +150,7 @@ public class EventPublisherTests
         }
     }
 
+    // ReSharper disable once NotAccessedPositionalProperty.Local
     private sealed record OtherEvent(Guid Id)
         : IDomainEvent<ByEventTypeId>
     {

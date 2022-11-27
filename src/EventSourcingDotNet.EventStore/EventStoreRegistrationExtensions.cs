@@ -8,11 +8,12 @@ namespace EventSourcingDotNet;
 
 public static class EventStoreRegistrationExtensions
 {
-    public static IServiceCollection ConfigureEventStore(this IServiceCollection services, Uri connectionString)
+    public static IServiceCollection ConfigureEventStore(this IServiceCollection services, string connectionString)
         => services
-            .AddSingleton(Options.Create(EventStoreClientSettings.Create(connectionString.ToString())));
+            .AddSingleton(Options.Create(EventStoreClientSettings.Create(connectionString)));
     
     public static AggregateBuilder UseEventStore(
-        this AggregateBuilder builder)
-        => builder.UseEventStoreProvider(new EventStoreProvider());
+        this AggregateBuilder builder,
+        string? connectionString = null)
+        => builder.UseEventStoreProvider(new EventStoreProvider(connectionString));
 }

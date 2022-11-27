@@ -15,8 +15,12 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
         IEventSerializer<TAggregateId> eventSerializer)
     {
         _eventSerializer = eventSerializer;
+        ClientSettings = options.Value;
+        
         _client = new EventStoreClient(options);
     }
+    
+    public EventStoreClientSettings ClientSettings { get; }
 
     public IObservable<IResolvedEvent<TAggregateId>> Listen(
         TAggregateId aggregateId,
@@ -76,24 +80,23 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
         private readonly IObserver<IResolvedEvent<TAggregateId>> _observer;
         private readonly IEventSerializer<TAggregateId> _eventSerializer;
 
-        public Listener(IObserver<IResolvedEvent<TAggregateId>> observer,
+        public Listener(
+            IObserver<IResolvedEvent<TAggregateId>> observer,
             IEventSerializer<TAggregateId> eventSerializer)
         {
             _observer = observer;
             _eventSerializer = eventSerializer;
         }
 
-        public Task EventAppeared(
+        public async Task EventAppeared(
             StreamSubscription subscription,
             ResolvedEvent resolvedEvent,
             CancellationToken cancellationToken)
         {
-            if (_eventSerializer.Deserialize(resolvedEvent) is { } @event)
+            if (await _eventSerializer.DeserializeAsync(resolvedEvent) is { } @event)
             {
                 _observer.OnNext(@event);
             }
-
-            return Task.CompletedTask;
         }
 
         public void SubscriptionDropped(

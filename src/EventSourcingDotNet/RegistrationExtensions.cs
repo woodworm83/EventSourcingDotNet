@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EventSourcingDotNet;
@@ -17,31 +18,50 @@ public static class RegistrationExtensions
         return services
             .AddTransient(typeof(IAggregateRepository<,>), typeof(AggregateRepository<,>));
     }
+
+    public static EventSourcingBuilder UseAesCryptoProvider(this EventSourcingBuilder builder)
+        => builder.UseCryptoProvider<AesCryptoProvider>();
 }
 
-public sealed class EventSourcingBuilder
+public interface IAggregateBuilder<out TBuilder>
+    where TBuilder : IAggregateBuilder<TBuilder>
 {
-    private readonly Dictionary<Type, (IReadOnlyList<Type> StateType, AggregateBuilder Builder)> _aggregates = new();
+    TBuilder UseEventStoreProvider(IEventStoreProvider provider);
+    TBuilder UseSnapshotProvider(ISnapshotProvider provider);
+}
+
+public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilder>
+{
+    private readonly Dictionary<Type, (ImmutableArray<Type> StateType, AggregateBuilder Builder)> _aggregates = new();
+    private readonly AggregateBuilder _defaults = new();
+    private Type _cryptoProviderType = typeof(AesCryptoProvider);
 
     public AggregateBuilder AddAggregate<TAggregateId, TState>()
         where TAggregateId : IAggregateId
         where TState : IAggregateState<TAggregateId>
-    {
-        var builder = new AggregateBuilder();
-        _aggregates[typeof(TAggregateId)] = (new List<Type>(){ typeof(TState) }, builder);
-        return builder;
-    }
+        => CreateAggregateBuilder(typeof(TAggregateId), ImmutableArray.Create(typeof(TState)));
 
     public AggregateBuilder AddAggregate<TAggregateId>(params Type[] stateTypes)
         where TAggregateId : IAggregateId
     {
-        CheckStateTypes(stateTypes, typeof(TAggregateId));
-        var builder = new AggregateBuilder();
-        _aggregates[typeof(TAggregateId)] = (stateTypes.ToList(), builder);
+        var aggregateIdType = typeof(TAggregateId);
+        CheckStateTypes(aggregateIdType, stateTypes);
+        return CreateAggregateBuilder(aggregateIdType, stateTypes.ToImmutableArray());
+    }
+
+    private AggregateBuilder CreateAggregateBuilder(Type aggregateIdType, ImmutableArray<Type> stateTypes)
+    {
+        var builder = new AggregateBuilder(GetBuilder(aggregateIdType));
+        _aggregates[aggregateIdType] = (stateTypes, builder);
         return builder;
     }
 
-    private static void CheckStateTypes(IEnumerable<Type> stateTypes, Type aggregateIdType)
+    private AggregateBuilder GetBuilder(Type aggregateIdType)
+        => _aggregates.TryGetValue(aggregateIdType, out var configuration)
+            ? configuration.Builder
+            : _defaults;
+
+    private static void CheckStateTypes(Type aggregateIdType, IEnumerable<Type> stateTypes)
     {
         var expectedStateType = typeof(IAggregateState<>).MakeGenericType(aggregateIdType);
         var invalidTypes = stateTypes
@@ -73,13 +93,9 @@ public sealed class EventSourcingBuilder
 
     private AggregateBuilder Scan(params Assembly[] assemblies)
     {
-        var builder = new AggregateBuilder();
-        var aggregateIdTypes = assemblies
-            .SelectMany(assembly => assembly.GetTypes())
-            .Where(type => !type.IsAbstract && type.IsAssignableTo(typeof(IAggregateId)))
-            .Select(idType => (idType, FindAggregateStates(idType, assemblies)));
+        var builder = new AggregateBuilder(_defaults);
 
-        foreach (var (idType, stateTypes) in aggregateIdTypes)
+        foreach (var (idType, stateTypes) in assemblies.SelectMany(Scan))
         {
             _aggregates[idType] = (stateTypes, builder);
         }
@@ -87,14 +103,26 @@ public sealed class EventSourcingBuilder
         return builder;
     }
 
-    private IReadOnlyList<Type> FindAggregateStates(Type aggregateIdType, IEnumerable<Assembly> assemblies)
+    private IEnumerable<(Type IdType, ImmutableArray<Type> StateTypes)> Scan(Assembly assembly)
+        => assembly.GetTypes()
+            .Where(type => !type.IsAbstract)
+            .SelectMany(GetAggregateIdTypes)
+            .GroupBy(
+                x => x.IdType,
+                x => x.StateType,
+                (idType, stateTypes) => (idType, stateTypes.ToImmutableArray()));
+    
+    private static IEnumerable<(Type IdType, Type StateType)> GetAggregateIdTypes(Type type)
     {
-        var expectedType = typeof(IAggregateState<>).MakeGenericType(aggregateIdType);
+        foreach (var @interface in type.GetInterfaces())
+        {
+            if (!@interface.IsGenericType) continue;
+            var genericTypeDefinition = @interface.GetGenericTypeDefinition();
+            if (genericTypeDefinition != typeof(IAggregateState<>)) continue;
+            if (@interface.GenericTypeArguments.FirstOrDefault() is not { } aggregateIdType) continue;
 
-        return assemblies
-            .SelectMany(assembly => assembly.GetTypes())
-            .Where(type => !type.IsAbstract && type.IsAssignableTo(expectedType))
-            .ToList();
+            yield return (aggregateIdType, type);
+        }
     }
 
     internal void ConfigureServices(
@@ -104,6 +132,31 @@ public sealed class EventSourcingBuilder
         {
             builder.ConfigureServices(serviceCollection, aggregateIdType, stateTypes);
         }
+
+        if (_cryptoProviderType is { } cryptoProviderType)
+        {
+            serviceCollection.AddTransient(typeof(ICryptoProvider), cryptoProviderType);
+        }
+    }
+
+    public EventSourcingBuilder UseEventStoreProvider(IEventStoreProvider provider)
+    {
+        _defaults.UseEventStoreProvider(provider);
+        return this;
+    }
+
+    public EventSourcingBuilder UseSnapshotProvider(ISnapshotProvider provider)
+    {
+        _defaults.UseSnapshotProvider(provider);
+        return this;
+    }
+
+
+    public EventSourcingBuilder UseCryptoProvider<TCryptoProvider>()
+        where TCryptoProvider : ICryptoProvider
+    {
+        _cryptoProviderType = typeof(TCryptoProvider);
+        return this;
     }
 }
 
@@ -125,10 +178,20 @@ public interface IEventStoreProvider
     public void RegisterServices(IServiceCollection services, Type aggregateIdType);
 }
 
-public sealed class AggregateBuilder
+public sealed class AggregateBuilder : IAggregateBuilder<AggregateBuilder>
 {
+    private readonly AggregateBuilder? _defaults;
     private IEventStoreProvider? _eventStoreProvider;
     private ISnapshotProvider? _snapshotProvider;
+
+    public AggregateBuilder(AggregateBuilder? defaults = null)
+    {
+        _defaults = defaults;
+    }
+
+    public IEventStoreProvider? EventStoreProvider => _eventStoreProvider ?? _defaults?.EventStoreProvider;
+
+    public ISnapshotProvider? SnapshotProvider => _snapshotProvider ?? _defaults?.SnapshotProvider;
 
     public AggregateBuilder UseEventStoreProvider(IEventStoreProvider provider)
     {
@@ -144,12 +207,12 @@ public sealed class AggregateBuilder
 
     internal void ConfigureServices(IServiceCollection services, Type aggregateIdType, IEnumerable<Type> stateTypes)
     {
-        if (_eventStoreProvider is not { } eventStoreProvider)
+        if (EventStoreProvider is not { } eventStoreProvider)
             throw new InvalidOperationException($"Event store provider was not specified");
 
         eventStoreProvider.RegisterServices(services, aggregateIdType);
 
-        if (_snapshotProvider is { } snapshotProvider)
+        if (SnapshotProvider is { } snapshotProvider)
         {
             snapshotProvider.RegisterServices(services, aggregateIdType, stateTypes);
         }

@@ -22,11 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\src\EventSourcingDotNet.EventStore\EventSourcingDotNet.EventStore.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="__snapshots__" />
+      <ProjectReference Include="..\..\..\src\EventSourcingDotNet.Serialization.Json\EventSourcingDotNet.Serialization.Json.csproj" />
     </ItemGroup>
 
 </Project>
