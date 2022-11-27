@@ -25,8 +25,4 @@
       <ProjectReference Include="..\..\..\src\EventSourcingDotNet.EventStore\EventSourcingDotNet.EventStore.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="__snapshots__" />
-    </ItemGroup>
-
 </Project>

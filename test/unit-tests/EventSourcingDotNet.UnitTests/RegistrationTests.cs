@@ -85,6 +85,46 @@ public class RegistrationTests
 
         eventStore.Should().Be(_snapshotStoreMock.Object);
     }
+    
+    [Fact]
+    public void ShouldResolveAesCryptoProviderByDefault()
+    {
+        var serviceProvider = new ServiceCollection()
+            .AddEventSourcing(_ => { })
+            .BuildServiceProvider();
+
+        serviceProvider.GetService<ICryptoProvider>()
+            .Should().BeOfType<AesCryptoProvider>();
+    }
+    
+    [Fact]
+    public void ShouldResolveAesCryptoProviderWhenSpecified()
+    {
+        var serviceProvider = new ServiceCollection()
+            .AddEventSourcing(builder =>
+            {
+                builder.UseAesCryptoProvider();
+            })
+            .BuildServiceProvider();
+
+        serviceProvider.GetService<ICryptoProvider>()
+            .Should().BeOfType<AesCryptoProvider>();
+    }
+
+    [Fact]
+    public void ShouldResolveSpecifiedCryptoProvider()
+    {
+        var serviceProvider = new ServiceCollection()
+            .AddEventSourcing(builder =>
+            {
+                builder.UseCryptoProvider<TestCryptoProvider>();
+            })
+            .BuildServiceProvider();
+
+        serviceProvider.GetService<ICryptoProvider>()
+            .Should().BeOfType<TestCryptoProvider>();
+        
+    }
 
     private static IEnumerable<object[]> GetAddAggregateMethods()
         => new Func<EventSourcingBuilder, AggregateBuilder>[]

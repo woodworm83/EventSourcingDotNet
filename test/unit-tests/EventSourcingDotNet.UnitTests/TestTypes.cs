@@ -1,6 +1,25 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 
 namespace EventSourcingDotNet.UnitTests;
+
+internal sealed class TestCryptoProvider : ICryptoProvider
+{
+    public ICryptoTransform GetEncryptor(EncryptionKey encryptionKey)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ICryptoTransform? GetDecryptor(EncryptionKey? encryptionKey)
+    {
+        throw new NotImplementedException();
+    }
+
+    public EncryptionKey GenerateKey()
+    {
+        throw new NotImplementedException();
+    }
+}
 
 internal readonly record struct TestId(int Id = default) : IAggregateId
 {
@@ -11,21 +30,23 @@ internal readonly record struct TestId(int Id = default) : IAggregateId
 
 internal sealed record TestState(int Value) : IAggregateState<TestId>
 {
-    public TestState() : this(0) { }
+    public TestState() : this(0)
+    {
+    }
 }
 
 internal sealed record TestEvent(int NewValue = default) : IDomainEvent<TestId, TestState>
 {
-    public TestState Apply(TestState state) => state with { Value = NewValue };
+    public TestState Apply(TestState state) => state with {Value = NewValue};
 }
 
 [SuppressMessage("ReSharper", "WithExpressionModifiesAllMembers")]
 internal sealed record ValueUpdatedEvent(int NewValue) : IDomainEvent<TestId, TestState>
 {
     public EventValidationResult ValidationResult { get; init; } = EventValidationResult.Fire;
-    
+
     public TestState Apply(TestState state)
         => state with {Value = NewValue};
-    
+
     public EventValidationResult Validate(TestState state) => ValidationResult;
 }
