@@ -6,11 +6,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace EventSourcingDotNet.EventStore;
 
-internal interface IEventSerializer
-{
-}
-
-internal interface IEventSerializer<TAggregateId>  : IEventSerializer
+internal interface IEventSerializer<TAggregateId>
     where TAggregateId : IAggregateId
 {
     ValueTask<EventData> SerializeAsync(
