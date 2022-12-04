@@ -52,7 +52,7 @@ public class InMemoryEventStoreTests
     {
         var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
-        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
         using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
@@ -62,7 +62,7 @@ public class InMemoryEventStoreTests
         
         observerMock.Verify(
             x => x.OnNext(
-                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))));
+                It.Is<ResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))));
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class InMemoryEventStoreTests
     {
         var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
-        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
         using (eventStore.Listen<TestEvent>().Subscribe(observerMock.Object))
@@ -80,7 +80,7 @@ public class InMemoryEventStoreTests
         
         observerMock.Verify(
             x => x.OnNext(
-                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))));
+                It.Is<ResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))));
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class InMemoryEventStoreTests
     {
         var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
-        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
         using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
@@ -98,7 +98,7 @@ public class InMemoryEventStoreTests
         
         observerMock.Verify(
             x => x.OnNext(
-                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))),
+                It.Is<ResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))),
             Times.Never);
     }
 
@@ -107,7 +107,7 @@ public class InMemoryEventStoreTests
     {
         var aggregateId = new TestId();
         var eventStore = new InMemoryEventStore<TestId>();
-        var observerMock = new Mock<IObserver<IResolvedEvent<TestId>>>();
+        var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
         using (eventStore.Listen<OtherTestEvent>().Subscribe(observerMock.Object))
@@ -117,7 +117,7 @@ public class InMemoryEventStoreTests
         
         observerMock.Verify(
             x => x.OnNext(
-                It.Is<IResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))),
+                It.Is<ResolvedEvent<TestId>>(e => ReferenceEquals(e.Event, @event))),
             Times.Never);
     }
 }

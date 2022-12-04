@@ -52,7 +52,7 @@ public sealed record Aggregate<TId, TState>(
             _ => throw new NotSupportedException($"Validation result is not supported")
         };
 
-    public Aggregate<TId, TState> ApplyEvent(IResolvedEvent<TId> resolvedEvent)
+    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent<TId> resolvedEvent)
         => resolvedEvent.Event is IDomainEvent<TId, TState> @event
             ? this with
             {

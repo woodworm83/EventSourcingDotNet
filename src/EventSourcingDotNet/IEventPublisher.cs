@@ -3,14 +3,14 @@
 public interface IEventPublisher<TAggregateId> 
     where TAggregateId : IAggregateId
 {
-    IObservable<IResolvedEvent<TAggregateId>> Listen(
+    IObservable<ResolvedEvent<TAggregateId>> Listen(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default);
 
-    IObservable<IResolvedEvent<TAggregateId>> Listen(
+    IObservable<ResolvedEvent<TAggregateId>> Listen(
         StreamPosition fromStreamPosition = default);
 
-    IObservable<IResolvedEvent<TAggregateId>> Listen<TEvent>(
+    IObservable<ResolvedEvent<TAggregateId>> Listen<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent<TAggregateId>;
 }

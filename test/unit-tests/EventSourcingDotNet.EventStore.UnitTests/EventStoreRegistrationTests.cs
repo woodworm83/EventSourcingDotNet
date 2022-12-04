@@ -62,7 +62,7 @@ public class EventStoreRegistrationTests
 
         var eventStore = serviceProvider.GetService<IEventPublisher<TestId>>();
 
-        eventStore.Should().BeOfType<EventPublisher<TestId>>()
+        eventStore.Should().BeOfType<EventListener<TestId>>()
             .Which
             .ClientSettings.ConnectivitySettings.Should().BeEquivalentTo(clientSettings.ConnectivitySettings);
     }

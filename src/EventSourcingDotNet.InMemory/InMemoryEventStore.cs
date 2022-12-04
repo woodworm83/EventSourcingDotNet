@@ -6,10 +6,10 @@ namespace EventSourcingDotNet.InMemory;
 internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventPublisher<TAggregateId>
     where TAggregateId : IAggregateId
 {
-    private readonly SourceList<IResolvedEvent<TAggregateId>> _events = new();
+    private readonly SourceList<ResolvedEvent<TAggregateId>> _events = new();
     private readonly SemaphoreSlim _semaphore = new(1);
 
-    public IAsyncEnumerable<IResolvedEvent<TAggregateId>> ReadEventsAsync(
+    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(
         TAggregateId aggregateId,
         AggregateVersion fromVersion)
         => _events.Items
@@ -18,13 +18,15 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
     public async Task<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId,
         IEnumerable<IDomainEvent<TAggregateId>> events, 
-        AggregateVersion expectedVersion)
+        AggregateVersion expectedVersion,
+        CorrelationId? correlationId = null,
+        CausationId? causationId = null)
     {
         await _semaphore.WaitAsync();
         try
         {
             CheckVersion(aggregateId, expectedVersion);
-            return AppendEventsUnsafe(aggregateId, events, expectedVersion);
+            return AppendEventsUnsafe(aggregateId, events, expectedVersion, correlationId ?? new CorrelationId(), causationId);
         }
         finally
         {
@@ -52,7 +54,9 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
     private AggregateVersion AppendEventsUnsafe(
         TAggregateId aggregateId,
         IEnumerable<IDomainEvent<TAggregateId>> events,
-        AggregateVersion currentVersion)
+        AggregateVersion currentVersion,
+        CorrelationId correlationId,
+        CausationId? causationId)
     {
         var streamPosition = (ulong) _events.Count;
 
@@ -60,31 +64,34 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         {
             _events.Add(
                 new ResolvedEvent<TAggregateId>(
+                    new EventId(Guid.NewGuid()),
                     aggregateId,
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,
-                    DateTime.UtcNow));
+                    DateTime.UtcNow,
+                    correlationId,
+                    causationId));
         }
 
         return currentVersion;
     }
 
-    public IObservable<IResolvedEvent<TAggregateId>> Listen(
+    public IObservable<ResolvedEvent<TAggregateId>> Listen(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         => Listen(fromStreamPosition)
             .Where(x => x.AggregateId.Equals(aggregateId));
 
-    public IObservable<IResolvedEvent<TAggregateId>> Listen(
+    public IObservable<ResolvedEvent<TAggregateId>> Listen(
         StreamPosition fromStreamPosition = default)
-        => Observable.Create<IResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent<TAggregateId>>(
                 observer => _events.Connect()
                     .OnItemAdded(observer.OnNext)
                     .Subscribe())
             .SkipWhile(x => x.StreamPosition.Position < fromStreamPosition.Position);
 
-    public IObservable<IResolvedEvent<TAggregateId>> Listen<TEvent>(
+    public IObservable<ResolvedEvent<TAggregateId>> Listen<TEvent>(
         StreamPosition fromStreamPosition = default) 
         where TEvent : IDomainEvent<TAggregateId> 
         => Listen(fromStreamPosition)

@@ -4,13 +4,13 @@ using Microsoft.Extensions.Options;
 
 namespace EventSourcingDotNet.EventStore;
 
-internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateId>, IAsyncDisposable
+internal sealed class EventListener<TAggregateId> : IEventPublisher<TAggregateId>, IAsyncDisposable
     where TAggregateId : IAggregateId
 {
     private readonly EventStoreClient _client;
     private readonly IEventSerializer<TAggregateId> _eventSerializer;
     
-    public EventPublisher(
+    public EventListener(
         IOptions<EventStoreClientSettings> options,
         IEventSerializer<TAggregateId> eventSerializer)
     {
@@ -22,27 +22,27 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
     
     public EventStoreClientSettings ClientSettings { get; }
 
-    public IObservable<IResolvedEvent<TAggregateId>> Listen(
+    public IObservable<ResolvedEvent<TAggregateId>> Listen(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
-        => Observable.Create<IResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 fromStreamPosition,
                 false,
                 observer));
 
-    public IObservable<IResolvedEvent<TAggregateId>> Listen(StreamPosition fromStreamPosition = default)
-        => Observable.Create<IResolvedEvent<TAggregateId>>(
+    public IObservable<ResolvedEvent<TAggregateId>> Listen(StreamPosition fromStreamPosition = default)
+        => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
                 fromStreamPosition,
                 true,
                 observer));
 
-    public IObservable<IResolvedEvent<TAggregateId>> Listen<TEvent>(StreamPosition fromStreamPosition = default)
+    public IObservable<ResolvedEvent<TAggregateId>> Listen<TEvent>(StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent<TAggregateId>
-        => Observable.Create<IResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByEventStreamName<TAggregateId, TEvent>(),
                 fromStreamPosition,
@@ -53,7 +53,7 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
         string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos,
-        IObserver<IResolvedEvent<TAggregateId>> observer)
+        IObserver<ResolvedEvent<TAggregateId>> observer)
     {
         var listener = new Listener(observer, _eventSerializer);
         return await _client.SubscribeToStreamAsync(
@@ -77,11 +77,11 @@ internal sealed class EventPublisher<TAggregateId> : IEventPublisher<TAggregateI
 
     private sealed class Listener
     {
-        private readonly IObserver<IResolvedEvent<TAggregateId>> _observer;
+        private readonly IObserver<ResolvedEvent<TAggregateId>> _observer;
         private readonly IEventSerializer<TAggregateId> _eventSerializer;
 
         public Listener(
-            IObserver<IResolvedEvent<TAggregateId>> observer,
+            IObserver<ResolvedEvent<TAggregateId>> observer,
             IEventSerializer<TAggregateId> eventSerializer)
         {
             _observer = observer;

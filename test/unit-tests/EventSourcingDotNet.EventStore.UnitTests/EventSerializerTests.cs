@@ -62,7 +62,7 @@ public class EventSerializerTests
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
             .Which
             .AggregateId.Should().Be(aggregateId);
     }
@@ -76,7 +76,7 @@ public class EventSerializerTests
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
             .Which
             .Event.Should().Be(@event);
     }
@@ -90,7 +90,7 @@ public class EventSerializerTests
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
             .Which
             .Timestamp.Should().Be(timestamp);
     }
@@ -103,7 +103,7 @@ public class EventSerializerTests
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
             .Which
             .AggregateVersion.Version.Should().Be(6);
     }
@@ -116,7 +116,7 @@ public class EventSerializerTests
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<IResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
             .Which
             .StreamPosition.Position.Should().Be(5);
     }
@@ -181,6 +181,8 @@ public class EventSerializerTests
         IDomainEvent<TestId>? @event = null,
         TestId? aggregateId = null,
         DateTime? created = null,
+        CausationId? causationId = null,
+        CorrelationId? correlationId = null,
         bool invalidMetadata = false)
         => new(
             new EventRecord(
@@ -197,7 +199,10 @@ public class EventSerializerTests
                 Serialize(@event ?? new TestEvent()),
                 invalidMetadata
                     ? new ReadOnlyMemory<byte>()
-                    : Serialize(new EventMetadata<TestId>(aggregateId ?? new TestId()))),
+                    : Serialize(new EventMetadata<TestId>(
+                        aggregateId ?? new TestId(),
+                        correlationId?.Id ?? Guid.NewGuid(),
+                        causationId?.Id))),
             null,
             null);
 

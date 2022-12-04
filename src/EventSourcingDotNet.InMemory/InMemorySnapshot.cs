@@ -7,11 +7,11 @@ public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, 
     where TState : new()
 {
     private readonly Dictionary<TAggregateId, Aggregate<TAggregateId, TState>> _snapshots = new();
-    private readonly IEventPublisher<TAggregateId> _eventPublisher;
+    private readonly IEventPublisher<TAggregateId> _eventListener;
 
-    public InMemorySnapshot(IEventPublisher<TAggregateId> eventPublisher)
+    public InMemorySnapshot(IEventPublisher<TAggregateId> eventListener)
     {
-        _eventPublisher = eventPublisher;
+        _eventListener = eventListener;
     }
 
     public Task<Aggregate<TAggregateId, TState>?> GetLatestSnapshotAsync(TAggregateId aggregateId)
@@ -19,7 +19,7 @@ public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using (_eventPublisher.Listen().Subscribe(HandleEvent))
+        using (_eventListener.Listen().Subscribe(HandleEvent))
         {
             var tcs = new TaskCompletionSource();
             stoppingToken.Register(tcs.SetResult);
@@ -27,7 +27,7 @@ public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, 
         }
     }
 
-    private void HandleEvent(IResolvedEvent<TAggregateId> resolvedEvent)
+    private void HandleEvent(ResolvedEvent<TAggregateId> resolvedEvent)
         => _snapshots[resolvedEvent.AggregateId] = GetSnapshotOrNew(resolvedEvent.AggregateId).ApplyEvent(resolvedEvent);
 
     private Aggregate<TAggregateId, TState> GetSnapshotOrNew(TAggregateId aggregateId) =>

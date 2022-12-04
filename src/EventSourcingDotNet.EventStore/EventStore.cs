@@ -20,7 +20,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
     
     public EventStoreClientSettings ClientSettings { get; }
 
-    public async IAsyncEnumerable<IResolvedEvent<TAggregateId>> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
+    public async IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
     {
         var result = _client.ReadStreamAsync(
             Direction.Forwards,
@@ -37,21 +37,30 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
         }
     }
 
-    public async Task<AggregateVersion> AppendEventsAsync(TAggregateId aggregateId, IEnumerable<IDomainEvent<TAggregateId>> events, AggregateVersion expectedVersion)
+    public async Task<AggregateVersion> AppendEventsAsync(
+        TAggregateId aggregateId, 
+        IEnumerable<IDomainEvent<TAggregateId>> events, 
+        AggregateVersion expectedVersion,
+        CorrelationId? correlationId = null,
+        CausationId? causationId = null)
     {
         var result = await _client.AppendToStreamAsync(
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
             new StreamRevision(expectedVersion.Version - 1),
-            await SerializeEventsAsync(aggregateId, events).ToListAsync());
+            await SerializeEventsAsync(aggregateId, events, correlationId, causationId).ToListAsync());
 
         return new AggregateVersion(result.NextExpectedStreamRevision.ToUInt64() + 1);
     }
 
-    private async IAsyncEnumerable<EventData> SerializeEventsAsync(TAggregateId aggregateId, IEnumerable<IDomainEvent<TAggregateId>> events)
+    private async IAsyncEnumerable<EventData> SerializeEventsAsync(
+        TAggregateId aggregateId, 
+        IEnumerable<IDomainEvent<TAggregateId>> events,
+        CorrelationId? correlationId,
+        CausationId? causationId)
     {
         foreach (var @event in events)
         {
-            yield return await _eventSerializer.SerializeAsync(aggregateId, @event);
+            yield return await _eventSerializer.SerializeAsync(aggregateId, @event, correlationId, causationId);
         }
     }
 

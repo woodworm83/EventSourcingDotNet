@@ -1,8 +1,10 @@
+using System.Text;
 using EventSourcingDotNet.Serialization.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace EventSourcingDotNet.EventStore.UnitTests;
@@ -97,8 +99,63 @@ public class EventStoreTests
         result.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task ShouldWriteCorrelationIdInMetadata()
+    {
+        var aggregateId = new TestId();
+        var correlationId = new CorrelationId(Guid.NewGuid());
+        var @event = new TestEvent();
+
+        await using var eventStore = CreateEventStore();
+
+        await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default, correlationId: correlationId);
+
+        var metadata = await ReadEventMetadata(aggregateId).FirstAsync();
+            
+        metadata?.CorrelationId.Should().Be(correlationId.Id);
+    }
+
+    [Fact]
+    public async Task ShouldReadCorrelationId()
+    {
+        var aggregateId = new TestId();
+        var @event = new TestEvent(42);
+        var correlationId = new CorrelationId();
+        var eventData = EventDataHelper.CreateEventData(aggregateId, @event, correlationId: correlationId);
+        await _container.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
+        await using var eventStore = CreateEventStore();
+
+        var result = await eventStore.ReadEventsAsync(aggregateId, default)
+            .Select(x => x.CorrelationId)
+            .ToListAsync();
+
+        result.Should().Equal(correlationId);
+    }
+
+    [Fact]
+    public async Task ShouldWriteCausationIdInMetadata()
+    {
+        var aggregateId = new TestId();
+        var causationId = new CausationId(Guid.NewGuid());
+        var @event = new TestEvent();
+
+        await using var eventStore = CreateEventStore();
+
+        await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default, causationId: causationId);
+
+        var metadata = await ReadEventMetadata(aggregateId).FirstAsync();
+            
+        metadata?.CausationId.Should().Be(causationId.Id);
+    }
+
     private EventStore<TestId> CreateEventStore(IEventSerializer<TestId>? eventSerializer = null)
         => new(
             Options.Create(_container.ClientSettings),
             eventSerializer ?? new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory));
+
+    private IAsyncEnumerable<EventMetadata<TestId>?> ReadEventMetadata(TestId aggregateId) 
+        => _container.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
+            .Select(
+                resolvedEvent => JsonConvert.DeserializeObject<EventMetadata<TestId>>(
+                    Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span)));
 }

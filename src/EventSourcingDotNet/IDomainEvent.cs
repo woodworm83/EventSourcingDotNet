@@ -1,7 +1,8 @@
 namespace EventSourcingDotNet;
 
+public interface IDomainEvent { }
 // ReSharper disable once UnusedTypeParameter
-public interface IDomainEvent<TAggregateId> 
+public interface IDomainEvent<TAggregateId> : IDomainEvent 
     where TAggregateId : IAggregateId
 { }
 

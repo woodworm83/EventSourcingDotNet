@@ -61,7 +61,9 @@ public class AggregateRepositoryTests
             x => x.AppendEventsAsync(
                 aggregate.Id, 
                 It.Is<IEnumerable<IDomainEvent<TestId>>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
-                aggregate.Version));
+                aggregate.Version,
+                It.IsAny<CorrelationId?>(),
+                It.IsAny<CausationId?>()));
     }
 
     [Fact]
@@ -85,7 +87,9 @@ public class AggregateRepositoryTests
                 x => x.AppendEventsAsync(
                     It.IsAny<TestId>(), 
                     It.IsAny<IEnumerable<IDomainEvent<TestId>>>(),
-                    It.IsAny<AggregateVersion>()))
+                    It.IsAny<AggregateVersion>(),
+                    null,
+                    null))
             .ReturnsAsync(new AggregateVersion(42));
         var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object);
 
@@ -101,26 +105,21 @@ public class AggregateRepositoryTests
             .Returns<TestId, AggregateVersion>(ResolveEvents);
         return mock;
 
-        async IAsyncEnumerable<IResolvedEvent<TestId>> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
+        async IAsyncEnumerable<ResolvedEvent<TestId>> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
         {
             var streamPosition = currentVersion.Version;
             foreach (var @event in events)
             {
-                yield return new ResolvedEvent(
+                yield return new ResolvedEvent<TestId>(
+                    new EventId(Guid.NewGuid()),
                     aggregateId,
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,
-                    DateTime.UtcNow);
+                    DateTime.UtcNow,
+                    new CorrelationId(),
+                    null);
             }
         }
     }
-
-    private readonly record struct ResolvedEvent(
-            TestId AggregateId,
-            AggregateVersion AggregateVersion,
-            StreamPosition StreamPosition,
-            IDomainEvent<TestId> Event,
-            DateTime Timestamp)
-        : IResolvedEvent<TestId>;
 }

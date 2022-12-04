@@ -9,12 +9,14 @@ namespace EventSourcingDotNet.EventStore;
 internal interface IEventSerializer<TAggregateId> 
     where TAggregateId : IAggregateId
 {
-    ValueTask<EventData> SerializeAsync(TAggregateId aggregateId, IDomainEvent<TAggregateId> @event);
+    ValueTask<EventData> SerializeAsync(
+        TAggregateId aggregateId, 
+        IDomainEvent<TAggregateId> @event,
+        CorrelationId? correlationId,
+        CausationId? causationId);
 
-    ValueTask<IResolvedEvent<TAggregateId>?> DeserializeAsync(ResolvedEvent resolvedEvent);
+    ValueTask<ResolvedEvent<TAggregateId>?> DeserializeAsync(ResolvedEvent resolvedEvent);
 }
-
-internal sealed record EventMetadata<TAggregateId>(TAggregateId AggregateId);
 
 internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregateId>
     where TAggregateId : IAggregateId
@@ -28,12 +30,16 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
         _serializerSettingsFactory = serializerSettingsFactory;
     }
 
-    public async ValueTask<EventData> SerializeAsync(TAggregateId aggregateId, IDomainEvent<TAggregateId> @event)
+    public async ValueTask<EventData> SerializeAsync(
+        TAggregateId aggregateId, 
+        IDomainEvent<TAggregateId> @event,
+        CorrelationId? correlationId = null,
+        CausationId? causationId = null)
         => new(
             Uuid.NewUuid(),
             @event.GetType().Name, 
             await SerializeEventData(aggregateId, @event), 
-            SerializeEventMetadata(aggregateId));
+            SerializeEventMetadata(aggregateId, correlationId?.Id, causationId?.Id));
 
     private async ValueTask<ReadOnlyMemory<byte>> SerializeEventData(TAggregateId aggregateId, IDomainEvent<TAggregateId> @event)
         => Encoding.UTF8.GetBytes(
@@ -41,36 +47,47 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
                 @event, 
                 await _serializerSettingsFactory.CreateForSerializationAsync(aggregateId, @event.GetType())));
 
-    private ReadOnlyMemory<byte> SerializeEventMetadata(TAggregateId aggregateId)
+    private static ReadOnlyMemory<byte> SerializeEventMetadata(
+        TAggregateId aggregateId,
+        Guid? correlationId,
+        Guid? causationId)
         => Encoding.UTF8.GetBytes(
             JsonConvert.SerializeObject(
-                new EventMetadata<TAggregateId>(aggregateId), 
+                new EventMetadata<TAggregateId>(aggregateId, correlationId, causationId), 
                 new JsonSerializerSettings
                 {
-                    ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() }
+                    ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
+                    NullValueHandling = NullValueHandling.Ignore
                 }));
 
-    public async ValueTask<IResolvedEvent<TAggregateId>?> DeserializeAsync(ResolvedEvent resolvedEvent)
+    public async ValueTask<ResolvedEvent<TAggregateId>?> DeserializeAsync(ResolvedEvent resolvedEvent)
     {
         if (DeserializeEventMetadata(resolvedEvent.Event) is not { } metadata) return null;
         if (await DeserializeEventDataAsync(metadata.AggregateId, resolvedEvent.Event) is not { } @event) return null;
 
         return new ResolvedEvent<TAggregateId>(
+            new EventId(resolvedEvent.Event.EventId.ToGuid()),
             metadata.AggregateId,
             new AggregateVersion(resolvedEvent.Event.EventNumber.ToUInt64() + 1), 
             new StreamPosition(resolvedEvent.OriginalEvent.EventNumber.ToUInt64()), 
             @event, 
-            resolvedEvent.Event.Created);
+            resolvedEvent.Event.Created,
+            metadata.CorrelationId is { } correlationId
+                ? new CorrelationId(correlationId)
+                : null,
+            metadata.CausationId is { } causationId
+                ? new CausationId(causationId)
+                : null);
     }
 
-    private EventMetadata<TAggregateId>? DeserializeEventMetadata(EventRecord eventRecord)
+    private static EventMetadata<TAggregateId>? DeserializeEventMetadata(EventRecord eventRecord)
         => JsonConvert.DeserializeObject<EventMetadata<TAggregateId>>(
             Encoding.UTF8.GetString(eventRecord.Metadata.Span),
             new JsonSerializerSettings
             {
-                ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy()}
+                ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy()},
             });
-
+                    
     private async ValueTask<IDomainEvent<TAggregateId>?> DeserializeEventDataAsync(TAggregateId aggregateId, EventRecord eventRecord)
     {
         if (_eventTypeResolver.GetEventType(eventRecord.EventType) is not { } eventType) return null;

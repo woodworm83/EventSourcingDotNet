@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class OptimisticConcurrencyexceptionTests
+public class OptimisticConcurrencyExceptionTests
 {
     [Fact]
     public void ShouldReturnExpectedVersion()

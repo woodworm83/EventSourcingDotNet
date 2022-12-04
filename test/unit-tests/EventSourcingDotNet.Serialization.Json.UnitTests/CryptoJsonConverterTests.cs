@@ -63,7 +63,7 @@ public class CryptoJsonConverterTests
 
         Serialize(_plainText, false, loggerMock.Object);
         
-        loggerMock.Verify(x => x.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType,Exception,string>>()));
+        loggerMock.Verify(x => x.Log(LogLevel.Warning, It.IsAny<Microsoft.Extensions.Logging.EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType,Exception,string>>()));
     }
 
     [Fact]

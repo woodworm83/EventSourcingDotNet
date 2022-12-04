@@ -23,7 +23,7 @@ public class EventPublisherTests
     {
         var aggregateId = new AggregateId();
         await using var publisher = CreateEventPublisher<AggregateId>();
-        using var receiver = new ReplaySubject<IResolvedEvent<AggregateId>>();
+        using var receiver = new ReplaySubject<ResolvedEvent<AggregateId>>();
         var @event = new TestEvent();
 
         using (publisher.Listen(aggregateId).Subscribe(receiver))
@@ -43,7 +43,7 @@ public class EventPublisherTests
     public async Task ShouldNotifyEventsByCategory()
     {
         await using var publisher = CreateEventPublisher<ByCategoryId>();
-        using var receiverSubject = new ReplaySubject<IResolvedEvent<ByCategoryId>>();
+        using var receiverSubject = new ReplaySubject<ResolvedEvent<ByCategoryId>>();
         var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
 
         using (publisher.Listen().Subscribe(receiverSubject))
@@ -67,7 +67,7 @@ public class EventPublisherTests
     public async Task ShouldNotifyEventsByEventType()
     {
         await using var publisher = CreateEventPublisher<ByEventTypeId>();
-        using var receiverSubject = new ReplaySubject<IResolvedEvent<ByEventTypeId>>();
+        using var receiverSubject = new ReplaySubject<ResolvedEvent<ByEventTypeId>>();
         var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
 
         using (publisher.Listen<TestEvent>().Subscribe(receiverSubject))
@@ -88,7 +88,7 @@ public class EventPublisherTests
         }
     }
 
-    private EventPublisher<TAggregateId> CreateEventPublisher<TAggregateId>()
+    private EventListener<TAggregateId> CreateEventPublisher<TAggregateId>()
         where TAggregateId : IAggregateId
         => new(
             Options.Create(_container.ClientSettings),
@@ -96,8 +96,8 @@ public class EventPublisherTests
                 new EventTypeResolver<TAggregateId>(),
                 new JsonSerializerSettingsFactory<TAggregateId>(NullLoggerFactory.Instance)));
 
-    private static async Task<IReadOnlyList<IResolvedEvent<TAggregateId>>> WaitForEvents<TAggregateId>(
-        IObservable<IResolvedEvent<TAggregateId>> source,
+    private static async Task<IReadOnlyList<ResolvedEvent<TAggregateId>>> WaitForEvents<TAggregateId>(
+        IObservable<ResolvedEvent<TAggregateId>> source,
         int count)
         where TAggregateId : IAggregateId
         => await source
@@ -137,6 +137,18 @@ public class EventPublisherTests
         }
 
         public static string AggregateName => "eventType";
+
+        public string AsString() => Id.ToString();
+    }
+
+    // ReSharper disable once MemberCanBePrivate.Global
+    internal readonly record struct ByCorrelationId(Guid Id) : IAggregateId
+    {
+        public ByCorrelationId() : this(Guid.NewGuid())
+        {
+        }
+
+        public static string AggregateName => "correlation";
 
         public string AsString() => Id.ToString();
     }
