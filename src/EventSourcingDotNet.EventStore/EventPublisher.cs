@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace EventSourcingDotNet.EventStore;
 
-internal sealed class EventListener<TAggregateId> : IEventPublisher<TAggregateId>, IAsyncDisposable
+internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>, IAsyncDisposable
     where TAggregateId : IAggregateId
 {
     private readonly EventStoreClient _client;
@@ -22,7 +22,7 @@ internal sealed class EventListener<TAggregateId> : IEventPublisher<TAggregateId
     
     public EventStoreClientSettings ClientSettings { get; }
 
-    public IObservable<ResolvedEvent<TAggregateId>> Listen(
+    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         => Observable.Create<ResolvedEvent<TAggregateId>>(
@@ -32,7 +32,7 @@ internal sealed class EventListener<TAggregateId> : IEventPublisher<TAggregateId
                 false,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> Listen(StreamPosition fromStreamPosition = default)
+    public IObservable<ResolvedEvent<TAggregateId>> ByCategory(StreamPosition fromStreamPosition = default)
         => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
@@ -40,7 +40,7 @@ internal sealed class EventListener<TAggregateId> : IEventPublisher<TAggregateId
                 true,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> Listen<TEvent>(StreamPosition fromStreamPosition = default)
+    public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TEvent>(StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent<TAggregateId>
         => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(

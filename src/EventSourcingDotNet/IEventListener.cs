@@ -1,16 +1,16 @@
 ﻿namespace EventSourcingDotNet;
 
-public interface IEventPublisher<TAggregateId> 
+public interface IEventListener<TAggregateId> 
     where TAggregateId : IAggregateId
 {
-    IObservable<ResolvedEvent<TAggregateId>> Listen(
+    IObservable<ResolvedEvent<TAggregateId>> ByAggregateId(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default);
 
-    IObservable<ResolvedEvent<TAggregateId>> Listen(
+    IObservable<ResolvedEvent<TAggregateId>> ByCategory(
         StreamPosition fromStreamPosition = default);
 
-    IObservable<ResolvedEvent<TAggregateId>> Listen<TEvent>(
+    IObservable<ResolvedEvent<TAggregateId>> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent<TAggregateId>;
 }

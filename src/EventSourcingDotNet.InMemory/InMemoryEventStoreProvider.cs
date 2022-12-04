@@ -14,7 +14,7 @@ internal sealed class InMemoryEventStoreProvider : IEventStoreProvider
                 typeof(IEventStore<>).MakeGenericType(aggregateIdType),
                 ImplementationFactory)
             .AddSingleton(
-                typeof(IEventPublisher<>).MakeGenericType(aggregateIdType),
+                typeof(IEventListener<>).MakeGenericType(aggregateIdType),
                 ImplementationFactory);
         
         object ImplementationFactory(IServiceProvider serviceProvider) =>

@@ -3,7 +3,7 @@ using DynamicData;
 
 namespace EventSourcingDotNet.InMemory;
 
-internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventPublisher<TAggregateId>
+internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventListener<TAggregateId>
     where TAggregateId : IAggregateId
 {
     private readonly SourceList<ResolvedEvent<TAggregateId>> _events = new();
@@ -77,13 +77,13 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         return currentVersion;
     }
 
-    public IObservable<ResolvedEvent<TAggregateId>> Listen(
+    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
-        => Listen(fromStreamPosition)
+        => ByCategory(fromStreamPosition)
             .Where(x => x.AggregateId.Equals(aggregateId));
 
-    public IObservable<ResolvedEvent<TAggregateId>> Listen(
+    public IObservable<ResolvedEvent<TAggregateId>> ByCategory(
         StreamPosition fromStreamPosition = default)
         => Observable.Create<ResolvedEvent<TAggregateId>>(
                 observer => _events.Connect()
@@ -91,9 +91,9 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
                     .Subscribe())
             .SkipWhile(x => x.StreamPosition.Position < fromStreamPosition.Position);
 
-    public IObservable<ResolvedEvent<TAggregateId>> Listen<TEvent>(
+    public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default) 
         where TEvent : IDomainEvent<TAggregateId> 
-        => Listen(fromStreamPosition)
+        => ByCategory(fromStreamPosition)
             .Where(x => x.Event is TEvent);
 }

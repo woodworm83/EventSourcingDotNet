@@ -55,7 +55,7 @@ public class InMemoryEventStoreTests
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
-        using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
+        using (eventStore.ByAggregateId(aggregateId).Subscribe(observerMock.Object))
         {
             await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
         }
@@ -73,7 +73,7 @@ public class InMemoryEventStoreTests
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
-        using (eventStore.Listen<TestEvent>().Subscribe(observerMock.Object))
+        using (eventStore.ByEventType<TestEvent>().Subscribe(observerMock.Object))
         {
             await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
         }
@@ -91,7 +91,7 @@ public class InMemoryEventStoreTests
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
-        using (eventStore.Listen(aggregateId).Subscribe(observerMock.Object))
+        using (eventStore.ByAggregateId(aggregateId).Subscribe(observerMock.Object))
         {
             await eventStore.AppendEventsAsync(new TestId(), new [] {@event}, default);
         }
@@ -110,7 +110,7 @@ public class InMemoryEventStoreTests
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
-        using (eventStore.Listen<OtherTestEvent>().Subscribe(observerMock.Object))
+        using (eventStore.ByEventType<OtherTestEvent>().Subscribe(observerMock.Object))
         {
             await eventStore.AppendEventsAsync(aggregateId, new [] {@event}, default);
         }

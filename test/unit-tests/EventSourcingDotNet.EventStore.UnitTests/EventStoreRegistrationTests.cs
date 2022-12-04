@@ -60,7 +60,7 @@ public class EventStoreRegistrationTests
         var clientSettings = EventStoreClientSettings.Create(connectionString);
         var serviceProvider = BuildServiceProvider(connectionString);
 
-        var eventStore = serviceProvider.GetService<IEventPublisher<TestId>>();
+        var eventStore = serviceProvider.GetService<IEventListener<TestId>>();
 
         eventStore.Should().BeOfType<EventListener<TestId>>()
             .Which

@@ -36,7 +36,7 @@ internal sealed class EventStoreProvider : IEventStoreProvider
                         typeof(EventStore<>).MakeGenericType(aggregateIdType),
                         options))
                 .AddTransient(
-                    typeof(IEventPublisher<>).MakeGenericType(aggregateIdType),
+                    typeof(IEventListener<>).MakeGenericType(aggregateIdType),
                     serviceProvider => ActivatorUtilities.CreateInstance(
                         serviceProvider,
                         typeof(EventListener<>).MakeGenericType(aggregateIdType),
@@ -49,7 +49,7 @@ internal sealed class EventStoreProvider : IEventStoreProvider
                     typeof(IEventStore<>).MakeGenericType(aggregateIdType),
                     typeof(EventStore<>).MakeGenericType(aggregateIdType))
                 .AddTransient(
-                    typeof(IEventPublisher<>).MakeGenericType(aggregateIdType),
+                    typeof(IEventListener<>).MakeGenericType(aggregateIdType),
                     typeof(EventListener<>).MakeGenericType(aggregateIdType));
         }
     }

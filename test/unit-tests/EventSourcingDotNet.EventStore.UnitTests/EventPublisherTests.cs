@@ -26,7 +26,7 @@ public class EventPublisherTests
         using var receiver = new ReplaySubject<ResolvedEvent<AggregateId>>();
         var @event = new TestEvent();
 
-        using (publisher.Listen(aggregateId).Subscribe(receiver))
+        using (publisher.ByAggregateId(aggregateId).Subscribe(receiver))
         {
             await _container.AppendEvents(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
@@ -46,7 +46,7 @@ public class EventPublisherTests
         using var receiverSubject = new ReplaySubject<ResolvedEvent<ByCategoryId>>();
         var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
 
-        using (publisher.Listen().Subscribe(receiverSubject))
+        using (publisher.ByCategory().Subscribe(receiverSubject))
         {
             foreach (var @event in events)
             {
@@ -70,7 +70,7 @@ public class EventPublisherTests
         using var receiverSubject = new ReplaySubject<ResolvedEvent<ByEventTypeId>>();
         var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
 
-        using (publisher.Listen<TestEvent>().Subscribe(receiverSubject))
+        using (publisher.ByEventType<TestEvent>().Subscribe(receiverSubject))
         {
             foreach (var @event in events)
             {

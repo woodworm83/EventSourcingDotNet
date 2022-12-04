@@ -33,7 +33,7 @@ public class InMemoryRegistrationTests
     {
         var serviceProvider = CreateServiceProvider();
         
-        serviceProvider.GetService<IEventPublisher<TestId>>()
+        serviceProvider.GetService<IEventListener<TestId>>()
             .Should()
             .BeOfType<InMemoryEventStore<TestId>>();
     }
