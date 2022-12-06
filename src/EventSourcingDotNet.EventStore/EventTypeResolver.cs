@@ -9,10 +9,11 @@ internal interface IEventTypeResolver<TAggregateId>
 internal sealed class EventTypeResolver<TAggregateId> : IEventTypeResolver<TAggregateId> 
     where TAggregateId : IAggregateId
 {
-    private static readonly IReadOnlyDictionary<string, Type> _eventTypes = AppDomain.CurrentDomain.GetAssemblies()
+    private static readonly IReadOnlyDictionary<string, Type> _eventTypes = AppDomain.CurrentDomain
+        .GetAssemblies()
         .SelectMany(assembly => assembly.GetTypes())
         .Where(type => !type.IsAbstract && type.IsAssignableTo(typeof(IDomainEvent<TAggregateId>)))
-        .ToDictionary(StreamNamingConvention.GetEventTypeName<TAggregateId>);
+        .ToDictionary(StreamNamingConvention.GetEventTypeName);
 
     public Type? GetEventType(string eventName)
         => _eventTypes.GetValueOrDefault(eventName);

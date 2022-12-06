@@ -22,11 +22,14 @@ public sealed class JsonSerializerSettingsFactory<TAggregateId> : IJsonSerialize
         _cryptoProvider = cryptoProvider;
     }
 
-    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(TAggregateId aggregateId, Type objectType)
+    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(TAggregateId aggregateId,
+        Type objectType)
         => new()
         {
             ContractResolver = objectType.HasEncryptedProperties()
-                ? new SerializationContractResolver(await GetEncryptor(aggregateId), _loggerFactory)
+                ? new SerializationContractResolver(
+                    await GetEncryptor(aggregateId),
+                    _loggerFactory.CreateLogger<SerializationContractResolver>())
                 : new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()}
         };
 

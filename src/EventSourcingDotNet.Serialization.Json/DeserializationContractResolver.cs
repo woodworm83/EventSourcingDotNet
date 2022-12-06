@@ -21,10 +21,13 @@ internal sealed class DeserializationContractResolver : DefaultContractResolver
     protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
     {
         var properties = base.CreateProperties(type, memberSerialization);
+        if (_decryptor is null) return properties;
 
-        foreach (var jsonProperty in properties)
+        foreach (var jsonProperty in base.CreateProperties(type, memberSerialization))
         {
-            jsonProperty.Converter = new CryptoJsonConverter(_decryptor, _loggerFactory.CreateLogger<CryptoJsonConverter>());
+            jsonProperty.PropertyName = $"#{jsonProperty.PropertyName}";
+            jsonProperty.Converter = new CryptoJsonConverter(_decryptor);
+            properties.Add(jsonProperty);
         }
 
         return properties;

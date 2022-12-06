@@ -8,12 +8,12 @@ namespace EventSourcingDotNet.Serialization.Json;
 internal sealed class SerializationContractResolver : DefaultContractResolver
 {
     private readonly ICryptoTransform? _encryptor;
-    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger<SerializationContractResolver> _logger;
 
-    public SerializationContractResolver(ICryptoTransform? encryptor, ILoggerFactory loggerFactory)
+    public SerializationContractResolver(ICryptoTransform? encryptor, ILogger<SerializationContractResolver> logger)
     {
         _encryptor = encryptor;
-        _loggerFactory = loggerFactory;
+        _logger = logger;
 
         NamingStrategy = new CamelCaseNamingStrategy();
     }
@@ -22,11 +22,20 @@ internal sealed class SerializationContractResolver : DefaultContractResolver
     {
         var properties = base.CreateProperties(type, memberSerialization);
 
+        if (!type.HasEncryptedProperties()) return properties;
+        if (_encryptor is null)
+        {
+            _logger.LogWarning(
+                @"Cannot encrypt properties of type {Type} with EncryptAttribute: No crypto provider available", type.Name);
+            return properties;
+        }
+
         foreach (var jsonProperty in properties)
         {
             if (!jsonProperty.HasEncryptedAttribute(type)) continue;
 
-            jsonProperty.Converter = new CryptoJsonConverter(_encryptor, _loggerFactory.CreateLogger<CryptoJsonConverter>());
+            jsonProperty.PropertyName = $"#{jsonProperty.PropertyName}";
+            jsonProperty.Converter = new CryptoJsonConverter(_encryptor);
         }
 
         return properties;

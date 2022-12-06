@@ -10,16 +10,13 @@ internal static class StreamNamingConvention
         where TAggregateId : IAggregateId
         => $"$ce-{TAggregateId.AggregateName}";
 
-    public static string GetByEventStreamName<TAggregateId, TEvent>()
-        where TAggregateId : IAggregateId 
-        where TEvent : IDomainEvent<TAggregateId>
-        => $"$et-{TAggregateId.AggregateName}-{typeof(TEvent).Name}";
+    public static string GetByEventStreamName<TEvent>()
+        where TEvent : IDomainEvent
+        => $"$et-{typeof(TEvent).Name}";
 
-    public static string GetEventTypeName<TAggregateId>(IDomainEvent<TAggregateId> @event)
-        where TAggregateId : IAggregateId
-        => GetEventTypeName<TAggregateId>(@event.GetType());
+    public static string GetEventTypeName(IDomainEvent @event)
+        => GetEventTypeName(@event.GetType());
             
-    public static string GetEventTypeName<TAggregateId>(Type eventType)
-        where TAggregateId : IAggregateId
-        => $"{TAggregateId.AggregateName}-{eventType.Name}";
+    public static string GetEventTypeName(Type eventType)
+        => eventType.Name;
 }

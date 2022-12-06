@@ -1,9 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -16,69 +13,33 @@ public class CryptoJsonConverterTests
     private static readonly EncryptionKey _testKey = new(
         Convert.FromBase64String("NCGQHa2+i43f+FBoHamAFXKgevnQ5QWKqx+K3rit+zQ="),
         Convert.FromBase64String("AeXZFLvLxmveN3eD0OBfYQ=="));
-    
+
     [Fact]
     public void ShouldEncryptPropertyValue()
     {
         var encrypted = Serialize(_plainText);
 
-        JsonConvert.DeserializeObject<EncryptedProperty>(encrypted)
-            .Should().BeOfType<EncryptedProperty>()
-            .Which
-            .Encrypted.Should().NotBeSameAs(Encoding.UTF8.GetBytes(_plainText));
-    }
+        var deserialized = Encoding.UTF8.GetString(
+            Convert.FromBase64String(
+                JsonConvert.DeserializeObject<string>(encrypted)!));
 
-    [Fact]
-    public void ShouldNotDecryptPlainPropertyValue()
-    {
-        var decrypted = Deserialize<string>(@"""plainText""");
-        
-        decrypted.Should().Be("plainText");
-    }
-
-    [Fact]
-    public void ShouldReturnDefaultValueWhenEncryptionKeyIsNotPresent()
-    {
-        var encrypted = Serialize(42);
-        
-        var decrypted = Deserialize<int>(encrypted, false);
-
-        decrypted.Should().Be(default);
+        deserialized
+            .Should().NotBeSameAs(_plainText);
     }
 
     [Fact]
     public void ShouldDecryptPropertyValue()
     {
-        var encrypted = Serialize(_plainText);
+        const string encrypted = @"""9yrUdI04WE4RXqHU8wHO0A==""";
 
         var decrypted = Deserialize<string>(encrypted);
 
         decrypted.Should().Be(_plainText);
     }
 
-    [Fact]
-    public void ShouldLogWarningWhenCryptoProviderIsNotAvailable()
+    private string Serialize(object value)
     {
-        var loggerMock = new Mock<ILogger<CryptoJsonConverter>>();
-
-        Serialize(_plainText, false, loggerMock.Object);
-        
-        loggerMock.Verify(x => x.Log(LogLevel.Warning, It.IsAny<Microsoft.Extensions.Logging.EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType,Exception,string>>()));
-    }
-
-    [Fact]
-    public void ShouldAcceptAllTypes()
-    {
-        var converter = new CryptoJsonConverter(null, new NullLogger<CryptoJsonConverter>());
-
-        converter.CanConvert(typeof(object));
-    }
-
-    private string Serialize(object value, bool hasEncryptionKey = true, ILogger<CryptoJsonConverter>? logger = null)
-    {
-        var encryptor = new CryptoJsonConverter(
-            hasEncryptionKey ? CreateEncryptor() : null, 
-            logger ??  new NullLogger<CryptoJsonConverter>());
+        var encryptor = new CryptoJsonConverter(CreateEncryptor());
 
         using var writer = new StringWriter();
         using var jsonWriter = new JsonTextWriter(writer);
@@ -88,12 +49,10 @@ public class CryptoJsonConverterTests
         return writer.ToString();
     }
 
-    private T? Deserialize<T>(string encrypted, bool hasEncryptionKey = true)
+    private T? Deserialize<T>(string encrypted)
     {
-        var decryptor = new CryptoJsonConverter(
-            hasEncryptionKey ? CreateDecryptor() : null,
-            new NullLogger<CryptoJsonConverter>());
-        
+        var decryptor = new CryptoJsonConverter(CreateDecryptor());
+
         using var reader = new StringReader(encrypted);
         using var jsonReader = new JsonTextReader(reader);
 
