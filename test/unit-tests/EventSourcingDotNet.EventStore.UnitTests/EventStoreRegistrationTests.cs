@@ -34,9 +34,9 @@ public class EventStoreRegistrationTests
     {
         var serviceProvider = BuildServiceProvider();
         
-        var eventStore = serviceProvider.GetService<IEventStore<TestId>>();
+        var eventStore = serviceProvider.GetService<IEventListener<TestId>>();
         
-        eventStore.Should().BeOfType<EventStore<TestId>>();
+        eventStore.Should().BeOfType<EventListener<TestId>>();
     }
 
     [Fact]
