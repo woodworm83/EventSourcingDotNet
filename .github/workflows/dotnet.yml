@@ -30,7 +30,7 @@ jobs:
         if: success() || failure()
         with: 
           name: Unit Tests
-          path: test-results.trx
+          path: "**/TestResults/test-results.trx"
           reporter: dotnet-trx
   push:
     if: github.repository == 'woodworm83/EventSourcingDotNet'
