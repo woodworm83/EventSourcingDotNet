@@ -23,8 +23,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Test
-        run: dotnet test --no-restore --verbosity normal
-
+        run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      - name: Test Results
+        uses: dorny/test-reporter@v1
+        id: test-report
+        if: success() || failure()
+        with: 
+          name: Unit Tests
+          path: test-results.trx
+          reporter: dotnet-trx
   push:
     if: github.repository == 'woodworm83/EventSourcingDotNet'
     runs-on: ubuntu-latest
