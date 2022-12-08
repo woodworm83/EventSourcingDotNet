@@ -32,6 +32,8 @@ jobs:
           name: Unit Tests
           path: "**/TestResults/test-results.trx"
           reporter: dotnet-trx
+          list-tests: "failed"
+          
   push:
     if: github.repository == 'woodworm83/EventSourcingDotNet'
     runs-on: ubuntu-latest
