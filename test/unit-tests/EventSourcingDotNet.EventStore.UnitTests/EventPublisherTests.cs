@@ -68,9 +68,9 @@ public class EventPublisherTests
     {
         await using var publisher = CreateEventPublisher<ByEventTypeId>();
         using var receiverSubject = new ReplaySubject<ResolvedEvent<ByEventTypeId>>();
-        var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
+        var events = Enumerable.Range(0, 5).Select(_ => new ByTypeEvent()).ToList();
 
-        using (publisher.ByEventType<TestEvent>().Subscribe(receiverSubject))
+        using (publisher.ByEventType<ByTypeEvent>().Subscribe(receiverSubject))
         {
             foreach (var @event in events)
             {
@@ -78,7 +78,7 @@ public class EventPublisherTests
                 await _container.AppendEvents(
                     StreamNamingConvention.GetAggregateStreamName(aggregateId),
                     EventDataHelper.CreateEventData(aggregateId, @event),
-                    EventDataHelper.CreateEventData(aggregateId, new OtherEvent()));
+                    EventDataHelper.CreateEventData(aggregateId, new TestEvent()));
             }
 
             var result = await WaitForEvents(receiverSubject, 5);
@@ -163,10 +163,10 @@ public class EventPublisherTests
     }
 
     // ReSharper disable once NotAccessedPositionalProperty.Local
-    private sealed record OtherEvent(Guid Id)
+    private sealed record ByTypeEvent(Guid Id)
         : IDomainEvent<ByEventTypeId>
     {
-        public OtherEvent() : this(Guid.NewGuid())
+        public ByTypeEvent() : this(Guid.NewGuid())
         {
         }
     }
