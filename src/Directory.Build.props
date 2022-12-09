@@ -7,8 +7,8 @@
         <RepositoryUrl>https://github.com/woodworm83/EventSourcingDotNet.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <MinVerMinimumMajorMinor>0.29</MinVerMinimumMajorMinor>
         <MinVerTagPrefix>v</MinVerTagPrefix>
+        <MinVerAutoIncrement>minor</MinVerAutoIncrement>
         <MinVerDefaultPreReleasePhase>pre</MinVerDefaultPreReleasePhase>
     </PropertyGroup>
     
