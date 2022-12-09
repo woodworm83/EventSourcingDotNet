@@ -53,7 +53,7 @@ Each event must implement the `Apply(TState)` method to update the aggregate sta
 
     public sealed record SomethingHappened : IDomainEvent<SomeState>
     {
-        public Something Apply(SomeState state)
+        public SomeState Apply(SomeState state)
         {
             // return updated state here
         }
@@ -62,6 +62,7 @@ Each event must implement the `Apply(TState)` method to update the aggregate sta
 ### Event validation
 The `IDomainEvent<TAggregateId, TState>` interface provides an additional `Validate` method allowing to implement logic whether an event should be fired, skipped or raise an error.
 The validation happens before the event is applied to the aggregate state and added to the uncommitted events.
+The default implementation always returns `EventValidationResult.Fire`.
 
     public sealed record SomethingHappened : IDomainEvent<SomeState>
     {
@@ -115,11 +116,14 @@ Alternatively there is a shorthand extension method allowing to retrieve, update
 ## Configuration using Dependency Injection
 The library uses [Microsoft Dependency Injection](https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection).
 It provides a set of extension methods and builders to allow fluent dependency injection configuration.
+You can configure providers globally and/or by aggregate.
 
 ### Single Aggregate Registration
 
 #### Register an aggregate using In-Memory event storage provider:
 You must add a reference to [EventSourcingDotNet.InMemory](https://www.nuget.org/packages/EventSourcingDotNet.InMemory) package.
+
+Provider Configuration by Aggregate:
 
     services.AddEventSourcing(builder => 
     {
@@ -127,16 +131,33 @@ You must add a reference to [EventSourcingDotNet.InMemory](https://www.nuget.org
             .UseInMemoryEventStore();
     }
 
+Global Provider Configuration:
+    
+    services.AddEventSourcing(builder => 
+    {
+        builder.UseInMemoryEventStore();
+        builder.AddAggregate<MyAggregateId, MyAggregateState>();
+        builder.AddAggregate<MyOtherAggregateId, MyOtherAggregateState>();
+    }
+
 #### Register an aggregate using EventStoreDB storage provider:
 You must add a reference to [EventSourcingDotNet.EventStore](https://www.nuget.org/packages/EventSourcingDotNet.EventStore) package.
+
+Provider Configuration by Aggregate:
 
     sevrices.AddEventSourcing(builder =>
     {
         builder.AddAggregate<MyAggregateId, MyAggregateState>()
-            .UseEventStore();
+            .UseEventStore("esdb://localhost:2113");
     }
 
-    services.ConfigureEventStore(new Uri("esdb://localhost:2113"));
+Global Provider Configuration:
+
+    sevrices.AddEventSourcing(builder =>
+    {
+        builder.UseEventStore("esdb://localhost:2113");
+        builder.AddAggregate<MyAggregateId, MyAggregateState>();
+    }
 
 All aggregates use the same event store configuration. At this time it is not possible to configure different configurations for individual aggregates.
 
@@ -183,10 +204,33 @@ It should not be used if there are many aggregates of the same type.
 
 As shown in the example above it is possible to use a mix of event storage and snapshot providers.
 
+# Crypto Shredding
+
+The Library has built-in support for crypto shredding.
+
+Event property encryption requires an implementation of an `IEncryptionKeyStore` to store the encryption keys and a `ICryptoProvider` to provide a symmetric encryption.
+By default, the built-in crypto provider `AesCryptoProvider` is used to encrypt the values using AES algorithm and PKCS7 padding.
+
+In the current version there is no built-in encryption key store implementation.
+
+To encrypt a property in an event, it can be marked with an `EncryptAttribute`.
+
+    public sealed record MyEvent(
+        [property: Encrypt] string MyValue)
+        : IDomainEvent<MyAggregateId, MyAggregateState>;
+
+Or
+
+    public sealed record MyEvent: IDomainEvent<MyAggregateId, MyAggregateState>
+    {
+        [Encrypt]
+        public string MyValue { get; init; }
+    }
+
 # Supported Data Stores
 ### Event Storage Providers
 * In-Memory
-* [Event Store DB](https://www.eventstore.com/) (experimental)
+* [Event Store DB](https://www.eventstore.com/)
 
 ### Snapshot Providers
 * In-Memory
@@ -194,3 +238,7 @@ As shown in the example above it is possible to use a mix of event storage and s
 #### Planned Snapshot Providers
 * Redis
 * A variety of No-SQL Document Databases 
+
+### Encryption Key Store Providers
+There are no built-in encryption key store providers implemented in this version.
+Implementations will be added in a later version.

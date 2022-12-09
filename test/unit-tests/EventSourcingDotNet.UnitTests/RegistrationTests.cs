@@ -134,4 +134,21 @@ public class RegistrationTests
                 builder => builder.Scan(typeof(RegistrationTests))
             }
             .Select(method => new object[] {method});
+
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private sealed class TestCryptoProvider : ICryptoProvider
+    {
+        public void Encrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey)
+        {
+            inputStream.CopyTo(outputStream);
+        }
+
+        public bool TryDecrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey)
+        {
+            inputStream.CopyTo(outputStream);
+            return true;
+        }
+
+        public EncryptionKey GenerateKey() => new();
+    }
 }

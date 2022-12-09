@@ -13,10 +13,23 @@ public class EventStoreRegistrationTests
     {
         return new ServiceCollection()
             .ConfigureEventStore("esdb://localhost:2113")
-            .AddEventSourcing(
-                builder => builder.AddAggregate<TestId>().UseEventStore(connectionStringForTestAggregate))
+            .AddEventSourcing(builder => AddTestAggregate(connectionStringForTestAggregate, builder))
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
+    }
+
+    private static void AddTestAggregate(string? connectionStringForTestAggregate, EventSourcingBuilder builder)
+    {
+        var aggregateBuilder = builder.AddAggregate<TestId>();
+        
+        if (connectionStringForTestAggregate is not null)
+        {
+            aggregateBuilder.UseEventStore(connectionStringForTestAggregate);
+        }
+        else
+        {
+            aggregateBuilder.UseEventStore();
+        }
     }
 
     [Fact]

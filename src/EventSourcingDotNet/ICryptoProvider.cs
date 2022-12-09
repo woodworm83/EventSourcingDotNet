@@ -1,13 +1,11 @@
-﻿using System.Security.Cryptography;
-
-namespace EventSourcingDotNet;
+﻿namespace EventSourcingDotNet;
 
 public interface ICryptoProvider
 {
-    ICryptoTransform GetEncryptor(EncryptionKey encryptionKey);
+    void Encrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey);
 
-    ICryptoTransform? GetDecryptor(EncryptionKey? encryptionKey);
-
+    bool TryDecrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey);
+    
     EncryptionKey GenerateKey();
 }
 

@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -22,30 +21,34 @@ public sealed class JsonSerializerSettingsFactory<TAggregateId> : IJsonSerialize
         _cryptoProvider = cryptoProvider;
     }
 
-    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(TAggregateId aggregateId,
+    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(
+        TAggregateId aggregateId,
         Type objectType)
         => new()
         {
             ContractResolver = objectType.HasEncryptedProperties()
                 ? new SerializationContractResolver(
-                    await GetEncryptor(aggregateId),
+                    _cryptoProvider,
+                    await GetEncryptionKey(aggregateId),
                     _loggerFactory.CreateLogger<SerializationContractResolver>())
                 : new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()}
         };
 
-    private async Task<ICryptoTransform?> GetEncryptor(TAggregateId aggregateId)
+    private async Task<EncryptionKey?> GetEncryptionKey(TAggregateId aggregateId)
         => _encryptionKeyStore is not null
-            ? _cryptoProvider?.GetEncryptor(await _encryptionKeyStore.GetOrCreateKeyAsync(aggregateId))
+            ? await _encryptionKeyStore.GetOrCreateKeyAsync(aggregateId)
             : null;
 
     public async ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(TAggregateId aggregateId)
         => new()
         {
-            ContractResolver = new DeserializationContractResolver(await GetDecryptor(aggregateId), _loggerFactory)
+            ContractResolver = new DeserializationContractResolver(
+                _cryptoProvider,
+                await GetDecryptionKey(aggregateId))
         };
 
-    private async Task<ICryptoTransform?> GetDecryptor(TAggregateId aggregateId)
+    private async Task<EncryptionKey?> GetDecryptionKey(TAggregateId aggregateId)
         => _encryptionKeyStore is not null
-            ? _cryptoProvider?.GetDecryptor(await _encryptionKeyStore.GetKeyAsync(aggregateId))
+            ? await _encryptionKeyStore.GetKeyAsync(aggregateId)
             : null;
 }

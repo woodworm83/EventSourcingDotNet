@@ -5,7 +5,7 @@ public class EncryptedAttribute : Attribute
 {
 }
 
-public readonly record struct EncryptionKey(byte[] Key, byte[] Nonce);
+public readonly record struct EncryptionKey(byte[] Key);
 
 public interface IEncryptionKeyStore<in TAggregateId>
     where TAggregateId : IAggregateId

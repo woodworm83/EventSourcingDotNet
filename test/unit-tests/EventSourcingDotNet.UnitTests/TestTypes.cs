@@ -1,25 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
 
 namespace EventSourcingDotNet.UnitTests;
-
-internal sealed class TestCryptoProvider : ICryptoProvider
-{
-    public ICryptoTransform GetEncryptor(EncryptionKey encryptionKey)
-    {
-        throw new NotImplementedException();
-    }
-
-    public ICryptoTransform? GetDecryptor(EncryptionKey? encryptionKey)
-    {
-        throw new NotImplementedException();
-    }
-
-    public EncryptionKey GenerateKey()
-    {
-        throw new NotImplementedException();
-    }
-}
 
 internal readonly record struct TestId(int Id = default) : IAggregateId
 {

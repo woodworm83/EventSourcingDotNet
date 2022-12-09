@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -7,12 +7,14 @@ namespace EventSourcingDotNet.Serialization.Json;
 
 internal sealed class SerializationContractResolver : DefaultContractResolver
 {
-    private readonly ICryptoTransform? _encryptor;
+    private readonly ICryptoProvider? _cryptoProvider;
+    private readonly EncryptionKey? _encryptionKey;
     private readonly ILogger<SerializationContractResolver> _logger;
 
-    public SerializationContractResolver(ICryptoTransform? encryptor, ILogger<SerializationContractResolver> logger)
+    public SerializationContractResolver(ICryptoProvider? cryptoProvider, EncryptionKey? encryptionKey, ILogger<SerializationContractResolver> logger)
     {
-        _encryptor = encryptor;
+        _cryptoProvider = cryptoProvider;
+        _encryptionKey = encryptionKey;
         _logger = logger;
 
         NamingStrategy = new CamelCaseNamingStrategy();
@@ -23,21 +25,36 @@ internal sealed class SerializationContractResolver : DefaultContractResolver
         var properties = base.CreateProperties(type, memberSerialization);
 
         if (!type.HasEncryptedProperties()) return properties;
-        if (_encryptor is null)
-        {
-            _logger.LogWarning(
-                @"Cannot encrypt properties of type {Type} with EncryptAttribute: No crypto provider available", type.Name);
-            return properties;
-        }
+        if (!CheckCryptoProviderAndEncryptionKey(type)) return properties;
 
         foreach (var jsonProperty in properties)
         {
             if (!jsonProperty.HasEncryptedAttribute(type)) continue;
 
             jsonProperty.PropertyName = $"#{jsonProperty.PropertyName}";
-            jsonProperty.Converter = new CryptoJsonConverter(_encryptor);
+            jsonProperty.Converter = new CryptoJsonConverter(_cryptoProvider, _encryptionKey.Value);
         }
 
         return properties;
+    }
+
+    [MemberNotNullWhen(true, nameof(_cryptoProvider), nameof(_encryptionKey))]
+    private bool CheckCryptoProviderAndEncryptionKey(Type type)
+    {
+        if (_cryptoProvider is null)
+        {
+            _logger.LogWarning(
+                @"Cannot encrypt properties of type {Type} with EncryptAttribute: No crypto provider available", type);
+            return false;
+        }
+
+        if (_encryptionKey is null)
+        {
+            _logger.LogWarning(
+                @"Cannot encrypt properties of type {Type} with EncryptAttribute: No encryption key available", type.Name);
+            return false;
+        }
+
+        return true;
     }
 }

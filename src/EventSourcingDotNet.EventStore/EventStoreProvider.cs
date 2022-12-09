@@ -7,11 +7,11 @@ namespace EventSourcingDotNet.EventStore;
 
 internal sealed class EventStoreProvider : IEventStoreProvider
 {
-    private readonly string? _connectionString;
+    private readonly EventStoreClientSettings? _clientSettings;
 
-    public EventStoreProvider(string? connectionString = null)
+    public EventStoreProvider(EventStoreClientSettings? clientSettings = null)
     {
-        _connectionString = connectionString;
+        _clientSettings = clientSettings;
     }
 
     public void RegisterServices(IServiceCollection services, Type aggregateIdType)
@@ -25,22 +25,21 @@ internal sealed class EventStoreProvider : IEventStoreProvider
                 typeof(EventTypeResolver<>).MakeGenericType(aggregateIdType))
             .AddJsonSerializer(aggregateIdType);
 
-        if (_connectionString is not null)
+        if (_clientSettings is not null)
         {
-            var options = Options.Create(EventStoreClientSettings.Create(_connectionString));
             services
                 .AddTransient(
                     typeof(IEventStore<>).MakeGenericType(aggregateIdType),
                     serviceProvider => ActivatorUtilities.CreateInstance(
                         serviceProvider,
                         typeof(EventStore<>).MakeGenericType(aggregateIdType),
-                        options))
+                        Options.Create(_clientSettings)))
                 .AddTransient(
                     typeof(IEventListener<>).MakeGenericType(aggregateIdType),
                     serviceProvider => ActivatorUtilities.CreateInstance(
                         serviceProvider,
                         typeof(EventListener<>).MakeGenericType(aggregateIdType),
-                        options));
+                        Options.Create(_clientSettings)));
         }
         else
         {

@@ -151,7 +151,6 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
         return this;
     }
 
-
     public EventSourcingBuilder UseCryptoProvider<TCryptoProvider>()
         where TCryptoProvider : ICryptoProvider
     {

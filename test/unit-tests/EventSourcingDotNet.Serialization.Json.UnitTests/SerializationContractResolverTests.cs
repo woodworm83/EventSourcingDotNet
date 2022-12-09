@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -13,7 +12,10 @@ public class SerializationContractResolverTests
     [Fact]
     public void ShouldUseJsonCryptoConverterForPropertiesWithEncryptedAttribute()
     {
-        var contractResolver = new SerializationContractResolver(Mock.Of<ICryptoTransform?>(), new NullLogger<SerializationContractResolver>());
+        var contractResolver = new SerializationContractResolver(
+            Mock.Of<ICryptoProvider>(),
+            new EncryptionKey(),
+            new NullLogger<SerializationContractResolver>());
         var contract = contractResolver.ResolveContract(typeof(TestTypeWithEncryptedProperties));
 
         contract.Should().BeOfType<JsonObjectContract>()
@@ -24,7 +26,10 @@ public class SerializationContractResolverTests
     [Fact]
     public void ShouldNotUseJsonCryptoConverterForPropertiesWithoutEncryptedAttribute()
     {
-        var contractResolver = new SerializationContractResolver(null, new NullLogger<SerializationContractResolver>());
+        var contractResolver = new SerializationContractResolver(
+            Mock.Of<ICryptoProvider>(),
+            new EncryptionKey(),
+            new NullLogger<SerializationContractResolver>());
         var contract = contractResolver.ResolveContract(typeof(TestTypeWithoutEncryptedProperties));
 
         contract.Should().BeOfType<JsonObjectContract>()
@@ -33,10 +38,10 @@ public class SerializationContractResolverTests
     }
     
     [Fact]
-    public void ShouldLogWarningWhenDecryptorIsNull()
+    public void ShouldLogWarningWhenEncryptionKeyIsNull()
     {
         var loggerMock = new Mock<ILogger<SerializationContractResolver>>();
-        var contractResolver = new SerializationContractResolver(null, loggerMock.Object);
+        var contractResolver = new SerializationContractResolver(Mock.Of<ICryptoProvider>(), null, loggerMock.Object);
 
         contractResolver.ResolveContract(typeof(TestTypeWithEncryptedProperties));
         
