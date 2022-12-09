@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  
+  <PropertyGroup>
+    <Description>EventStoreDB provider for EventSourcingDotNet</Description>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\EventSourcingDotNet.Serialization.Json\EventSourcingDotNet.Serialization.Json.csproj" />
     <ProjectReference Include="..\EventSourcingDotNet\EventSourcingDotNet.csproj" />
