@@ -227,6 +227,15 @@ Or
         public string MyValue { get; init; }
     }
 
+Encrypted property names will be prefixed with a # to indicate an encrypted value.
+The value is encoded using Base64 encoding.
+
+The event `MyEvent` shown above will be serialized as:
+
+    {
+      "#myValue": "eyJpdiI6IjJ3YXE3OFRGTTRjNkovQXUvVHdDZWc9PSIsImN5cGhlciI6ImpKOW5jaXlNTkQ1WG9wanR1b3Qxc0E9PSJ9"
+    }
+
 # Supported Data Stores
 ### Event Storage Providers
 * In-Memory
