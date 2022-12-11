@@ -45,6 +45,6 @@ public class SerializationContractResolverTests
 
         contractResolver.ResolveContract(typeof(TestTypeWithEncryptedProperties));
         
-        loggerMock.Verify(x => x.Log(LogLevel.Warning, It.IsAny<Microsoft.Extensions.Logging.EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType,Exception,string>>()));
+        loggerMock.Verify(x => x.Log(LogLevel.Warning, It.IsAny<Microsoft.Extensions.Logging.EventId>(), It.IsAny<It.IsAnyType>(), null, It.IsAny<Func<It.IsAnyType,Exception?,string>>()));
     }
 }

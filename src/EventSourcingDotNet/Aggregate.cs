@@ -9,6 +9,7 @@ public interface IAggregateId
     string AsString();
 }
 
+// ReSharper disable once UnusedTypeParameter
 public interface IAggregateState<TAggregateId>
 {
     

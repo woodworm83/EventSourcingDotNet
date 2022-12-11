@@ -16,6 +16,7 @@ internal sealed record TestState(int Value) : IAggregateState<TestId>
     }
 }
 
+[SuppressMessage("ReSharper", "WithExpressionModifiesAllMembers")]
 internal sealed record TestEvent(int NewValue = default) : IDomainEvent<TestId, TestState>
 {
     public TestState Apply(TestState state) => state with {Value = NewValue};

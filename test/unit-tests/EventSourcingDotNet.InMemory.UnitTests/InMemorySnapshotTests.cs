@@ -32,7 +32,7 @@ public class InMemorySnapshotTests
         var @event = new TestEvent();
         var eventPublisherMock = new Mock<IEventListener<TestId>>();
         eventPublisherMock.Setup(x => x.ByCategory(It.IsAny<StreamPosition>()))
-            .Returns(Observable.Return<ResolvedEvent<TestId>>(new ResolvedEvent<TestId> {AggregateId = aggregateId, Event = @event}));
+            .Returns(Observable.Return(new ResolvedEvent<TestId> {AggregateId = aggregateId, Event = @event}));
         var snapshot = new InMemorySnapshot<TestId, TestState>(eventPublisherMock.Object);
 
         using (Run(snapshot))
