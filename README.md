@@ -211,8 +211,6 @@ The Library has built-in support for crypto shredding.
 Event property encryption requires an implementation of an `IEncryptionKeyStore` to store the encryption keys and a `ICryptoProvider` to provide a symmetric encryption.
 By default, the built-in crypto provider `AesCryptoProvider` is used to encrypt the values using AES algorithm and PKCS7 padding.
 
-In the current version there is no built-in encryption key store implementation.
-
 To encrypt a property in an event, it can be marked with an `EncryptAttribute`.
 
     public sealed record MyEvent(
@@ -236,6 +234,12 @@ The event `MyEvent` shown above will be serialized as:
       "#myValue": "eyJpdiI6IjJ3YXE3OFRGTTRjNkovQXUvVHdDZWc9PSIsImN5cGhlciI6ImpKOW5jaXlNTkQ1WG9wanR1b3Qxc0E9PSJ9"
     }
 
+To use the file based encryption key provider register it using extenstion method:
+
+    IServiceCollection AddFileEncryptionKeyStore(
+        this IServiceCollection services, 
+        IConfigurationSection configurationSection);
+
 # Supported Data Stores
 ### Event Storage Providers
 * In-Memory
@@ -249,5 +253,4 @@ The event `MyEvent` shown above will be serialized as:
 * A variety of No-SQL Document Databases 
 
 ### Encryption Key Store Providers
-There are no built-in encryption key store providers implemented in this version.
-Implementations will be added in a later version.
+* File Storage

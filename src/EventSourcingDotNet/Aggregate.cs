@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EventSourcingDotNet;
 
@@ -6,10 +7,11 @@ public interface IAggregateId
 {
     static abstract string AggregateName { get; }
 
-    string AsString();
+    string? AsString();
 }
 
 // ReSharper disable once UnusedTypeParameter
+[SuppressMessage("Major Code Smell", "S2326:Unused type parameters should be removed")]
 public interface IAggregateState<TAggregateId>
 {
     
