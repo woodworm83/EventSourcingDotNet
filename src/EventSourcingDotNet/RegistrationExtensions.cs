@@ -64,17 +64,19 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
     private static void CheckStateTypes(Type aggregateIdType, IEnumerable<Type> stateTypes)
     {
         var expectedStateType = typeof(IAggregateState<>).MakeGenericType(aggregateIdType);
-        var invalidTypes = stateTypes
+        var exceptions = stateTypes
             .Where(t => !t.IsAssignableTo(expectedStateType))
+            .Select(GetInvalidStateTypeException)
             .ToList();
 
-        switch (invalidTypes)
+        switch (exceptions)
         {
-            case [var stateType]:
-                throw GetInvalidStateTypeException(stateType);
+            // cannot use List Pattern here because it is not supported by Sonar Analyzer
+            case {Count: 1}:
+                throw exceptions.First();
 
             case {Count: > 1}:
-                throw new AggregateException(invalidTypes.Select(GetInvalidStateTypeException));
+                throw new AggregateException(exceptions);
         }
 
         InvalidOperationException GetInvalidStateTypeException(Type stateType)
