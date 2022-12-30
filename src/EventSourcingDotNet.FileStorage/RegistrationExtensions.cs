@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using EventSourcingDotNet.FileStorage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace EventSourcingDotNet.FileStorage;
+// ReSharper disable once CheckNamespace
+namespace EventSourcingDotNet;
 
 public static class RegistrationExtensions
 {

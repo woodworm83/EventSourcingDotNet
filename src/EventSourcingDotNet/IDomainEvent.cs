@@ -1,7 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace EventSourcingDotNet;
 
 public interface IDomainEvent { }
+
 // ReSharper disable once UnusedTypeParameter
+[SuppressMessage("Major Code Smell", "S2326:Unused type parameters should be removed")]
 public interface IDomainEvent<TAggregateId> : IDomainEvent 
     where TAggregateId : IAggregateId
 { }

@@ -1,6 +1,9 @@
-﻿namespace EventSourcingDotNet.EventStore;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace EventSourcingDotNet.EventStore;
 
 // ReSharper disable once UnusedTypeParameter
+[SuppressMessage("Major Code Smell", "S2326:Unused type parameters should be removed")]
 internal interface IEventTypeResolver<TAggregateId>
 {
     Type? GetEventType(string eventName);

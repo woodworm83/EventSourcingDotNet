@@ -10,6 +10,7 @@
         <MinVerTagPrefix>v</MinVerTagPrefix>
         <MinVerAutoIncrement>minor</MinVerAutoIncrement>
         <MinVerDefaultPreReleasePhase>pre</MinVerDefaultPreReleasePhase>
+        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     </PropertyGroup>
     
     <ItemGroup>

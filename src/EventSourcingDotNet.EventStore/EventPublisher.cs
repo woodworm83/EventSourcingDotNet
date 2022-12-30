@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reactive.Linq;
 using EventStore.Client;
 using Microsoft.Extensions.Options;
 
@@ -9,17 +10,17 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
 {
     private readonly EventStoreClient _client;
     private readonly IEventSerializer<TAggregateId> _eventSerializer;
-    
+
     public EventListener(
         IOptions<EventStoreClientSettings> options,
         IEventSerializer<TAggregateId> eventSerializer)
     {
         _eventSerializer = eventSerializer;
         ClientSettings = options.Value;
-        
+
         _client = new EventStoreClient(options);
     }
-    
+
     public EventStoreClientSettings ClientSettings { get; }
 
     public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId(
@@ -88,6 +89,7 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
             _eventSerializer = eventSerializer;
         }
 
+        [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed")]
         public async Task EventAppeared(
             StreamSubscription subscription,
             ResolvedEvent resolvedEvent,
@@ -99,6 +101,8 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
             }
         }
 
+        [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed",
+            Justification = "Parameters used to match callback")]
         public void SubscriptionDropped(
             StreamSubscription subscription,
             SubscriptionDroppedReason reason,

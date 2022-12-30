@@ -33,8 +33,8 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
     public async ValueTask<EventData> SerializeAsync(
         TAggregateId aggregateId, 
         IDomainEvent<TAggregateId> @event,
-        CorrelationId? correlationId = null,
-        CausationId? causationId = null)
+        CorrelationId? correlationId,
+        CausationId? causationId)
         => new(
             Uuid.NewUuid(),
             @event.GetType().Name, 
