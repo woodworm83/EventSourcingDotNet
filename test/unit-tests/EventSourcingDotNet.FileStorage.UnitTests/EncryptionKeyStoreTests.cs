@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -112,6 +113,7 @@ public sealed class EncryptionKeyStoreTests : IDisposable
         }
     }
 
+    [ExcludeFromCodeCoverage]
     private readonly record struct TestId(int? Id) : IAggregateId
     {
         public static string AggregateName => "test";

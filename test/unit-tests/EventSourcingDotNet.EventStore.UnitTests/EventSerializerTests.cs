@@ -21,7 +21,7 @@ public class EventSerializerTests
         var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
         var @event = new TestEvent();
 
-        var result = await serializer.SerializeAsync(new TestId(), @event);
+        var result = await serializer.SerializeAsync(new TestId(), @event, null, null);
 
         result.Type.Should().Be(nameof(TestEvent));
     }
@@ -32,7 +32,7 @@ public class EventSerializerTests
         var serializer = new EventSerializer<TestId>(_eventTypeResolver, _serializerSettingsFactory);
         var @event = new TestEvent(42);
 
-        var result = await serializer.SerializeAsync(new TestId(), @event);
+        var result = await serializer.SerializeAsync(new TestId(), @event, null, null);
 
         Deserialize<TestEvent>(result.Data)
             .Should()
@@ -46,7 +46,7 @@ public class EventSerializerTests
         var @event = new TestEvent();
         var aggregateId = new TestId();
 
-        var result = await serializer.SerializeAsync(aggregateId, @event);
+        var result = await serializer.SerializeAsync(aggregateId, @event, null, null);
 
         (Deserialize<EventMetadata<TestId>>(result.Metadata)?.AggregateId)
             .Should()
@@ -151,7 +151,7 @@ public class EventSerializerTests
         var serializerSettingsFactoryMock = new Mock<IJsonSerializerSettingsFactory<TestId>>();
         var serializer = new EventSerializer<TestId>(_eventTypeResolver, serializerSettingsFactoryMock.Object);
 
-        await serializer.SerializeAsync(aggregateId, new EncryptedTestEvent("value"));
+        await serializer.SerializeAsync(aggregateId, new EncryptedTestEvent("value"), null, null);
         
         serializerSettingsFactoryMock.Verify(x => x.CreateForSerializationAsync(aggregateId, It.IsAny<Type>()));
     }
