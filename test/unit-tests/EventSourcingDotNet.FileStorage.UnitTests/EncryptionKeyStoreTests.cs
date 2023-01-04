@@ -8,11 +8,11 @@ namespace EventSourcingDotNet.FileStorage.UnitTests;
 public sealed class EncryptionKeyStoreTests : IDisposable
 {
     private readonly string _tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-    private readonly TestId _aggregateId = new TestId(42);
+    private readonly TestId _aggregateId = new(42);
     private readonly byte[] _key = GenerateKey(42);
 
     private IOptions<EncryptionKeyStoreSettings> Settings
-        => Options.Create(new EncryptionKeyStoreSettings(_tempPath));
+        => Options.Create(new EncryptionKeyStoreSettings { StoragePath = _tempPath });
     
     [Fact]
     public async Task ShouldStoreNewEncryptionKeyIfNotExists()

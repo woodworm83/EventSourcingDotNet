@@ -2,7 +2,10 @@
 
 namespace EventSourcingDotNet.FileStorage;
 
-public sealed record EncryptionKeyStoreSettings(string? StoragePath);
+public sealed class EncryptionKeyStoreSettings
+{
+    public string? StoragePath { get; set; }
+};
 
 internal sealed class EncryptionKeyStore<TAggregateId> : IEncryptionKeyStore<TAggregateId>
     where TAggregateId : IAggregateId
