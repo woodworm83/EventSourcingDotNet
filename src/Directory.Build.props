@@ -4,13 +4,19 @@
     <PropertyGroup>
         <Authors>Reto Kühni</Authors>
         <ProductName>EventSourcingDotNet</ProductName>
-        <RepositoryUrl>https://github.com/woodworm83/EventSourcingDotNet.git</RepositoryUrl>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <MinVerTagPrefix>v</MinVerTagPrefix>
         <MinVerAutoIncrement>minor</MinVerAutoIncrement>
         <MinVerDefaultPreReleasePhase>pre</MinVerDefaultPreReleasePhase>
         <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
     
     <ItemGroup>
@@ -23,5 +29,6 @@
     
     <ItemGroup>
         <PackageReference Include="MinVer" Version="4.2.0" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
     </ItemGroup>
 </Project>
