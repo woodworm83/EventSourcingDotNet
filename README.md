@@ -51,7 +51,7 @@ An event must implement the `IDomainEvent<TAggregateId, TState>` interface to be
 
 Each event must implement the `Apply(TState)` method to update the aggregate state.
 
-    public sealed record SomethingHappened : IDomainEvent<SomeState>
+    public sealed record SomethingHappened : IDomainEvent<MyAggregateId, SomeState>
     {
         public SomeState Apply(SomeState state)
         {
@@ -239,6 +239,13 @@ To use the file based encryption key provider register it using extenstion metho
     IServiceCollection AddFileEncryptionKeyStore(
         this IServiceCollection services, 
         IConfigurationSection configurationSection);
+
+The configuration section is bound to the configuration class `EncryptionKeyStoreSettings`
+
+    public sealed class EncryptionKeyStoreSettings
+    {
+        public string? StoragePath { get; set; }
+    };
 
 # Supported Data Stores
 ### Event Storage Providers
