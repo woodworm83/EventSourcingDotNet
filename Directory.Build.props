@@ -4,6 +4,12 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <VersionPrefix>0.0.1</VersionPrefix>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinousIntegrationBuild>true</ContinousIntegrationBuild>
     </PropertyGroup>
     
     <ItemGroup>
