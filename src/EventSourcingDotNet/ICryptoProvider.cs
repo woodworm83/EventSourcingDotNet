@@ -8,5 +8,3 @@ public interface ICryptoProvider
     
     EncryptionKey GenerateKey();
 }
-
-// ReSharper disable once ClassNeverInstantiated.Global

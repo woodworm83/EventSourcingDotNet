@@ -49,12 +49,13 @@ public class AggregateTests
     [Fact]
     public void ShouldThrowExceptionWhenEventValidationFails()
     {
-        var @event = new ValueUpdatedEvent(42) {ValidationResult = EventValidationResult.Fail(new Exception())};
+        const string message = "message";
+        var @event = new ValueUpdatedEvent(42) {ValidationResult = EventValidationResult.Fail(message)};
         var aggregate = new Aggregate<TestId, TestState>(new TestId());
 
         aggregate.Invoking(x => x.AddEvent(@event))
             .Should()
-            .Throw<Exception>();
+            .ThrowExactly<EventValidationException>();
     }
 
     [Fact]

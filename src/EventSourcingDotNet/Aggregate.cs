@@ -51,7 +51,7 @@ public sealed record Aggregate<TId, TState>(
                     UncommittedEvents = UncommittedEvents.Add(@event)
                 },
             EventValidationResult.Skipped => this,
-            EventValidationResult.Failed failed => throw failed.Exception,
+            EventValidationResult.Failed failed => throw new EventValidationException(failed.Message),
             _ => throw new NotSupportedException($"Validation result is not supported")
         };
 
