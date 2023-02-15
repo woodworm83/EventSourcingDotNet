@@ -16,7 +16,7 @@ public class RegistrationTests
     {
         _eventStoreProviderMock
             .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>()))
-            .Callback<IServiceCollection, Type>((services, _) => services.AddSingleton(_eventStoreMock.Object));
+            .Callback<IServiceCollection>(services => services.AddSingleton(_eventStoreMock.Object));
         _snapshotProviderMock
             .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>(), typeof(TestId), typeof(TestState)))
             .Callback<IServiceCollection, Type, Type>(
@@ -45,11 +45,11 @@ public class RegistrationTests
     [Fact]
     public void ShouldThrowInvalidOperationExceptionWhenEventStoreProviderIsNotSet()
     {
-        var builder = new AggregateBuilder();
+        var builder = new EventSourcingBuilder();
         var serviceCollectionMock = new Mock<IServiceCollection>();
 
         builder.Invoking(
-                x => x.ConfigureServices(serviceCollectionMock.Object, typeof(TestId), Enumerable.Empty<Type>()))
+                x => x.ConfigureServices(serviceCollectionMock.Object))
             .Should()
             .Throw<InvalidOperationException>();
     }
@@ -88,7 +88,7 @@ public class RegistrationTests
     public void ShouldResolveAesCryptoProviderByDefault()
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(_ => { })
+            .AddEventSourcing(builder => builder.UseEventStoreProvider(Mock.Of<IEventStoreProvider>()))
             .BuildServiceProvider();
 
         serviceProvider.GetService<ICryptoProvider>()
@@ -99,7 +99,9 @@ public class RegistrationTests
     public void ShouldResolveAesCryptoProviderWhenSpecified()
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => { builder.UseAesCryptoProvider(); })
+            .AddEventSourcing(builder => builder
+                .UseEventStoreProvider(Mock.Of<IEventStoreProvider>())
+                .UseAesCryptoProvider())
             .BuildServiceProvider();
 
         serviceProvider.GetService<ICryptoProvider>()
@@ -110,7 +112,9 @@ public class RegistrationTests
     public void ShouldResolveSpecifiedCryptoProvider()
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => { builder.UseCryptoProvider<TestCryptoProvider>(); })
+            .AddEventSourcing(builder => builder
+                .UseEventStoreProvider(Mock.Of<IEventStoreProvider>())
+                .UseCryptoProvider<TestCryptoProvider>())
             .BuildServiceProvider();
 
         serviceProvider.GetService<ICryptoProvider>()

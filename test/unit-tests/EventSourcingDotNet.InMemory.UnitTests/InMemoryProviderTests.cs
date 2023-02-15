@@ -35,7 +35,7 @@ public class InMemoryRegistrationTests
         
         serviceProvider.GetService<IEventListener>()
             .Should()
-            .BeOfType<InMemoryEventStore<TestId>>();
+            .BeOfType<EventListener>();
     }
 
     [Fact]
