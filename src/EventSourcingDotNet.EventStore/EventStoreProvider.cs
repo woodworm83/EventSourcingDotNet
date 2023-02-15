@@ -21,24 +21,12 @@ internal sealed class EventStoreProvider : IEventStoreProvider
             .AddSingleton<IEventListener, EventListener>()
             .AddTransient(typeof(IEventSerializer<>), typeof(EventSerializer<>))
             .AddSingleton(typeof(IEventTypeResolver<>), typeof(EventTypeResolver<>))
+            .AddTransient(typeof(IEventStore<>), typeof(EventStore<>))
             .AddJsonSerializer();
 
         if (_clientSettings is not null)
         {
-            services
-                .AddTransient(
-                    typeof(IEventStore<>),
-                    serviceProvider => ActivatorUtilities.CreateInstance(
-                        serviceProvider,
-                        typeof(EventStore<>),
-                        Options.Create(_clientSettings)));
-        }
-        else
-        {
-            services
-                .AddTransient(
-                    typeof(IEventStore<>),
-                    typeof(EventStore<>));
+            services.AddSingleton(Options.Create(_clientSettings));
         }
     }
 }
