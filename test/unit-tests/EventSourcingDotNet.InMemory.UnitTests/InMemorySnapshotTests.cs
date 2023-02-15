@@ -12,8 +12,8 @@ public class InMemorySnapshotTests
     [Fact]
     public async Task ShouldReturnNullWhenNoEventsArePublished()
     {
-        var eventPublisherMock = new Mock<IEventListener<TestId>>();
-        eventPublisherMock.Setup(x => x.ByCategory(It.IsAny<StreamPosition>()))
+        var eventPublisherMock = new Mock<IEventListener>();
+        eventPublisherMock.Setup(x => x.ByCategory<TestId>(It.IsAny<StreamPosition>()))
             .Returns(Observable.Never<ResolvedEvent<TestId>>());
         var snapshot = new InMemorySnapshot<TestId, TestState>(eventPublisherMock.Object);
 
@@ -30,8 +30,8 @@ public class InMemorySnapshotTests
     {
         var aggregateId = new TestId();
         var @event = new TestEvent();
-        var eventPublisherMock = new Mock<IEventListener<TestId>>();
-        eventPublisherMock.Setup(x => x.ByCategory(It.IsAny<StreamPosition>()))
+        var eventPublisherMock = new Mock<IEventListener>();
+        eventPublisherMock.Setup(x => x.ByCategory<TestId>(It.IsAny<StreamPosition>()))
             .Returns(Observable.Return(new ResolvedEvent<TestId> {AggregateId = aggregateId, Event = @event}));
         var snapshot = new InMemorySnapshot<TestId, TestState>(eventPublisherMock.Object);
 

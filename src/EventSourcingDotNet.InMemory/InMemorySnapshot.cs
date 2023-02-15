@@ -7,9 +7,9 @@ public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, 
     where TState : new()
 {
     private readonly Dictionary<TAggregateId, Aggregate<TAggregateId, TState>> _snapshots = new();
-    private readonly IEventListener<TAggregateId> _eventListener;
+    private readonly IEventListener _eventListener;
 
-    public InMemorySnapshot(IEventListener<TAggregateId> eventListener)
+    public InMemorySnapshot(IEventListener eventListener)
     {
         _eventListener = eventListener;
     }
@@ -19,7 +19,7 @@ public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using (_eventListener.ByCategory().Subscribe(HandleEvent))
+        using (_eventListener.ByCategory<TAggregateId>().Subscribe(HandleEvent))
         {
             var tcs = new TaskCompletionSource();
             stoppingToken.Register(tcs.SetResult);

@@ -11,8 +11,8 @@ public class InMemoryRegistrationTests
         return new ServiceCollection()
             .AddEventSourcing(builder =>
             {
-                var aggregateBuilder = builder.AddAggregate<TestId, TestState>()
-                    .UseInMemoryEventStore();
+                builder.UseInMemoryEventStore();
+                var aggregateBuilder = builder.AddAggregate<TestId, TestState>();
                 configureAggregate?.Invoke(aggregateBuilder);
             })
             .BuildServiceProvider();
@@ -33,7 +33,7 @@ public class InMemoryRegistrationTests
     {
         var serviceProvider = CreateServiceProvider();
         
-        serviceProvider.GetService<IEventListener<TestId>>()
+        serviceProvider.GetService<IEventListener>()
             .Should()
             .BeOfType<InMemoryEventStore<TestId>>();
     }

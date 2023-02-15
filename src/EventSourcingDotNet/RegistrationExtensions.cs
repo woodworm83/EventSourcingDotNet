@@ -26,7 +26,6 @@ public static class RegistrationExtensions
 public interface IAggregateBuilder<out TBuilder>
     where TBuilder : IAggregateBuilder<TBuilder>
 {
-    TBuilder UseEventStoreProvider(IEventStoreProvider provider);
     TBuilder UseSnapshotProvider(ISnapshotProvider provider);
 }
 
@@ -35,6 +34,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
     private readonly Dictionary<Type, (ImmutableArray<Type> StateType, AggregateBuilder Builder)> _aggregates = new();
     private readonly AggregateBuilder _defaults = new();
     private Type _cryptoProviderType = typeof(AesCryptoProvider);
+    private IEventStoreProvider? _eventStoreProvider;
 
     public AggregateBuilder AddAggregate<TAggregateId, TState>()
         where TAggregateId : IAggregateId
@@ -128,22 +128,27 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
     }
 
     internal void ConfigureServices(
-        IServiceCollection serviceCollection)
-    {
+        IServiceCollection services)
+    {        
+        if (_eventStoreProvider is not { } eventStoreProvider)
+            throw new InvalidOperationException($"Event store provider was not specified");
+
+        eventStoreProvider.RegisterServices(services);
+
         foreach (var (aggregateIdType, (stateTypes, builder)) in _aggregates)
         {
-            builder.ConfigureServices(serviceCollection, aggregateIdType, stateTypes);
+            builder.ConfigureServices(services, aggregateIdType, stateTypes);
         }
 
         if (_cryptoProviderType is { } cryptoProviderType)
         {
-            serviceCollection.AddTransient(typeof(ICryptoProvider), cryptoProviderType);
+            services.AddTransient(typeof(ICryptoProvider), cryptoProviderType);
         }
     }
 
     public EventSourcingBuilder UseEventStoreProvider(IEventStoreProvider provider)
     {
-        _defaults.UseEventStoreProvider(provider);
+        _eventStoreProvider = provider;
         return this;
     }
 
@@ -176,13 +181,12 @@ public interface ISnapshotProvider
 
 public interface IEventStoreProvider
 {
-    public void RegisterServices(IServiceCollection services, Type aggregateIdType);
+    public void RegisterServices(IServiceCollection services);
 }
 
 public sealed class AggregateBuilder : IAggregateBuilder<AggregateBuilder>
 {
     private readonly AggregateBuilder? _defaults;
-    private IEventStoreProvider? _eventStoreProvider;
     private ISnapshotProvider? _snapshotProvider;
 
     public AggregateBuilder(AggregateBuilder? defaults = null)
@@ -190,15 +194,7 @@ public sealed class AggregateBuilder : IAggregateBuilder<AggregateBuilder>
         _defaults = defaults;
     }
 
-    public IEventStoreProvider? EventStoreProvider => _eventStoreProvider ?? _defaults?.EventStoreProvider;
-
     public ISnapshotProvider? SnapshotProvider => _snapshotProvider ?? _defaults?.SnapshotProvider;
-
-    public AggregateBuilder UseEventStoreProvider(IEventStoreProvider provider)
-    {
-        _eventStoreProvider = provider;
-        return this;
-    }
 
     public AggregateBuilder UseSnapshotProvider(ISnapshotProvider provider)
     {
@@ -208,11 +204,6 @@ public sealed class AggregateBuilder : IAggregateBuilder<AggregateBuilder>
 
     internal void ConfigureServices(IServiceCollection services, Type aggregateIdType, IEnumerable<Type> stateTypes)
     {
-        if (EventStoreProvider is not { } eventStoreProvider)
-            throw new InvalidOperationException($"Event store provider was not specified");
-
-        eventStoreProvider.RegisterServices(services, aggregateIdType);
-
         if (SnapshotProvider is { } snapshotProvider)
         {
             snapshotProvider.RegisterServices(services, aggregateIdType, stateTypes);

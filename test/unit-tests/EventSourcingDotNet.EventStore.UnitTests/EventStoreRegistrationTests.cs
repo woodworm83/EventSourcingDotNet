@@ -20,15 +20,15 @@ public class EventStoreRegistrationTests
 
     private static void AddTestAggregate(string? connectionStringForTestAggregate, EventSourcingBuilder builder)
     {
-        var aggregateBuilder = builder.AddAggregate<TestId>();
+        builder.AddAggregate<TestId>();
         
         if (connectionStringForTestAggregate is not null)
         {
-            aggregateBuilder.UseEventStore(connectionStringForTestAggregate);
+            builder.UseEventStore(connectionStringForTestAggregate);
         }
         else
         {
-            aggregateBuilder.UseEventStore();
+            builder.UseEventStore();
         }
     }
 
@@ -47,9 +47,9 @@ public class EventStoreRegistrationTests
     {
         var serviceProvider = BuildServiceProvider();
         
-        var eventStore = serviceProvider.GetService<IEventListener<TestId>>();
+        var eventStore = serviceProvider.GetService<IEventListener>();
         
-        eventStore.Should().BeOfType<EventListener<TestId>>();
+        eventStore.Should().BeOfType<EventListener>();
     }
 
     [Fact]
@@ -73,9 +73,9 @@ public class EventStoreRegistrationTests
         var clientSettings = EventStoreClientSettings.Create(connectionString);
         var serviceProvider = BuildServiceProvider(connectionString);
 
-        var eventStore = serviceProvider.GetService<IEventListener<TestId>>();
+        var eventStore = serviceProvider.GetService<IEventListener>();
 
-        eventStore.Should().BeOfType<EventListener<TestId>>()
+        eventStore.Should().BeOfType<EventListener>()
             .Which
             .ClientSettings.ConnectivitySettings.Should().BeEquivalentTo(clientSettings.ConnectivitySettings);
     }

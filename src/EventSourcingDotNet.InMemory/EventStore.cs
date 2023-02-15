@@ -2,7 +2,7 @@
 
 namespace EventSourcingDotNet.InMemory;
 
-internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>, IEventListener<TAggregateId>
+internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateId>
     where TAggregateId : IAggregateId
 {
     private readonly IInMemoryEventStream _eventStream;

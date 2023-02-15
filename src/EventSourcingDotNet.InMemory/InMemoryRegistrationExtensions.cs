@@ -5,8 +5,7 @@ namespace EventSourcingDotNet;
 
 public static class InMemoryRegistrationExtensions
 {
-    public static TBuilder UseInMemoryEventStore<TBuilder>(this TBuilder builder)
-        where TBuilder : IAggregateBuilder<TBuilder>
+    public static EventSourcingBuilder UseInMemoryEventStore(this EventSourcingBuilder builder)
         => builder.UseEventStoreProvider(new InMemoryEventStoreProvider());
 
     public static TBuilder UseInMemorySnapshot<TBuilder>(this TBuilder builder)

@@ -1,21 +1,22 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using EventStore.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace EventSourcingDotNet.EventStore;
 
-internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>, IAsyncDisposable
-    where TAggregateId : IAggregateId
+internal sealed class EventListener : IEventListener, IAsyncDisposable
 {
     private readonly EventStoreClient _client;
-    private readonly IEventSerializer<TAggregateId> _eventSerializer;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public EventListener(
         IOptions<EventStoreClientSettings> options,
-        IEventSerializer<TAggregateId> eventSerializer)
+        IServiceScopeFactory serviceScopeFactory)
     {
-        _eventSerializer = eventSerializer;
+        _serviceScopeFactory = serviceScopeFactory;
         ClientSettings = options.Value;
 
         _client = new EventStoreClient(options);
@@ -23,9 +24,10 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
 
     public EventStoreClientSettings ClientSettings { get; }
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId(
+    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
+        where TAggregateId : IAggregateId, IEquatable<TAggregateId>
         => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
@@ -33,7 +35,9 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
                 false,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByCategory(StreamPosition fromStreamPosition = default)
+    public IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
+        StreamPosition fromStreamPosition = default)
+        where TAggregateId : IAggregateId
         => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
@@ -41,7 +45,9 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
                 true,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TEvent>(StreamPosition fromStreamPosition = default)
+    public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>(
+        StreamPosition fromStreamPosition = default)
+        where TAggregateId : IAggregateId
         where TEvent : IDomainEvent<TAggregateId>
         => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
@@ -50,20 +56,30 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
                 true,
                 observer));
 
-    private async Task<IDisposable> SubscribeAsync(
+    private async Task<IDisposable> SubscribeAsync<TAggregateId>(
         string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos,
         IObserver<ResolvedEvent<TAggregateId>> observer)
+        where TAggregateId : IAggregateId
     {
-        var listener = new Listener(observer, _eventSerializer);
-        return await _client.SubscribeToStreamAsync(
+        var scope = _serviceScopeFactory.CreateScope();
+        
+        var listener = new Listener<TAggregateId>(
+            observer, 
+            scope.ServiceProvider.GetRequiredService<IEventSerializer<TAggregateId>>());
+        
+        var subscription = await _client.SubscribeToStreamAsync(
             streamName,
             GetFromStream(fromStreamPosition),
             listener.EventAppeared,
             resolveLinkTos,
             listener.SubscriptionDropped
         );
+
+        return new CompositeDisposable(
+            subscription,
+            scope);
     }
 
     private static FromStream GetFromStream(StreamPosition fromStreamPosition)
@@ -76,7 +92,8 @@ internal sealed class EventListener<TAggregateId> : IEventListener<TAggregateId>
         await _client.DisposeAsync();
     }
 
-    private sealed class Listener
+    private sealed class Listener<TAggregateId>
+        where TAggregateId : IAggregateId
     {
         private readonly IObserver<ResolvedEvent<TAggregateId>> _observer;
         private readonly IEventSerializer<TAggregateId> _eventSerializer;

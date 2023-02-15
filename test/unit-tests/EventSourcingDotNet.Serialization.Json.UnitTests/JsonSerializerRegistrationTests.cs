@@ -12,7 +12,7 @@ public class JsonSerializerRegistrationTests
     public void ShouldResolveJsonSerializerSettingsFactory()
     {
         var serviceProvider = new ServiceCollection()
-            .AddJsonSerializer(typeof(TestId))
+            .AddJsonSerializer()
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 

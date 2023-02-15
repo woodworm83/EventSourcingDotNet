@@ -12,14 +12,14 @@ public static class EventStoreRegistrationExtensions
         => services
             .AddSingleton(Options.Create(EventStoreClientSettings.Create(connectionString)));
 
-    public static TBuilder UseEventStore<TBuilder>(this TBuilder builder, string connectionString)
-        where TBuilder : IAggregateBuilder<TBuilder>
+    public static EventSourcingBuilder UseEventStore(
+        this EventSourcingBuilder builder, 
+        string connectionString)
         => builder.UseEventStore(EventStoreClientSettings.Create(connectionString));
 
-    public static TBuilder UseEventStore<TBuilder>(
-        this TBuilder builder,
+    public static EventSourcingBuilder UseEventStore(
+        this EventSourcingBuilder builder,
         EventStoreClientSettings? clientSettings = null)
-        where TBuilder : IAggregateBuilder<TBuilder>
         => builder.UseEventStoreProvider(
             new EventStoreProvider(clientSettings));
 }

@@ -14,42 +14,31 @@ internal sealed class EventStoreProvider : IEventStoreProvider
         _clientSettings = clientSettings;
     }
 
-    public void RegisterServices(IServiceCollection services, Type aggregateIdType)
+    public void RegisterServices(IServiceCollection services)
     {
         services
-            .AddTransient(
-                typeof(IEventSerializer<>).MakeGenericType(aggregateIdType),
-                typeof(EventSerializer<>).MakeGenericType(aggregateIdType))
-            .AddSingleton(
-                typeof(IEventTypeResolver<>).MakeGenericType(aggregateIdType),
-                typeof(EventTypeResolver<>).MakeGenericType(aggregateIdType))
-            .AddJsonSerializer(aggregateIdType);
+            .AddSingleton<IEventReader, EventReader>()
+            .AddSingleton<IEventListener, EventListener>()
+            .AddTransient(typeof(IEventSerializer<>), typeof(EventSerializer<>))
+            .AddSingleton(typeof(IEventTypeResolver<>), typeof(EventTypeResolver<>))
+            .AddJsonSerializer();
 
         if (_clientSettings is not null)
         {
             services
                 .AddTransient(
-                    typeof(IEventStore<>).MakeGenericType(aggregateIdType),
+                    typeof(IEventStore<>),
                     serviceProvider => ActivatorUtilities.CreateInstance(
                         serviceProvider,
-                        typeof(EventStore<>).MakeGenericType(aggregateIdType),
-                        Options.Create(_clientSettings)))
-                .AddTransient(
-                    typeof(IEventListener<>).MakeGenericType(aggregateIdType),
-                    serviceProvider => ActivatorUtilities.CreateInstance(
-                        serviceProvider,
-                        typeof(EventListener<>).MakeGenericType(aggregateIdType),
+                        typeof(EventStore<>),
                         Options.Create(_clientSettings)));
         }
         else
         {
             services
                 .AddTransient(
-                    typeof(IEventStore<>).MakeGenericType(aggregateIdType),
-                    typeof(EventStore<>).MakeGenericType(aggregateIdType))
-                .AddTransient(
-                    typeof(IEventListener<>).MakeGenericType(aggregateIdType),
-                    typeof(EventListener<>).MakeGenericType(aggregateIdType));
+                    typeof(IEventStore<>),
+                    typeof(EventStore<>));
         }
     }
 }

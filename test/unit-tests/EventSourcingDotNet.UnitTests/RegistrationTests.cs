@@ -15,7 +15,7 @@ public class RegistrationTests
     public RegistrationTests()
     {
         _eventStoreProviderMock
-            .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>(), typeof(TestId)))
+            .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>()))
             .Callback<IServiceCollection, Type>((services, _) => services.AddSingleton(_eventStoreMock.Object));
         _snapshotProviderMock
             .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>(), typeof(TestId), typeof(TestState)))
@@ -49,21 +49,19 @@ public class RegistrationTests
         var serviceCollectionMock = new Mock<IServiceCollection>();
 
         builder.Invoking(
-            x => x.ConfigureServices(serviceCollectionMock.Object, typeof(TestId), Enumerable.Empty<Type>()))
+                x => x.ConfigureServices(serviceCollectionMock.Object, typeof(TestId), Enumerable.Empty<Type>()))
             .Should()
             .Throw<InvalidOperationException>();
-        
-        
     }
-        
+
 
     [Theory]
     [MemberData(nameof(GetAddAggregateMethods))]
     public void EventStoreCanBeResolved(Func<EventSourcingBuilder, AggregateBuilder> addAggregateCallback)
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => addAggregateCallback(builder)
-                .UseEventStoreProvider(_eventStoreProviderMock.Object))
+            .AddEventSourcing(builder => addAggregateCallback(
+                builder.UseEventStoreProvider(_eventStoreProviderMock.Object)))
             .BuildServiceProvider();
 
         var eventStore = serviceProvider.GetService<IEventStore<TestId>>();
@@ -76,8 +74,8 @@ public class RegistrationTests
     public void SnapshotProviderCanBeResolved(Func<EventSourcingBuilder, AggregateBuilder> addAggregateCallback)
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => addAggregateCallback(builder)
-                .UseEventStoreProvider(_eventStoreProviderMock.Object)
+            .AddEventSourcing(builder => addAggregateCallback(
+                    builder.UseEventStoreProvider(_eventStoreProviderMock.Object))
                 .UseSnapshotProvider(_snapshotProviderMock.Object))
             .BuildServiceProvider();
 
@@ -85,7 +83,7 @@ public class RegistrationTests
 
         eventStore.Should().Be(_snapshotStoreMock.Object);
     }
-    
+
     [Fact]
     public void ShouldResolveAesCryptoProviderByDefault()
     {
@@ -96,15 +94,12 @@ public class RegistrationTests
         serviceProvider.GetService<ICryptoProvider>()
             .Should().BeOfType<AesCryptoProvider>();
     }
-    
+
     [Fact]
     public void ShouldResolveAesCryptoProviderWhenSpecified()
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder =>
-            {
-                builder.UseAesCryptoProvider();
-            })
+            .AddEventSourcing(builder => { builder.UseAesCryptoProvider(); })
             .BuildServiceProvider();
 
         serviceProvider.GetService<ICryptoProvider>()
@@ -115,15 +110,11 @@ public class RegistrationTests
     public void ShouldResolveSpecifiedCryptoProvider()
     {
         var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder =>
-            {
-                builder.UseCryptoProvider<TestCryptoProvider>();
-            })
+            .AddEventSourcing(builder => { builder.UseCryptoProvider<TestCryptoProvider>(); })
             .BuildServiceProvider();
 
         serviceProvider.GetService<ICryptoProvider>()
             .Should().BeOfType<TestCryptoProvider>();
-        
     }
 
     private static IEnumerable<object[]> GetAddAggregateMethods()

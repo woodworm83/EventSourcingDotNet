@@ -2,6 +2,7 @@
 using System.Reactive.Subjects;
 using EventSourcingDotNet.Serialization.Json;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -9,11 +10,11 @@ using Xunit;
 namespace EventSourcingDotNet.EventStore.UnitTests;
 
 [Collection(nameof(EventStoreCollection))]
-public class EventPublisherTests
+public class EventListenerTests
 {
     private readonly EventStoreTestContainer _container;
 
-    public EventPublisherTests(EventStoreFixture fixture)
+    public EventListenerTests(EventStoreFixture fixture)
     {
         _container = fixture.Container;
     }
@@ -22,7 +23,7 @@ public class EventPublisherTests
     public async Task ShouldNotifyEventsByAggregateId()
     {
         var aggregateId = new AggregateId();
-        await using var publisher = CreateEventPublisher<AggregateId>();
+        await using var publisher = CreateEventListener<AggregateId>();
         using var receiver = new ReplaySubject<ResolvedEvent<AggregateId>>();
         var @event = new TestEvent();
 
@@ -42,11 +43,11 @@ public class EventPublisherTests
     [Fact]
     public async Task ShouldNotifyEventsByCategory()
     {
-        await using var publisher = CreateEventPublisher<ByCategoryId>();
+        await using var publisher = CreateEventListener<ByCategoryId>();
         using var receiverSubject = new ReplaySubject<ResolvedEvent<ByCategoryId>>();
         var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
 
-        using (publisher.ByCategory().Subscribe(receiverSubject))
+        using (publisher.ByCategory<ByCategoryId>().Subscribe(receiverSubject))
         {
             foreach (var @event in events)
             {
@@ -66,11 +67,11 @@ public class EventPublisherTests
     [Fact]
     public async Task ShouldNotifyEventsByEventType()
     {
-        await using var publisher = CreateEventPublisher<ByEventTypeId>();
+        await using var publisher = CreateEventListener<ByEventTypeId>();
         using var receiverSubject = new ReplaySubject<ResolvedEvent<ByEventTypeId>>();
         var events = Enumerable.Range(0, 5).Select(_ => new ByTypeEvent()).ToList();
 
-        using (publisher.ByEventType<ByTypeEvent>().Subscribe(receiverSubject))
+        using (publisher.ByEventType<ByEventTypeId, ByTypeEvent>().Subscribe(receiverSubject))
         {
             foreach (var @event in events)
             {
@@ -88,13 +89,19 @@ public class EventPublisherTests
         }
     }
 
-    private EventListener<TAggregateId> CreateEventPublisher<TAggregateId>()
+    private EventListener CreateEventListener<TAggregateId>()
         where TAggregateId : IAggregateId
-        => new(
+    {
+        var serviceProvider = new ServiceCollection()
+            .AddSingleton<IEventSerializer<TAggregateId>>(
+                new EventSerializer<TAggregateId>(
+                    new EventTypeResolver<TAggregateId>(),
+                    new JsonSerializerSettingsFactory<TAggregateId>(NullLoggerFactory.Instance)))
+            .BuildServiceProvider();
+        return new(
             Options.Create(_container.ClientSettings),
-            new EventSerializer<TAggregateId>(
-                new EventTypeResolver<TAggregateId>(),
-                new JsonSerializerSettingsFactory<TAggregateId>(NullLoggerFactory.Instance)));
+            serviceProvider.GetRequiredService<IServiceScopeFactory>());
+    }
 
     private static async Task<IReadOnlyList<ResolvedEvent<TAggregateId>>> WaitForEvents<TAggregateId>(
         IObservable<ResolvedEvent<TAggregateId>> source,
