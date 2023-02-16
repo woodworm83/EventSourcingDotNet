@@ -19,8 +19,8 @@ internal sealed class EventStoreProvider : IEventStoreProvider
         services
             .AddSingleton<IEventReader, EventReader>()
             .AddSingleton<IEventListener, EventListener>()
+            .AddSingleton<IEventTypeResolver, EventTypeResolver>()
             .AddTransient(typeof(IEventSerializer<>), typeof(EventSerializer<>))
-            .AddSingleton(typeof(IEventTypeResolver<>), typeof(EventTypeResolver<>))
             .AddTransient(typeof(IEventStore<>), typeof(EventStore<>))
             .AddJsonSerializer();
 

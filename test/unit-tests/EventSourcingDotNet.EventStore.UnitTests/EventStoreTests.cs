@@ -12,7 +12,7 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 [Collection(nameof(EventStoreCollection))]
 public class EventStoreTests
 {
-    private static readonly EventTypeResolver<TestId> _eventTypeResolver = new();
+    private static readonly EventTypeResolver _eventTypeResolver = new();
     private readonly EventStoreTestContainer _container;
     private readonly JsonSerializerSettingsFactory<TestId> _serializerSettingsFactory = new(NullLoggerFactory.Instance);
 

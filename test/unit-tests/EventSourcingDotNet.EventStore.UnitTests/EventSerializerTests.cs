@@ -11,7 +11,7 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 
 public class EventSerializerTests
 {
-    private readonly IEventTypeResolver<TestId> _eventTypeResolver = CreateEventTypeResolver();
+    private readonly IEventTypeResolver _eventTypeResolver = CreateEventTypeResolver();
 
     private readonly JsonSerializerSettingsFactory<TestId> _serializerSettingsFactory = new(NullLoggerFactory.Instance);
 
@@ -125,7 +125,7 @@ public class EventSerializerTests
     public async Task ShouldReturnNullWhenEventTypeIsUnknown()
     {
         var resolvedEvent = CreateResolvedEvent();
-        var eventTypeResolverMock = new Mock<IEventTypeResolver<TestId>>();
+        var eventTypeResolverMock = new Mock<IEventTypeResolver>();
         var serializer = new EventSerializer<TestId>(eventTypeResolverMock.Object, _serializerSettingsFactory);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
@@ -206,9 +206,9 @@ public class EventSerializerTests
             null,
             null);
 
-    private static IEventTypeResolver<TestId> CreateEventTypeResolver()
+    private static IEventTypeResolver CreateEventTypeResolver()
     {
-        var eventTypeResolverMock = new Mock<IEventTypeResolver<TestId>>();
+        var eventTypeResolverMock = new Mock<IEventTypeResolver>();
         eventTypeResolverMock.Setup(x => x.GetEventType(nameof(TestEvent)))
             .Returns(typeof(TestEvent));
         eventTypeResolverMock.Setup(x => x.GetEventType(nameof(EncryptedTestEvent)))

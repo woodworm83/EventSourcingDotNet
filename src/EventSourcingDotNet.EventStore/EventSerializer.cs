@@ -21,10 +21,10 @@ internal interface IEventSerializer<TAggregateId>
 internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregateId>
     where TAggregateId : IAggregateId
 {
-    private readonly IEventTypeResolver<TAggregateId> _eventTypeResolver;
+    private readonly IEventTypeResolver _eventTypeResolver;
     private readonly IJsonSerializerSettingsFactory<TAggregateId> _serializerSettingsFactory;
 
-    public EventSerializer(IEventTypeResolver<TAggregateId> eventTypeResolver, IJsonSerializerSettingsFactory<TAggregateId> serializerSettingsFactory)
+    public EventSerializer(IEventTypeResolver eventTypeResolver, IJsonSerializerSettingsFactory<TAggregateId> serializerSettingsFactory)
     {
         _eventTypeResolver = eventTypeResolver;
         _serializerSettingsFactory = serializerSettingsFactory;

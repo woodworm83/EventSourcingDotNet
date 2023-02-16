@@ -95,7 +95,7 @@ public class EventListenerTests
         var serviceProvider = new ServiceCollection()
             .AddSingleton<IEventSerializer<TAggregateId>>(
                 new EventSerializer<TAggregateId>(
-                    new EventTypeResolver<TAggregateId>(),
+                    new EventTypeResolver(),
                     new JsonSerializerSettingsFactory<TAggregateId>(NullLoggerFactory.Instance)))
             .BuildServiceProvider();
         return new(
@@ -158,21 +158,5 @@ public class EventListenerTests
         public static string AggregateName => "correlation";
 
         public string AsString() => Id.ToString();
-    }
-
-    // ReSharper disable once NotAccessedPositionalProperty.Local
-    private sealed record TestEvent(Guid Id) : IDomainEvent
-    {
-        public TestEvent() : this(Guid.NewGuid())
-        {
-        }
-    }
-
-    // ReSharper disable once NotAccessedPositionalProperty.Local
-    private sealed record ByTypeEvent(Guid Id) : IDomainEvent
-    {
-        public ByTypeEvent() : this(Guid.NewGuid())
-        {
-        }
     }
 }
