@@ -1,3 +1,4 @@
+using System.Reactive.Concurrency;
 using FluentAssertions;
 using Xunit;
 
@@ -10,7 +11,7 @@ public class InMemoryEventStreamTests
     {
         var aggregateId = new TestId();
         var @event = new TestEvent();
-        var eventStream = new InMemoryEventStream();
+        var eventStream = new InMemoryEventStream(Scheduler.Immediate);
         await eventStream.AppendEventsAsync(aggregateId, new[] {@event}, default, default, default);
 
         var events = await eventStream.ReadEventsAsync()
@@ -26,7 +27,7 @@ public class InMemoryEventStreamTests
     public async Task ShouldThrowOptimisticConcurrencyException()
     {
         var aggregateId = new TestId();
-        var eventStore = new InMemoryEventStream();
+        var eventStore = new InMemoryEventStream(Scheduler.Immediate);
         var actualVersion = await eventStore.AppendEventsAsync(aggregateId, new[] {new TestEvent()}, default, default, default);
 
         await eventStore.Awaiting(x => x.AppendEventsAsync(aggregateId, new[] {new TestEvent()}, new AggregateVersion(42), default, default))
@@ -38,7 +39,7 @@ public class InMemoryEventStreamTests
     [Fact]
     public async Task ShouldIgnoreOtherStreamsForAggregateVersion()
     {
-        var eventStore = new InMemoryEventStream();
+        var eventStore = new InMemoryEventStream(Scheduler.Immediate);
         await eventStore.AppendEventsAsync(new TestId(), new[] {new TestEvent()}, default, default, default);
 
         await eventStore.Awaiting(x => x.AppendEventsAsync(new TestId(), new[] {new TestEvent()}, default, default, default))

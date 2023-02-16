@@ -23,6 +23,12 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
 {
     private readonly SemaphoreSlim _semaphore = new(1);
     private readonly SourceList<ImmutableArray<IResolvedEvent>> _events = new();
+    private readonly IScheduler? _scheduler;
+
+    public InMemoryEventStream(IScheduler? scheduler = null)
+    {
+        _scheduler = scheduler;
+    }
 
     public async ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(
         TAggregateId aggregateId,
@@ -109,6 +115,6 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
                 observer => _events.Connect()
                     .OnItemAdded(observer.OnNext)
                     .Subscribe())
-            .ObserveOn(new EventLoopScheduler())
+            .ObserveOn(_scheduler ?? new EventLoopScheduler())
             .SelectMany(events => events);
 }

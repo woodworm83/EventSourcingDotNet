@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using System.Reactive.Concurrency;
+using Moq;
 using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;
@@ -10,7 +11,7 @@ public class InMemoryEventStoreTests
     public async Task ShouldYieldAddedEventByAggregateId()
     {
         var aggregateId = new TestId();
-        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream());
+        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream(Scheduler.Immediate));
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
@@ -28,7 +29,7 @@ public class InMemoryEventStoreTests
     public async Task ShouldYieldAddedEventsByEventType()
     {
         var aggregateId = new TestId();
-        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream());
+        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream(Scheduler.Immediate));
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
@@ -46,7 +47,7 @@ public class InMemoryEventStoreTests
     public async Task ShouldNotYieldAddedEventWhenAggregateIdDoesNotMatch()
     {
         var aggregateId = new TestId();
-        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream());
+        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream(Scheduler.Immediate));
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
@@ -65,7 +66,7 @@ public class InMemoryEventStoreTests
     public async Task ShouldNotYieldAddedEventWhenEventTypeIdDoesNotMatch()
     {
         var aggregateId = new TestId();
-        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream());
+        var eventStore = new InMemoryEventStore<TestId>(new InMemoryEventStream(Scheduler.Immediate));
         var observerMock = new Mock<IObserver<ResolvedEvent<TestId>>>();
         var @event = new TestEvent();
         
