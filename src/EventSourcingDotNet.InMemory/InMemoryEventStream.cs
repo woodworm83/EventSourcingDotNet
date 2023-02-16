@@ -1,4 +1,6 @@
-﻿using System.Reactive.Linq;
+﻿using System.Collections.Immutable;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using DynamicData;
 
 namespace EventSourcingDotNet.InMemory;
@@ -6,44 +8,49 @@ namespace EventSourcingDotNet.InMemory;
 internal interface IInMemoryEventStream
 {
     public ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events, 
+        IEnumerable<IDomainEvent> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId,
         CausationId? causationId)
         where TAggregateId : IAggregateId;
-    
+
     public IAsyncEnumerable<IResolvedEvent> ReadEventsAsync();
-    
+
     public IObservable<IResolvedEvent> Listen();
 }
 
 internal sealed class InMemoryEventStream : IInMemoryEventStream
 {
     private readonly SemaphoreSlim _semaphore = new(1);
-    private readonly SourceList<IResolvedEvent> _events = new();
-    
+    private readonly SourceList<ImmutableArray<IResolvedEvent>> _events = new();
+
     public async ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events, 
+        IEnumerable<IDomainEvent> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId,
-        CausationId? causationId) 
+        CausationId? causationId)
         where TAggregateId : IAggregateId
     {
-        
         await _semaphore.WaitAsync();
         try
         {
             CheckVersion(aggregateId, expectedVersion);
-            return AppendEventsUnsafe(aggregateId, events, expectedVersion, correlationId ?? new CorrelationId(), causationId);
+            correlationId ??= new CorrelationId();
+            return AppendEventsUnsafe(
+                aggregateId,
+                events,
+                expectedVersion,
+                correlationId.Value,
+                causationId);
         }
         finally
         {
             _semaphore.Release();
         }
     }
-    
-    private void CheckVersion<TAggregateId>(TAggregateId aggregateId, AggregateVersion expectedVersion) 
+
+    private void CheckVersion<TAggregateId>(TAggregateId aggregateId, AggregateVersion expectedVersion)
         where TAggregateId : IAggregateId
     {
         var actualVersion = GetAggregateVersion(aggregateId);
@@ -54,13 +61,14 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
         }
     }
 
-    private AggregateVersion GetAggregateVersion<TAggregateId>(TAggregateId aggregateId) 
+    private AggregateVersion GetAggregateVersion<TAggregateId>(TAggregateId aggregateId)
         where TAggregateId : IAggregateId
         => _events
             .Items
+            .SelectMany(events => events)
             .OfType<ResolvedEvent<TAggregateId>>()
-            .Where(x => x.AggregateId.Equals(aggregateId))
-            .Select(x => x.AggregateVersion)
+            .Where(resolvedEvent => resolvedEvent.AggregateId.Equals(aggregateId))
+            .Select(resolvedEvent => resolvedEvent.AggregateVersion)
             .LastOrDefault();
 
     private AggregateVersion AppendEventsUnsafe<TAggregateId>(
@@ -73,30 +81,34 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
     {
         var streamPosition = (ulong) _events.Count;
 
-        foreach (var @event in events)
-        {
-            _events.Add(
-                new ResolvedEvent<TAggregateId>(
-                    new EventId(Guid.NewGuid()),
-                    aggregateId,
-                    ++currentVersion,
-                    new StreamPosition(streamPosition++),
-                    @event,
-                    DateTime.UtcNow,
-                    correlationId,
-                    causationId));
-        }
+        _events.Add(
+            events.Select(
+                    @event => new ResolvedEvent<TAggregateId>(
+                        new EventId(Guid.NewGuid()),
+                        aggregateId,
+                        ++currentVersion,
+                        new StreamPosition(streamPosition++),
+                        @event,
+                        DateTime.UtcNow,
+                        correlationId,
+                        causationId))
+                .Cast<IResolvedEvent>()
+                .ToImmutableArray());
 
         return currentVersion;
     }
 
 
     public IAsyncEnumerable<IResolvedEvent> ReadEventsAsync()
-        => _events.Items.ToAsyncEnumerable();
+        => _events.Items
+            .SelectMany(events => events)
+            .ToAsyncEnumerable();
 
     public IObservable<IResolvedEvent> Listen()
-        => Observable.Create<IResolvedEvent>(
-            observer => _events.Connect()
-                .OnItemAdded(observer.OnNext)
-                .Subscribe());
+        => Observable.Create<ImmutableArray<IResolvedEvent>>(
+                observer => _events.Connect()
+                    .OnItemAdded(observer.OnNext)
+                    .Subscribe())
+            .ObserveOn(new EventLoopScheduler())
+            .SelectMany(events => events);
 }
