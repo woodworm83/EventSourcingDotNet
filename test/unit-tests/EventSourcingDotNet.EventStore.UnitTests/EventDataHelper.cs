@@ -7,7 +7,7 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 
 internal static class EventDataHelper
 {
-    private static readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
+    private static readonly JsonSerializerSettings _serializerSettings = new()
     {
         ContractResolver = new DefaultContractResolver{NamingStrategy = new CamelCaseNamingStrategy()},
         NullValueHandling = NullValueHandling.Ignore
@@ -15,7 +15,7 @@ internal static class EventDataHelper
     
     public static EventData CreateEventData<TAggregateId>(
         TAggregateId aggregateId, 
-        IDomainEvent<TAggregateId> @event,
+        IDomainEvent @event,
         Guid? eventId = null,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)

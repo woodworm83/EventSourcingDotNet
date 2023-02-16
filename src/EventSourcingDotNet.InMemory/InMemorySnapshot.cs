@@ -4,7 +4,7 @@ namespace EventSourcingDotNet.InMemory;
 
 public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, ISnapshotStore<TAggregateId, TState> 
     where TAggregateId : IAggregateId 
-    where TState : new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     private readonly Dictionary<TAggregateId, Aggregate<TAggregateId, TState>> _snapshots = new();
     private readonly IEventListener _eventListener;
@@ -30,7 +30,7 @@ public sealed class InMemorySnapshot<TAggregateId, TState> : BackgroundService, 
     private void HandleEvent(ResolvedEvent<TAggregateId> resolvedEvent)
         => _snapshots[resolvedEvent.AggregateId] = GetSnapshotOrNew(resolvedEvent.AggregateId).ApplyEvent(resolvedEvent);
 
-    private Aggregate<TAggregateId, TState> GetSnapshotOrNew(TAggregateId aggregateId) =>
-        _snapshots.GetValueOrDefault(aggregateId)
-        ?? new Aggregate<TAggregateId, TState>(aggregateId);
+    private Aggregate<TAggregateId, TState> GetSnapshotOrNew(TAggregateId aggregateId) 
+        => _snapshots.GetValueOrDefault(aggregateId)
+            ?? new Aggregate<TAggregateId, TState>(aggregateId);
 }

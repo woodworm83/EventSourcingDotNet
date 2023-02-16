@@ -60,7 +60,7 @@ public class AggregateRepositoryTests
         eventStoreMock.Verify(
             x => x.AppendEventsAsync(
                 aggregate.Id, 
-                It.Is<IEnumerable<IDomainEvent<TestId>>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
+                It.Is<IEnumerable<IDomainEvent>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
                 aggregate.Version,
                 It.IsAny<CorrelationId?>(),
                 It.IsAny<CausationId?>()));
@@ -86,7 +86,7 @@ public class AggregateRepositoryTests
         eventStoreMock.Setup(
                 x => x.AppendEventsAsync(
                     It.IsAny<TestId>(), 
-                    It.IsAny<IEnumerable<IDomainEvent<TestId>>>(),
+                    It.IsAny<IEnumerable<IDomainEvent>>(),
                     It.IsAny<AggregateVersion>(),
                     null,
                     null))
@@ -98,7 +98,7 @@ public class AggregateRepositoryTests
         result.Version.Version.Should().Be(42);
     }
     
-    private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent<TestId>[] events)
+    private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent[] events)
     {
         var mock = new Mock<IEventStore<TestId>>();
         mock.Setup(x => x.ReadEventsAsync(It.IsAny<TestId>(), It.IsAny<AggregateVersion>()))

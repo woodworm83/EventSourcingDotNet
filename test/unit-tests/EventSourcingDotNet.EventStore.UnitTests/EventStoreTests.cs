@@ -56,7 +56,7 @@ public class EventStoreTests
         var aggregateId = new TestId();
         await using var eventStore = CreateEventStore();
 
-        var result = await eventStore.AppendEventsAsync(aggregateId, Array.Empty<IDomainEvent<TestId>>(), default);
+        var result = await eventStore.AppendEventsAsync(aggregateId, Array.Empty<IDomainEvent>(), default);
 
         result.Version.Should().Be(0);
     }

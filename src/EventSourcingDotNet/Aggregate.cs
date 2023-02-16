@@ -12,15 +12,19 @@ public interface IAggregateId
 
 // ReSharper disable once UnusedTypeParameter
 [SuppressMessage("Major Code Smell", "S2326:Unused type parameters should be removed")]
-public interface IAggregateState<TAggregateId>
+public interface IAggregateState<out TSelf, TAggregateId>
+    where TSelf : IAggregateState<TSelf, TAggregateId>
 {
-    
+    TSelf ApplyEvent(IDomainEvent @event);
+
+    EventValidationResult ValidateEvent(IDomainEvent @event) 
+        => EventValidationResult.Fire;
 }
 
 public sealed record Aggregate<TId, TState>(
     TId Id)
     where TId : IAggregateId
-    where TState : new()
+    where TState : IAggregateState<TState, TId>, new()
 {
     /// <summary>
     /// Current version of the aggregate
@@ -32,8 +36,8 @@ public sealed record Aggregate<TId, TState>(
     /// Collection of uncommitted events.
     /// Use <see cref="IAggregateRepository&lt;TId, TState&gt;"/>.Save to store the events in the event stream
     /// </summary>
-    public ImmutableList<IDomainEvent<TId, TState>> UncommittedEvents { get; internal init; }
-        = ImmutableList<IDomainEvent<TId, TState>>.Empty;
+    public ImmutableList<IDomainEvent> UncommittedEvents { get; internal init; }
+        = ImmutableList<IDomainEvent>.Empty;
 
     /// <summary>
     /// Adds an event to the collection of uncommitted events
@@ -41,13 +45,13 @@ public sealed record Aggregate<TId, TState>(
     /// </summary>
     /// <param name="event">The event to apply and to be added to the collection of uncommitted events</param>
     /// <returns></returns>
-    public Aggregate<TId, TState> AddEvent(IDomainEvent<TId, TState> @event)
-        => @event.Validate(State) switch
+    public Aggregate<TId, TState> AddEvent(IDomainEvent @event)
+        => State.ValidateEvent(@event) switch
         {
             EventValidationResult.Fired
                 => this with
                 {
-                    State = @event.Apply(State),
+                    State = State.ApplyEvent(@event),
                     UncommittedEvents = UncommittedEvents.Add(@event)
                 },
             EventValidationResult.Skipped => this,
@@ -56,17 +60,15 @@ public sealed record Aggregate<TId, TState>(
         };
 
     public Aggregate<TId, TState> ApplyEvent(ResolvedEvent<TId> resolvedEvent)
-        => resolvedEvent.Event is IDomainEvent<TId, TState> @event
-            ? this with
+        => this with
             {
-                State = @event.Apply(State),
+                State = State.ApplyEvent(resolvedEvent.Event),
                 Version = resolvedEvent.AggregateVersion
-            }
-            : this;
+            };
 
     /// <summary>
     /// The current state of the aggregate.
     /// You can update the state by adding new events.
     /// </summary>
-    public TState State { get; internal init; } = new TState();
+    public TState State { get; private init; } = new();
 }

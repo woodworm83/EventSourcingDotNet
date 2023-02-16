@@ -6,7 +6,7 @@ namespace EventSourcingDotNet.InMemory;
 internal interface IInMemoryEventStream
 {
     public ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(TAggregateId aggregateId,
-        IEnumerable<IDomainEvent<TAggregateId>> events, 
+        IEnumerable<IDomainEvent> events, 
         AggregateVersion expectedVersion,
         CorrelationId? correlationId,
         CausationId? causationId)
@@ -24,7 +24,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
     
     public async ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent<TAggregateId>> events, 
+        IEnumerable<IDomainEvent> events, 
         AggregateVersion expectedVersion,
         CorrelationId? correlationId,
         CausationId? causationId) 
@@ -65,7 +65,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
 
     private AggregateVersion AppendEventsUnsafe<TAggregateId>(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent<TAggregateId>> events,
+        IEnumerable<IDomainEvent> events,
         AggregateVersion currentVersion,
         CorrelationId correlationId,
         CausationId? causationId)

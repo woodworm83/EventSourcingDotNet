@@ -39,7 +39,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
 
     public async Task<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId, 
-        IEnumerable<IDomainEvent<TAggregateId>> events, 
+        IEnumerable<IDomainEvent> events, 
         AggregateVersion expectedVersion,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
@@ -54,7 +54,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
 
     private async IAsyncEnumerable<EventData> SerializeEventsAsync(
         TAggregateId aggregateId, 
-        IEnumerable<IDomainEvent<TAggregateId>> events,
+        IEnumerable<IDomainEvent> events,
         CorrelationId? correlationId,
         CausationId? causationId)
     {

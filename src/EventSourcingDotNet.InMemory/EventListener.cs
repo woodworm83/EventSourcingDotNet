@@ -28,7 +28,7 @@ internal sealed class EventListener : IEventListener
     public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        where TEvent : IDomainEvent<TAggregateId>
+        where TEvent : IDomainEvent
         => ByCategory<TAggregateId>(fromStreamPosition)
             .Where(resolvedEvent => resolvedEvent.Event is TEvent);
 }

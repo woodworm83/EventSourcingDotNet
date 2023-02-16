@@ -20,7 +20,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
 
     public async Task<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent<TAggregateId>> events,
+        IEnumerable<IDomainEvent> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
@@ -40,7 +40,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
 
     public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default) 
-        where TEvent : IDomainEvent<TAggregateId> 
+        where TEvent : IDomainEvent
         => ByCategory(fromStreamPosition)
             .Where(x => x.Event is TEvent);
 }

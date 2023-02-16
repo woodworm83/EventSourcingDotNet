@@ -11,7 +11,7 @@ internal interface IEventSerializer<TAggregateId>
 {
     ValueTask<EventData> SerializeAsync(
         TAggregateId aggregateId, 
-        IDomainEvent<TAggregateId> @event,
+        IDomainEvent @event,
         CorrelationId? correlationId,
         CausationId? causationId);
     
@@ -32,7 +32,7 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
 
     public async ValueTask<EventData> SerializeAsync(
         TAggregateId aggregateId, 
-        IDomainEvent<TAggregateId> @event,
+        IDomainEvent @event,
         CorrelationId? correlationId,
         CausationId? causationId)
         => new(
@@ -41,7 +41,7 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
             await SerializeEventData(aggregateId, @event), 
             SerializeEventMetadata(aggregateId, correlationId?.Id, causationId?.Id));
 
-    private async ValueTask<ReadOnlyMemory<byte>> SerializeEventData(TAggregateId aggregateId, IDomainEvent<TAggregateId> @event)
+    private async ValueTask<ReadOnlyMemory<byte>> SerializeEventData(TAggregateId aggregateId, IDomainEvent @event)
         => Encoding.UTF8.GetBytes(
             JsonConvert.SerializeObject(
                 @event, 
@@ -88,7 +88,7 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
                 ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy()},
             });
                     
-    private async ValueTask<IDomainEvent<TAggregateId>?> DeserializeEventDataAsync(TAggregateId aggregateId, EventRecord eventRecord)
+    private async ValueTask<IDomainEvent?> DeserializeEventDataAsync(TAggregateId aggregateId, EventRecord eventRecord)
     {
         if (_eventTypeResolver.GetEventType(eventRecord.EventType) is not { } eventType) return null;
 
@@ -96,6 +96,6 @@ internal sealed class EventSerializer<TAggregateId> : IEventSerializer<TAggregat
             Encoding.UTF8.GetString(eventRecord.Data.Span),
             eventType,
             await _serializerSettingsFactory.CreateForDeserializationAsync(aggregateId))
-            as IDomainEvent<TAggregateId>;
+            as IDomainEvent;
     }
 }

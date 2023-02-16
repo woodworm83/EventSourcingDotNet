@@ -10,5 +10,5 @@ public interface IEventReader
 
     public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>()
         where TAggregateId : IAggregateId
-        where TEvent : IDomainEvent<TAggregateId>;
+        where TEvent : IDomainEvent;
 }

@@ -1,14 +1,8 @@
 ﻿namespace EventSourcingDotNet.InMemory.UnitTests;
 
-internal sealed record TestEvent : IDomainEvent<TestId, TestState>
-{
-    public TestState Apply(TestState state) => state;
-}
+internal sealed record TestEvent : IDomainEvent;
 
-internal sealed record OtherTestEvent : IDomainEvent<TestId, TestState>
-{
-    public TestState Apply(TestState state) => state;
-}
+internal sealed record OtherTestEvent : IDomainEvent;
 
 internal readonly record struct TestId(Guid Id) : IAggregateId
 {
@@ -19,4 +13,7 @@ internal readonly record struct TestId(Guid Id) : IAggregateId
     public string AsString() => string.Empty;
 }
 
-internal sealed record TestState : IAggregateState<TestId>;
+internal sealed record TestState : IAggregateState<TestState, TestId>
+{
+    public TestState ApplyEvent(IDomainEvent @event) => this;
+}

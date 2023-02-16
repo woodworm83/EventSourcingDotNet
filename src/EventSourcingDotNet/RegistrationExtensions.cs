@@ -38,7 +38,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
 
     public AggregateBuilder AddAggregate<TAggregateId, TState>()
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TAggregateId>
+        where TState : IAggregateState<TState, TAggregateId>
         => CreateAggregateBuilder(typeof(TAggregateId), ImmutableArray.Create(typeof(TState)));
 
     public AggregateBuilder AddAggregate<TAggregateId>(params Type[] stateTypes)
@@ -63,10 +63,10 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
 
     private static void CheckStateTypes(Type aggregateIdType, IEnumerable<Type> stateTypes)
     {
-        var expectedStateType = typeof(IAggregateState<>).MakeGenericType(aggregateIdType);
         var exceptions = stateTypes
-            .Where(t => !t.IsAssignableTo(expectedStateType))
-            .Select(GetInvalidStateTypeException)
+            .Where(stateType => !IsValidStateType(stateType, aggregateIdType))
+            .Select(stateType => new InvalidOperationException(
+                $"Type {stateType.Name} is not assignable to type IAggregateState<TState, TAggregateId>"))
             .ToList();
 
         switch (exceptions)
@@ -78,14 +78,28 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
             case {Count: > 1}:
                 throw new AggregateException(exceptions);
         }
-
-        InvalidOperationException GetInvalidStateTypeException(Type stateType)
-        {
-            return new InvalidOperationException(
-                $"Type {stateType.Name} is not assignable to type {expectedStateType.Name}");
-        }
     }
-    
+
+    private static bool IsValidStateType(Type stateType, Type aggregateIdType)
+    {
+        var hasAggregateIdType = false;
+        foreach (var typeArguments in GetAggregateStateTypeArguments(stateType))
+        {
+            if (typeArguments[0] != stateType) return false;
+            if (typeArguments[1] != aggregateIdType) continue;
+
+            hasAggregateIdType = true;
+        }
+
+        return hasAggregateIdType;
+    }
+
+    private static IEnumerable<Type[]> GetAggregateStateTypeArguments(Type stateType)
+        => stateType.GetInterfaces()
+            .Where(x => x.IsGenericType)
+            .Where(x => x.GetGenericTypeDefinition() == typeof(IAggregateState<,>))
+            .Select(x => x.GenericTypeArguments);
+
     public AggregateBuilder Scan(params Type[] assemblyMarkerTypes)
         => Scan(
             assemblyMarkerTypes
@@ -108,22 +122,22 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
     private IEnumerable<(Type IdType, ImmutableArray<Type> StateTypes)> Scan(Assembly assembly)
         => assembly.GetTypes()
             .Where(type => !type.IsAbstract)
-            .SelectMany(GetAggregateIdTypes)
+            .SelectMany(GetAggregateIdAndStateTypes)
             .GroupBy(
                 x => x.IdType,
                 x => x.StateType,
                 (idType, stateTypes) => (idType, stateTypes.ToImmutableArray()));
     
-    private static IEnumerable<(Type IdType, Type StateType)> GetAggregateIdTypes(Type type)
+    private static IEnumerable<(Type IdType, Type StateType)> GetAggregateIdAndStateTypes(Type type)
     {
         foreach (var @interface in type.GetInterfaces())
         {
             if (!@interface.IsGenericType) continue;
             var genericTypeDefinition = @interface.GetGenericTypeDefinition();
-            if (genericTypeDefinition != typeof(IAggregateState<>)) continue;
-            if (@interface.GenericTypeArguments.FirstOrDefault() is not { } aggregateIdType) continue;
+            if (genericTypeDefinition != typeof(IAggregateState<,>)) continue;
+            if (@interface.GenericTypeArguments is not [{ } stateType, { } aggregateIdType]) continue;
 
-            yield return (aggregateIdType, type);
+            yield return (aggregateIdType, stateType);
         }
     }
 

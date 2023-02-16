@@ -14,5 +14,5 @@ public interface IEventListener
     IObservable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        where TEvent : IDomainEvent<TAggregateId>;
+        where TEvent : IDomainEvent;
 }

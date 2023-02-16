@@ -14,7 +14,7 @@ public readonly record struct ResolvedEvent<TAggregateId>(
         TAggregateId AggregateId,
         AggregateVersion AggregateVersion,
         StreamPosition StreamPosition,
-        IDomainEvent<TAggregateId> Event,
+        IDomainEvent Event,
         DateTime Timestamp,
         CorrelationId? CorrelationId,
         CausationId? CausationId)

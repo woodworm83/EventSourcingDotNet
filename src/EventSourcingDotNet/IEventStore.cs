@@ -11,7 +11,7 @@ public interface IEventStore<TAggregateId>
 
     Task<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId, 
-        IEnumerable<IDomainEvent<TAggregateId>> events, 
+        IEnumerable<IDomainEvent> events, 
         AggregateVersion expectedVersion,
         CorrelationId? correlationId = null,
         CausationId? causationId = null);

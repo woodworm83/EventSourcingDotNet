@@ -9,7 +9,7 @@ namespace EventSourcingDotNet;
 /// <typeparam name="TState">The aggregate state</typeparam>
 public interface IAggregateRepository<TAggregateId, TState> 
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TAggregateId>, new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     /// <summary>
     /// Creates an aggregate and replays the events from the event store
@@ -34,7 +34,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// </summary>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="events">The events to be appended to the event store</param>
-    sealed async Task UpdateAsync(TAggregateId id, params IDomainEvent<TAggregateId, TState>[] events)
+    sealed async Task UpdateAsync(TAggregateId id, params IDomainEvent[] events)
         => await SaveAsync(
             events.Aggregate(
                 await GetByIdAsync(id), 
@@ -43,7 +43,7 @@ public interface IAggregateRepository<TAggregateId, TState>
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TAggregateId>, new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     private readonly IEventStore<TAggregateId> _eventStore;
     private readonly ISnapshotStore<TAggregateId, TState>? _snapshotProvider;
@@ -81,7 +81,7 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         
         return aggregate with
         {
-            UncommittedEvents = ImmutableList<IDomainEvent<TAggregateId, TState>>.Empty,
+            UncommittedEvents = ImmutableList<IDomainEvent>.Empty,
             Version = version
         };
     }

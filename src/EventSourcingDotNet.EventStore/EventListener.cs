@@ -48,7 +48,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
     public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        where TEvent : IDomainEvent<TAggregateId>
+        where TEvent : IDomainEvent
         => Observable.Create<ResolvedEvent<TAggregateId>>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByEventStreamName<TEvent>(),

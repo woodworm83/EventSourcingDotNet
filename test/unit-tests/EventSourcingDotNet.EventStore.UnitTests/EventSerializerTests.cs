@@ -178,7 +178,7 @@ public class EventSerializerTests
         string eventStreamId = "",
         Uuid? uuid = null,
         ulong streamPosition = 0,
-        IDomainEvent<TestId>? @event = null,
+        IDomainEvent? @event = null,
         TestId? aggregateId = null,
         DateTime? created = null,
         CausationId? causationId = null,

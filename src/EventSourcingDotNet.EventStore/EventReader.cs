@@ -27,7 +27,7 @@ internal sealed class EventReader : IEventReader
             global::EventStore.Client.StreamPosition.Start);
 
     public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>()
-        where TEvent : IDomainEvent<TAggregateId>
+        where TEvent : IDomainEvent
         where TAggregateId : IAggregateId
         => ReadEventsAsync<TAggregateId>(
             StreamNamingConvention.GetByEventStreamName<TEvent>(),

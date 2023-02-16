@@ -161,8 +161,7 @@ public class EventListenerTests
     }
 
     // ReSharper disable once NotAccessedPositionalProperty.Local
-    private sealed record TestEvent(Guid Id)
-        : IDomainEvent<AggregateId>, IDomainEvent<ByCategoryId>, IDomainEvent<ByEventTypeId>
+    private sealed record TestEvent(Guid Id) : IDomainEvent
     {
         public TestEvent() : this(Guid.NewGuid())
         {
@@ -170,8 +169,7 @@ public class EventListenerTests
     }
 
     // ReSharper disable once NotAccessedPositionalProperty.Local
-    private sealed record ByTypeEvent(Guid Id)
-        : IDomainEvent<ByEventTypeId>
+    private sealed record ByTypeEvent(Guid Id) : IDomainEvent
     {
         public ByTypeEvent() : this(Guid.NewGuid())
         {

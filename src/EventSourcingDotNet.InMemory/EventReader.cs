@@ -21,7 +21,7 @@ internal sealed class EventReader : IEventReader
 
     public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>()
         where TAggregateId : IAggregateId
-        where TEvent : IDomainEvent<TAggregateId>
+        where TEvent : IDomainEvent
         => ByCategory<TAggregateId>()
             .Where(resolvedEvent => resolvedEvent.Event is TEvent);
 }

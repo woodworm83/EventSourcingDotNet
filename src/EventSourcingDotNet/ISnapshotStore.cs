@@ -2,7 +2,7 @@
 
 public interface ISnapshotStore<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     Task<Aggregate<TAggregateId, TState>?> GetLatestSnapshotAsync(
         TAggregateId aggregateId);
