@@ -16,7 +16,7 @@ public class JsonSerializerRegistrationTests
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 
-        serviceProvider.GetService<IJsonSerializerSettingsFactory<TestId>>()
-            .Should().BeOfType<JsonSerializerSettingsFactory<TestId>>();
+        serviceProvider.GetService<IJsonSerializerSettingsFactory>()
+            .Should().BeOfType<JsonSerializerSettingsFactory>();
     }
 }

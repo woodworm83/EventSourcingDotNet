@@ -5,11 +5,11 @@ namespace EventSourcingDotNet;
 public interface IEventStore<TAggregateId>
     where TAggregateId : IAggregateId
 {
-    IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(
+    IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
         TAggregateId aggregateId,
         AggregateVersion fromVersion);
 
-    Task<AggregateVersion> AppendEventsAsync(
+    ValueTask<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId, 
         IEnumerable<IDomainEvent> events, 
         AggregateVersion expectedVersion,

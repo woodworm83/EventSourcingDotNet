@@ -7,7 +7,7 @@ public sealed class InMemorySnapshotProvider : ISnapshotProvider
 {
     public void RegisterServices(IServiceCollection services, Type aggregateIdType, Type stateType)
     {
-        var snapshotType = typeof(InMemorySnapshot<,>).MakeGenericType(aggregateIdType, stateType);
+        var snapshotType = typeof(InMemorySnapshotStore<,>).MakeGenericType(aggregateIdType, stateType);
         var serviceType = typeof(ISnapshotStore<,>).MakeGenericType(aggregateIdType, stateType);
 
         object ImplementationFactory(IServiceProvider serviceProvider) =>

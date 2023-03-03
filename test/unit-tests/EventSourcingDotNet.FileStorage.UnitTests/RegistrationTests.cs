@@ -23,8 +23,8 @@ public class RegistrationTests
     {
         var serviceProvider = BuildServiceProvider();
         
-        var eventStore = serviceProvider.GetService<IEncryptionKeyStore<TestId>>();
+        var eventStore = serviceProvider.GetService<IEncryptionKeyStore>();
 
-        eventStore.Should().BeOfType<EncryptionKeyStore<TestId>>();
+        eventStore.Should().BeOfType<EncryptionKeyStore>();
     }
 }

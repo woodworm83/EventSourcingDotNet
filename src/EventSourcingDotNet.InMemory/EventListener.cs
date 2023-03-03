@@ -11,24 +11,22 @@ internal sealed class EventListener : IEventListener
         _eventStream = eventStream;
     }
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId<TAggregateId>(
+    public IObservable<ResolvedEvent> ByAggregateId<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
-        => ByCategory<TAggregateId>(fromStreamPosition)
-            .Where(resolvedEvent => resolvedEvent.AggregateId.Equals(aggregateId));
+        => _eventStream.Listen(fromStreamPosition)
+            .Where(resolvedEvent => resolvedEvent.StreamName.Equals($"{TAggregateId.AggregateName}-{aggregateId.AsString()}"));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
+    public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        => _eventStream.Listen()
-            .SkipWhile(resolvedEvent => resolvedEvent.StreamPosition.Position < fromStreamPosition.Position)
-            .OfType<ResolvedEvent<TAggregateId>>();
+        => _eventStream.Listen(fromStreamPosition)
+            .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith($"{TAggregateId.AggregateName}-"));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>(
+    public IObservable<ResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
-        where TAggregateId : IAggregateId
         where TEvent : IDomainEvent
-        => ByCategory<TAggregateId>(fromStreamPosition)
+        => _eventStream.Listen(fromStreamPosition)
             .Where(resolvedEvent => resolvedEvent.Event is TEvent);
 }

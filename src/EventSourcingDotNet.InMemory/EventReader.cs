@@ -9,19 +9,23 @@ internal sealed class EventReader : IEventReader
         _eventStream = eventStream;
     }
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(TAggregateId aggregateId)
+    public IAsyncEnumerable<ResolvedEvent> ByAggregate<TAggregateId>(
+        TAggregateId aggregateId,
+        StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
-        => ByCategory<TAggregateId>()
-            .Where(resolvedEvent => resolvedEvent.AggregateId.Equals(aggregateId));
+        => _eventStream.ReadEventsAsync(fromStreamPosition)
+            .Where(resolvedEvent => resolvedEvent.StreamName.Equals(
+                $"{TAggregateId.AggregateName}-{aggregateId.AsString()}"));
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>() 
+    public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
+        StreamPosition fromStreamPosition = default) 
         where TAggregateId : IAggregateId
-        => _eventStream.ReadEventsAsync()
-            .OfType<ResolvedEvent<TAggregateId>>();
+        => _eventStream.ReadEventsAsync(fromStreamPosition)
+            .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith($"{TAggregateId.AggregateName}-"));
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>()
-        where TAggregateId : IAggregateId
+    public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
+        StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent
-        => ByCategory<TAggregateId>()
+        => _eventStream.ReadEventsAsync(fromStreamPosition)
             .Where(resolvedEvent => resolvedEvent.Event is TEvent);
 }

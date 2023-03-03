@@ -7,12 +7,11 @@ public class EncryptedAttribute : Attribute
 
 public readonly record struct EncryptionKey(byte[] Key);
 
-public interface IEncryptionKeyStore<in TAggregateId>
-    where TAggregateId : IAggregateId
+public interface IEncryptionKeyStore
 {
-    ValueTask<EncryptionKey> GetOrCreateKeyAsync(TAggregateId aggregateId);
+    ValueTask<EncryptionKey> GetOrCreateKeyAsync(string encryptionKeyName);
 
-    ValueTask<EncryptionKey?> GetKeyAsync(TAggregateId aggregateId);
+    ValueTask<EncryptionKey?> GetKeyAsync(string encryptionKeyName);
 
-    ValueTask DeleteKeyAsync(TAggregateId aggregateId);
+    ValueTask DeleteKeyAsync(string encryptionKeyName);
 }

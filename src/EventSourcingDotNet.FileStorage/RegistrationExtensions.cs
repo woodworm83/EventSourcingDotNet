@@ -8,6 +8,6 @@ namespace EventSourcingDotNet;
 public static class RegistrationExtensions
 {
     public static IServiceCollection AddFileEncryptionKeyStore(this IServiceCollection services, IConfigurationSection configSection)
-        => services.AddSingleton(typeof(IEncryptionKeyStore<>), typeof(EncryptionKeyStore<>))
+        => services.AddSingleton<IEncryptionKeyStore, EncryptionKeyStore>()
             .Configure<EncryptionKeyStoreSettings>(configSection);
 }

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -8,7 +9,6 @@ namespace EventSourcingDotNet.FileStorage.UnitTests;
 public sealed class EncryptionKeyStoreTests : IDisposable
 {
     private readonly string _tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-    private readonly TestId _aggregateId = new(42);
     private readonly byte[] _key = GenerateKey(42);
 
     private IOptions<EncryptionKeyStoreSettings> Settings
@@ -19,11 +19,11 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     {
         var cryptoProviderMock = new Mock<ICryptoProvider>();
         cryptoProviderMock.Setup(x => x.GenerateKey()).Returns(new EncryptionKey(_key));
-        var keyStore = new EncryptionKeyStore<TestId>(Settings, cryptoProviderMock.Object);
+        var keyStore = new EncryptionKeyStore(Settings, cryptoProviderMock.Object);
 
-        await keyStore.GetOrCreateKeyAsync(_aggregateId);
+        await keyStore.GetOrCreateKeyAsync(GetTestKeyName());
 
-        var result = await File.ReadAllBytesAsync(GetFilePath(_aggregateId));
+        var result = await File.ReadAllBytesAsync(GetTestKeyPath());
         result.Should().Equal(_key);
     }
 
@@ -31,10 +31,10 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     public async Task ShouldReturnExistingKeyIfExists()
     {
         Directory.CreateDirectory(Path.Combine(_tempPath, TestId.AggregateName));
-        await File.WriteAllBytesAsync(GetFilePath(_aggregateId), _key);
-        var keyStore = new EncryptionKeyStore<TestId>(Settings, Mock.Of<ICryptoProvider>());
+        await File.WriteAllBytesAsync(GetTestKeyPath(), _key);
+        var keyStore = new EncryptionKeyStore(Settings, Mock.Of<ICryptoProvider>());
 
-        var result = await keyStore.GetOrCreateKeyAsync(_aggregateId);
+        var result = await keyStore.GetOrCreateKeyAsync(GetTestKeyName());
 
         result.Key.Should().Equal(_key);
     }
@@ -43,10 +43,10 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     public async Task ShouldReadExistingKey()
     {
         Directory.CreateDirectory(Path.Combine(_tempPath, TestId.AggregateName));
-        await File.WriteAllBytesAsync(GetFilePath(_aggregateId), _key);
-        var keyStore = new EncryptionKeyStore<TestId>(Settings, Mock.Of<ICryptoProvider>());
+        await File.WriteAllBytesAsync(GetTestKeyPath(), _key);
+        var keyStore = new EncryptionKeyStore(Settings, Mock.Of<ICryptoProvider>());
 
-        var result = await keyStore.GetKeyAsync(_aggregateId);
+        var result = await keyStore.GetKeyAsync(GetTestKeyName());
 
         result.Should().BeOfType<EncryptionKey>()
             .Which
@@ -56,12 +56,11 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     [Fact]
     public async Task ShouldReadExistingKeyIfAsStringReturnsNull()
     {
-        var aggregateId = new TestId(null);
         Directory.CreateDirectory(Path.Combine(_tempPath));
-        await File.WriteAllBytesAsync(GetFilePath(aggregateId), _key);
-        var keyStore = new EncryptionKeyStore<TestId>(Settings, Mock.Of<ICryptoProvider>());
+        await File.WriteAllBytesAsync(GetTestKeyPath(), _key);
+        var keyStore = new EncryptionKeyStore(Settings, Mock.Of<ICryptoProvider>());
 
-        var result = await keyStore.GetKeyAsync(aggregateId);
+        var result = await keyStore.GetKeyAsync(GetTestKeyName());
 
         result.Should().BeOfType<EncryptionKey>()
             .Which
@@ -71,9 +70,9 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     [Fact]
     public async Task ShouldReturnNullIfKeyDoesNotExist()
     {
-        var keyStore = new EncryptionKeyStore<TestId>(Settings, Mock.Of<ICryptoProvider>());
+        var keyStore = new EncryptionKeyStore(Settings, Mock.Of<ICryptoProvider>());
 
-        var result = await keyStore.GetKeyAsync(_aggregateId);
+        var result = await keyStore.GetKeyAsync(GetTestKeyName());
 
         result.Should().BeNull();
     }
@@ -82,20 +81,20 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     public async Task ShouldDeleteKey()
     {
         Directory.CreateDirectory(Path.Combine(_tempPath, TestId.AggregateName));
-        var filePath = GetFilePath(_aggregateId);
+        var filePath = GetTestKeyPath();
         await File.WriteAllBytesAsync(filePath, _key);
-        var keyStore = new EncryptionKeyStore<TestId>(Settings, Mock.Of<ICryptoProvider>());
+        var keyStore = new EncryptionKeyStore(Settings, Mock.Of<ICryptoProvider>());
 
-        await keyStore.DeleteKeyAsync(_aggregateId);
+        await keyStore.DeleteKeyAsync(GetTestKeyName());
 
         File.Exists(filePath).Should().BeFalse();
     }
-    
 
-    private string GetFilePath(TestId aggregateId)
-    {
-        return Path.Combine(_tempPath, TestId.AggregateName, aggregateId.AsString() ?? string.Empty);
-    }
+    private string GetTestKeyName([CallerMemberName] string testMethodName = "")
+        => testMethodName;
+
+    private string GetTestKeyPath([CallerMemberName] string testMethodName = "") 
+        => Path.Combine(_tempPath, GetTestKeyName(testMethodName));
 
     private static byte[] GenerateKey(int seed)
     {

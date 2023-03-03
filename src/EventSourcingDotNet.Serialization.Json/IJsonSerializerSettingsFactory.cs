@@ -2,9 +2,9 @@
 
 namespace EventSourcingDotNet.Serialization.Json;
 
-public interface IJsonSerializerSettingsFactory<in TAggregateId>
+public interface IJsonSerializerSettingsFactory
 {
-    ValueTask<JsonSerializerSettings> CreateForSerializationAsync(TAggregateId aggregateId, Type objectType);
+    ValueTask<JsonSerializerSettings> CreateForSerializationAsync(Type objectType, string? encryptionKeyName = null);
 
-    ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(TAggregateId aggregateId);
+    ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(string? encryptionKeyName = null);
 }

@@ -6,7 +6,5 @@ public static class JsonSerializerRegistrationExtensions
 {
     public static IServiceCollection AddJsonSerializer(this IServiceCollection services)
         => services
-            .AddTransient(
-                typeof(IJsonSerializerSettingsFactory<>),
-                typeof(JsonSerializerSettingsFactory<>));
+            .AddTransient<IJsonSerializerSettingsFactory, JsonSerializerSettingsFactory>();
 }

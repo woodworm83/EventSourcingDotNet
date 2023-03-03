@@ -45,6 +45,6 @@ public class InMemoryRegistrationTests
 
         serviceProvider.GetService<ISnapshotStore<TestId, TestState>>()
             .Should()
-            .BeOfType<InMemorySnapshot<TestId, TestState>>();
+            .BeOfType<InMemorySnapshotStore<TestId, TestState>>();
     }
 }

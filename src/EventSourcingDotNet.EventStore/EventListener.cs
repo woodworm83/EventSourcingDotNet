@@ -24,50 +24,48 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
 
     public EventStoreClientSettings ClientSettings { get; }
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId<TAggregateId>(
+    public IObservable<ResolvedEvent> ByAggregateId<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
-        => Observable.Create<ResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 fromStreamPosition,
                 false,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
+    public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        => Observable.Create<ResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
                 fromStreamPosition,
                 true,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>(
+    public IObservable<ResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
-        where TAggregateId : IAggregateId
         where TEvent : IDomainEvent
-        => Observable.Create<ResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByEventStreamName<TEvent>(),
                 fromStreamPosition,
                 true,
                 observer));
 
-    private async Task<IDisposable> SubscribeAsync<TAggregateId>(
+    private async Task<IDisposable> SubscribeAsync(
         string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos,
-        IObserver<ResolvedEvent<TAggregateId>> observer)
-        where TAggregateId : IAggregateId
+        IObserver<ResolvedEvent> observer)
     {
         var scope = _serviceScopeFactory.CreateScope();
         
-        var listener = new Listener<TAggregateId>(
+        var listener = new Listener(
             observer, 
-            scope.ServiceProvider.GetRequiredService<IEventSerializer<TAggregateId>>());
+            scope.ServiceProvider.GetRequiredService<IEventSerializer>());
         
         var subscription = await _client.SubscribeToStreamAsync(
             streamName,
@@ -92,15 +90,14 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         await _client.DisposeAsync();
     }
 
-    private sealed class Listener<TAggregateId>
-        where TAggregateId : IAggregateId
+    private sealed class Listener
     {
-        private readonly IObserver<ResolvedEvent<TAggregateId>> _observer;
-        private readonly IEventSerializer<TAggregateId> _eventSerializer;
+        private readonly IObserver<ResolvedEvent> _observer;
+        private readonly IEventSerializer _eventSerializer;
 
         public Listener(
-            IObserver<ResolvedEvent<TAggregateId>> observer,
-            IEventSerializer<TAggregateId> eventSerializer)
+            IObserver<ResolvedEvent> observer,
+            IEventSerializer eventSerializer)
         {
             _observer = observer;
             _eventSerializer = eventSerializer;
@@ -109,13 +106,10 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed")]
         public async Task EventAppeared(
             StreamSubscription subscription,
-            ResolvedEvent resolvedEvent,
+            global::EventStore.Client.ResolvedEvent resolvedEvent,
             CancellationToken cancellationToken)
         {
-            if (await _eventSerializer.DeserializeAsync(resolvedEvent) is { } @event)
-            {
-                _observer.OnNext(@event);
-            }
+            _observer.OnNext(await _eventSerializer.DeserializeAsync(resolvedEvent));
         }
 
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed",

@@ -7,11 +7,11 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
     where TAggregateId : IAggregateId
 {
     private readonly EventStoreClient _client;
-    private readonly IEventSerializer<TAggregateId> _eventSerializer;
+    private readonly IEventSerializer _eventSerializer;
 
     public EventStore(
         IOptions<EventStoreClientSettings> clientSettings, 
-        IEventSerializer<TAggregateId> eventSerializer)
+        IEventSerializer eventSerializer)
     {
         _eventSerializer = eventSerializer;
         ClientSettings = clientSettings.Value;
@@ -20,7 +20,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
     
     public EventStoreClientSettings ClientSettings { get; }
 
-    public async IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
+    public async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
     {
         var result = _client.ReadStreamAsync(
             Direction.Forwards,
@@ -31,13 +31,11 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
         
         await foreach (var resolvedEvent in result)
         {
-            if (await _eventSerializer.DeserializeAsync(resolvedEvent) is not { } @event) continue;
-
-            yield return @event;
+            yield return await _eventSerializer.DeserializeAsync(resolvedEvent);
         }
     }
 
-    public async Task<AggregateVersion> AppendEventsAsync(
+    public async ValueTask<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId, 
         IEnumerable<IDomainEvent> events, 
         AggregateVersion expectedVersion,

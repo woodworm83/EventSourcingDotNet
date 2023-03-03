@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 
 namespace EventSourcingDotNet;
 
@@ -10,10 +9,8 @@ public interface IAggregateId
     string? AsString();
 }
 
-// ReSharper disable once UnusedTypeParameter
-[SuppressMessage("Major Code Smell", "S2326:Unused type parameters should be removed")]
-public interface IAggregateState<out TSelf, TAggregateId>
-    where TSelf : IAggregateState<TSelf, TAggregateId>
+public interface IAggregateState<out TSelf>
+    where TSelf : IAggregateState<TSelf>
 {
     TSelf ApplyEvent(IDomainEvent @event);
 
@@ -24,7 +21,7 @@ public interface IAggregateState<out TSelf, TAggregateId>
 public sealed record Aggregate<TId, TState>(
     TId Id)
     where TId : IAggregateId
-    where TState : IAggregateState<TState, TId>, new()
+    where TState : IAggregateState<TState>, new()
 {
     /// <summary>
     /// Current version of the aggregate
@@ -59,12 +56,16 @@ public sealed record Aggregate<TId, TState>(
             _ => throw new NotSupportedException($"Validation result is not supported")
         };
 
-    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent<TId> resolvedEvent)
-        => this with
+    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent resolvedEvent)
+        => resolvedEvent.Event switch
+        {
+            null => this,
+            var @event => this with
             {
-                State = State.ApplyEvent(resolvedEvent.Event),
+                State = State.ApplyEvent(@event),
                 Version = resolvedEvent.AggregateVersion
-            };
+            }
+        };
 
     /// <summary>
     /// The current state of the aggregate.

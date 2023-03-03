@@ -6,21 +6,11 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 public class ResolvedEventTests
 {
     [Fact]
-    public void ShouldInitializeAggregateId()
-    {
-        var aggregateId = new TestId();
-        
-        var resolvedEvent = new ResolvedEvent<TestId> { AggregateId = aggregateId };
-
-        resolvedEvent.AggregateId.Should().Be(aggregateId);
-    }
-
-    [Fact]
     public void ShouldInitializeAggregateVersion()
     {
         var version = new AggregateVersion(42);
 
-        var resolvedEvent = new ResolvedEvent<TestId> {AggregateVersion = version};
+        var resolvedEvent = new ResolvedEvent {AggregateVersion = version};
 
         resolvedEvent.AggregateVersion.Should().Be(version);
     }
@@ -30,7 +20,7 @@ public class ResolvedEventTests
     {
         var streamPosition = new StreamPosition(42);
 
-        var resolvedEvent = new ResolvedEvent<TestId> {StreamPosition = streamPosition};
+        var resolvedEvent = new ResolvedEvent {StreamPosition = streamPosition};
 
         resolvedEvent.StreamPosition.Should().Be(streamPosition);
     }
@@ -40,7 +30,7 @@ public class ResolvedEventTests
     {
         var @event = new TestEvent();
 
-        var resolvedEvent = new ResolvedEvent<TestId> {Event = @event};
+        var resolvedEvent = new ResolvedEvent {Event = @event};
 
         resolvedEvent.Event.Should().Be(@event);
     }
@@ -50,7 +40,7 @@ public class ResolvedEventTests
     {
         var timestamp = DateTime.Today;
 
-        var resolvedEvent = new ResolvedEvent<TestId> {Timestamp = timestamp};
+        var resolvedEvent = new ResolvedEvent {Timestamp = timestamp};
 
         resolvedEvent.Timestamp.Should().Be(timestamp);
     }

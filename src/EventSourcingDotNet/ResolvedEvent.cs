@@ -1,27 +1,13 @@
 ﻿namespace EventSourcingDotNet;
 
-public interface IResolvedEvent
-{
-    StreamPosition StreamPosition { get; }
-    IDomainEvent Event { get; }
-    DateTime Timestamp { get; }
-    CorrelationId? CorrelationId { get; }
-    CausationId? CausationId { get; }
-}
-
-public readonly record struct ResolvedEvent<TAggregateId>(
+public readonly record struct ResolvedEvent(
         EventId Id,
-        TAggregateId AggregateId,
+        string StreamName,
         AggregateVersion AggregateVersion,
         StreamPosition StreamPosition,
-        IDomainEvent Event,
+        IDomainEvent? Event,
         DateTime Timestamp,
         CorrelationId? CorrelationId,
-        CausationId? CausationId)
-    : IResolvedEvent
-    where TAggregateId : IAggregateId
-{
-    IDomainEvent IResolvedEvent.Event => Event;
-}
+        CausationId? CausationId);
 
 public readonly record struct EventId(Guid Id);

@@ -26,6 +26,6 @@ internal static class EventDataHelper
             Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, _serializerSettings)),
             Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
-                    new EventMetadata<TAggregateId>(aggregateId, correlationId?.Id ?? Guid.NewGuid(), causationId?.Id),
+                    new EventMetadata(correlationId?.Id ?? Guid.NewGuid(), causationId?.Id),
                     _serializerSettings)));
 }

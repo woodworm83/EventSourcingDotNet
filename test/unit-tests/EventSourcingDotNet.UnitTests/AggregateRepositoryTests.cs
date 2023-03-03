@@ -36,7 +36,7 @@ public class AggregateRepositoryTests
     {
         var snapshot = new Aggregate<TestId, TestState>(new TestId());
         var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
-        snapshotProviderMock.Setup(x => x.GetLatestSnapshotAsync(It.IsAny<TestId>()))
+        snapshotProviderMock.Setup(x => x.GetAsync(It.IsAny<TestId>()))
             .ReturnsAsync(snapshot);
         var eventStoreMock = MockEventStore();
         var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object, snapshotProviderMock.Object);
@@ -105,14 +105,14 @@ public class AggregateRepositoryTests
             .Returns<TestId, AggregateVersion>(ResolveEvents);
         return mock;
 
-        async IAsyncEnumerable<ResolvedEvent<TestId>> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
+        async IAsyncEnumerable<ResolvedEvent> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
         {
             var streamPosition = currentVersion.Version;
             foreach (var @event in events)
             {
-                yield return new ResolvedEvent<TestId>(
+                yield return new ResolvedEvent(
                     new EventId(Guid.NewGuid()),
-                    aggregateId,
+                    "",
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,

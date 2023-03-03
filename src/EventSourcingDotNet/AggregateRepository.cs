@@ -9,7 +9,7 @@ namespace EventSourcingDotNet;
 /// <typeparam name="TState">The aggregate state</typeparam>
 public interface IAggregateRepository<TAggregateId, TState> 
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState, TAggregateId>, new()
+    where TState : IAggregateState<TState>, new()
 {
     /// <summary>
     /// Creates an aggregate and replays the events from the event store
@@ -43,17 +43,17 @@ public interface IAggregateRepository<TAggregateId, TState>
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState, TAggregateId>, new()
+    where TState : IAggregateState<TState>, new()
 {
     private readonly IEventStore<TAggregateId> _eventStore;
-    private readonly ISnapshotStore<TAggregateId, TState>? _snapshotProvider;
+    private readonly ISnapshotStore<TAggregateId, TState>? _snapshotStore;
 
     public AggregateRepository(
         IEventStore<TAggregateId> eventStore,
-        ISnapshotStore<TAggregateId, TState>? snapshotProvider = null)
+        ISnapshotStore<TAggregateId, TState>? snapshotStore = null)
     {
         _eventStore = eventStore;
-        _snapshotProvider = snapshotProvider;
+        _snapshotStore = snapshotStore;
     }
 
     public async Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id)
@@ -70,9 +70,9 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
 
     private async Task<Aggregate<TAggregateId, TState>?> GetSnapshotAsync(TAggregateId aggregateId)
     {
-        if (_snapshotProvider is null) return null;
+        if (_snapshotStore is null) return null;
 
-        return await _snapshotProvider.GetLatestSnapshotAsync(aggregateId);
+        return await _snapshotStore.GetAsync(aggregateId);
     }
 
     public async Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate)

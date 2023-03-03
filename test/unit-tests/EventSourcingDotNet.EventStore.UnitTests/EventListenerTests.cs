@@ -23,8 +23,8 @@ public class EventListenerTests
     public async Task ShouldNotifyEventsByAggregateId()
     {
         var aggregateId = new AggregateId();
-        await using var publisher = CreateEventListener<AggregateId>();
-        using var receiver = new ReplaySubject<ResolvedEvent<AggregateId>>();
+        await using var publisher = CreateEventListener();
+        using var receiver = new ReplaySubject<ResolvedEvent>();
         var @event = new TestEvent();
 
         using (publisher.ByAggregateId(aggregateId).Subscribe(receiver))
@@ -43,8 +43,8 @@ public class EventListenerTests
     [Fact]
     public async Task ShouldNotifyEventsByCategory()
     {
-        await using var publisher = CreateEventListener<ByCategoryId>();
-        using var receiverSubject = new ReplaySubject<ResolvedEvent<ByCategoryId>>();
+        await using var publisher = CreateEventListener();
+        using var receiverSubject = new ReplaySubject<ResolvedEvent>();
         var events = Enumerable.Range(0, 5).Select(_ => new TestEvent()).ToList();
 
         using (publisher.ByCategory<ByCategoryId>().Subscribe(receiverSubject))
@@ -67,11 +67,11 @@ public class EventListenerTests
     [Fact]
     public async Task ShouldNotifyEventsByEventType()
     {
-        await using var publisher = CreateEventListener<ByEventTypeId>();
-        using var receiverSubject = new ReplaySubject<ResolvedEvent<ByEventTypeId>>();
+        await using var publisher = CreateEventListener();
+        using var receiverSubject = new ReplaySubject<ResolvedEvent>();
         var events = Enumerable.Range(0, 5).Select(_ => new ByTypeEvent()).ToList();
 
-        using (publisher.ByEventType<ByEventTypeId, ByTypeEvent>().Subscribe(receiverSubject))
+        using (publisher.ByEventType<ByTypeEvent>().Subscribe(receiverSubject))
         {
             foreach (var @event in events)
             {
@@ -89,24 +89,22 @@ public class EventListenerTests
         }
     }
 
-    private EventListener CreateEventListener<TAggregateId>()
-        where TAggregateId : IAggregateId
+    private EventListener CreateEventListener()
     {
         var serviceProvider = new ServiceCollection()
-            .AddSingleton<IEventSerializer<TAggregateId>>(
-                new EventSerializer<TAggregateId>(
-                    new EventTypeResolver(),
-                    new JsonSerializerSettingsFactory<TAggregateId>(NullLoggerFactory.Instance)))
+            .AddSingleton<IEventSerializer>(
+                new EventSerializer(
+                    new TestEventTypeResolver(),
+                    new JsonSerializerSettingsFactory(NullLoggerFactory.Instance)))
             .BuildServiceProvider();
         return new(
             Options.Create(_container.ClientSettings),
             serviceProvider.GetRequiredService<IServiceScopeFactory>());
     }
 
-    private static async Task<IReadOnlyList<ResolvedEvent<TAggregateId>>> WaitForEvents<TAggregateId>(
-        IObservable<ResolvedEvent<TAggregateId>> source,
+    private static async Task<IReadOnlyList<ResolvedEvent>> WaitForEvents(
+        IObservable<ResolvedEvent> source,
         int count)
-        where TAggregateId : IAggregateId
         => await source
             .Take(count)
             .Timeout(TimeSpan.FromSeconds(2))

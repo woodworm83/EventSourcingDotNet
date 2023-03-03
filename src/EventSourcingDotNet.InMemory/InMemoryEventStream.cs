@@ -14,15 +14,15 @@ internal interface IInMemoryEventStream
         CausationId? causationId)
         where TAggregateId : IAggregateId;
 
-    public IAsyncEnumerable<IResolvedEvent> ReadEventsAsync();
+    public IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(StreamPosition fromStreamPosition = default);
 
-    public IObservable<IResolvedEvent> Listen();
+    public IObservable<ResolvedEvent> Listen(StreamPosition fromStreamPosition = default);
 }
 
 internal sealed class InMemoryEventStream : IInMemoryEventStream
 {
     private readonly SemaphoreSlim _semaphore = new(1);
-    private readonly SourceList<ImmutableArray<IResolvedEvent>> _events = new();
+    private readonly SourceList<ImmutableArray<ResolvedEvent>> _events = new();
     private readonly IScheduler? _scheduler;
 
     public InMemoryEventStream(IScheduler? scheduler = null)
@@ -72,8 +72,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
         => _events
             .Items
             .SelectMany(events => events)
-            .OfType<ResolvedEvent<TAggregateId>>()
-            .Where(resolvedEvent => resolvedEvent.AggregateId.Equals(aggregateId))
+            .Where(resolvedEvent => resolvedEvent.StreamName.Equals(GetStreamName(aggregateId)))
             .Select(resolvedEvent => resolvedEvent.AggregateVersion)
             .LastOrDefault();
 
@@ -89,32 +88,36 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
 
         _events.Add(
             events.Select(
-                    @event => new ResolvedEvent<TAggregateId>(
+                    @event => new ResolvedEvent(
                         new EventId(Guid.NewGuid()),
-                        aggregateId,
+                        $"{TAggregateId.AggregateName}-{aggregateId.AsString()}",
                         ++currentVersion,
                         new StreamPosition(streamPosition++),
                         @event,
                         DateTime.UtcNow,
                         correlationId,
                         causationId))
-                .Cast<IResolvedEvent>()
                 .ToImmutableArray());
 
         return currentVersion;
     }
 
+    private static string GetStreamName<TAggregateId>(TAggregateId aggregateId)
+        where TAggregateId : IAggregateId
+        => $"{TAggregateId.AggregateName}-{aggregateId.AsString()}";
 
-    public IAsyncEnumerable<IResolvedEvent> ReadEventsAsync()
+    public IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(StreamPosition fromStreamPosition = default)
         => _events.Items
             .SelectMany(events => events)
+            .SkipWhile(resolvedEvent => resolvedEvent.StreamPosition.Position < fromStreamPosition.Position)
             .ToAsyncEnumerable();
 
-    public IObservable<IResolvedEvent> Listen()
-        => Observable.Create<ImmutableArray<IResolvedEvent>>(
+    public IObservable<ResolvedEvent> Listen(StreamPosition fromStreamPosition = default)
+        => Observable.Create<ImmutableArray<ResolvedEvent>>(
                 observer => _events.Connect()
                     .OnItemAdded(observer.OnNext)
                     .Subscribe())
             .ObserveOn(_scheduler ?? new EventLoopScheduler())
-            .SelectMany(events => events);
+            .SelectMany(events => events)
+            .SkipWhile(resolvedEvent => resolvedEvent.StreamPosition.Position < fromStreamPosition.Position);
 }

@@ -2,6 +2,10 @@
   <PropertyGroup>
     <Description>Core library of EventSourcingDotNet</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(AssemblyName).*.UnitTests" />
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />

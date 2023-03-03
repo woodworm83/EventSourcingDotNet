@@ -1,45 +1,49 @@
 ﻿using EventStore.Client;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace EventSourcingDotNet.EventStore;
 
 internal sealed class EventReader : IEventReader
 {
     private readonly EventStoreClient _client;
-    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IEventSerializer _eventSerializer;
 
-    public EventReader(IServiceScopeFactory serviceScopeFactory, EventStoreClient client)
+    public EventReader(IEventSerializer eventSerializer, EventStoreClient client)
     {
-        _serviceScopeFactory = serviceScopeFactory;
+        _eventSerializer = eventSerializer;
         _client = client;
     }
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(TAggregateId aggregateId)
+    public IAsyncEnumerable<ResolvedEvent> ByAggregate<TAggregateId>(
+        TAggregateId aggregateId,
+        StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
-        => ReadEventsAsync<TAggregateId>(
+        => ReadEventsAsync(
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
-            global::EventStore.Client.StreamPosition.Start);
+            fromStreamPosition);
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>() 
+    public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
+        StreamPosition fromStreamPosition = default) 
         where TAggregateId : IAggregateId
-        => ReadEventsAsync<TAggregateId>(
+        => ReadEventsAsync(
             StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
-            global::EventStore.Client.StreamPosition.Start);
+            fromStreamPosition);
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByEventType<TAggregateId, TEvent>()
+    public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
+        StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent
-        where TAggregateId : IAggregateId
-        => ReadEventsAsync<TAggregateId>(
+        => ReadEventsAsync(
             StreamNamingConvention.GetByEventStreamName<TEvent>(),
-            global::EventStore.Client.StreamPosition.Start);
-    
-    private async IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync<TAggregateId>(string streamName, global::EventStore.Client.StreamPosition direction)
-        where TAggregateId : IAggregateId
-    {
-        using var scope = _serviceScopeFactory.CreateScope();
-        var eventSerializer = scope.ServiceProvider.GetRequiredService<IEventSerializer<TAggregateId>>();
+            fromStreamPosition);
 
-        if (_client.ReadStreamAsync(Direction.Forwards, streamName, direction) is not { } result)
+    private static global::EventStore.Client.StreamPosition GetRevision(StreamPosition streamPosition)
+        => global::EventStore.Client.StreamPosition.FromStreamRevision(
+            new StreamRevision(streamPosition.Position));
+    
+    private async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
+        string streamName, 
+        StreamPosition fromStreamPosition)
+    {
+        if (_client.ReadStreamAsync(Direction.Forwards, streamName, GetRevision(fromStreamPosition)) is not { } result)
             yield break;
 
         if (await result.ReadState == ReadState.StreamNotFound)
@@ -47,10 +51,7 @@ internal sealed class EventReader : IEventReader
 
         await foreach (var @event in result)
         {
-            if (await eventSerializer.DeserializeAsync(@event) is not { } resolvedEvent)
-                continue;
-
-            yield return resolvedEvent;
+            yield return await _eventSerializer.DeserializeAsync(@event);
         }
     }
 }

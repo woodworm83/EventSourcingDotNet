@@ -1,8 +1,4 @@
-﻿using System.Reactive;
-using System.Reactive.Linq;
-using FluentAssertions;
-using Microsoft.Extensions.Hosting;
-using Moq;
+﻿using FluentAssertions;
 using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;
@@ -10,51 +6,25 @@ namespace EventSourcingDotNet.InMemory.UnitTests;
 public class InMemorySnapshotTests
 {
     [Fact]
-    public async Task ShouldReturnNullWhenNoEventsArePublished()
+    public async Task ShouldReturnNullWhenNoSnapshotWasStored()
     {
-        var eventPublisherMock = new Mock<IEventListener>();
-        eventPublisherMock.Setup(x => x.ByCategory<TestId>(It.IsAny<StreamPosition>()))
-            .Returns(Observable.Never<ResolvedEvent<TestId>>());
-        var snapshot = new InMemorySnapshot<TestId, TestState>(eventPublisherMock.Object);
+        var snapshot = new InMemorySnapshotStore<TestId, TestState>();
 
-        using (Run(snapshot))
-        {
-            var result = await snapshot.GetLatestSnapshotAsync(new TestId());
-                
-            result.Should().BeNull();
-        }
+        var result = await snapshot.GetAsync(new TestId());
+        
+        result.Should().BeNull();
     }
 
     [Fact]
     public async Task ShouldReturnSnapshot()
     {
-        var aggregateId = new TestId();
-        var @event = new TestEvent();
-        var eventPublisherMock = new Mock<IEventListener>();
-        eventPublisherMock.Setup(x => x.ByCategory<TestId>(It.IsAny<StreamPosition>()))
-            .Returns(Observable.Return(new ResolvedEvent<TestId> {AggregateId = aggregateId, Event = @event}));
-        var snapshot = new InMemorySnapshot<TestId, TestState>(eventPublisherMock.Object);
+        var aggregate = new Aggregate<TestId, TestState>(new TestId());
+        var snapshot = new InMemorySnapshotStore<TestId, TestState>();
+        
+        await snapshot.SetAsync(aggregate);
 
-        using (Run(snapshot))
-        {
-            var result = await snapshot.GetLatestSnapshotAsync(aggregateId);
+        var result = await snapshot.GetAsync(aggregate.Id);
                 
-            result.Should().BeOfType<Aggregate<TestId, TestState>>()
-                .Which
-                .Id.Should().Be(aggregateId);
-        }
+        result.Should().BeSameAs(aggregate);
     }
-
-    private IDisposable Run(IHostedService service)
-        => Observable.Create<Unit>(
-            async (_, stoppingToken) =>
-            {
-                await service.StartAsync(CancellationToken.None);
-                var tcs = new TaskCompletionSource();
-                stoppingToken.Register(tcs.SetResult);
-                await tcs.Task;
-                await service.StopAsync(CancellationToken.None);
-            })
-            .Subscribe();
-
 }

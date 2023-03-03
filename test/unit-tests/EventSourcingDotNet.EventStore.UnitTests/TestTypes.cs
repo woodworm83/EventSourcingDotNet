@@ -20,3 +20,15 @@ public sealed record ByTypeEvent(Guid Id) : IDomainEvent
 public sealed record EncryptedTestEvent(
     [property: Encrypted] string Value)
     : IDomainEvent;
+
+internal sealed class TestEventTypeResolver : IEventTypeResolver
+{
+    public Type? GetEventType(string eventName)
+        => eventName switch
+        {
+            nameof(TestEvent) => typeof(TestEvent),
+            nameof(ByTypeEvent) => typeof(ByTypeEvent),
+            nameof(EncryptedTestEvent) => typeof(EncryptedTestEvent),
+            _ => null
+        };
+}

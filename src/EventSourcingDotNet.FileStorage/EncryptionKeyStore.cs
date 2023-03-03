@@ -7,8 +7,7 @@ public sealed class EncryptionKeyStoreSettings
     public string? StoragePath { get; set; }
 };
 
-internal sealed class EncryptionKeyStore<TAggregateId> : IEncryptionKeyStore<TAggregateId>
-    where TAggregateId : IAggregateId
+internal sealed class EncryptionKeyStore : IEncryptionKeyStore
 {
     private readonly EncryptionKeyStoreSettings _settings;
     private readonly ICryptoProvider _cryptoProvider;
@@ -19,9 +18,9 @@ internal sealed class EncryptionKeyStore<TAggregateId> : IEncryptionKeyStore<TAg
         _settings = settings.Value;
     }
 
-    public async ValueTask<EncryptionKey> GetOrCreateKeyAsync(TAggregateId aggregateId)
+    public async ValueTask<EncryptionKey> GetOrCreateKeyAsync(string encryptionKeyName)
     {
-        var file = GetFileInfo(aggregateId);
+        var file = GetFileInfo(encryptionKeyName);
         if (await GetKeyAsync(file) is { } encryptionKey) return encryptionKey;
 
         if (file.Directory is {Exists: false} directory)
@@ -34,8 +33,8 @@ internal sealed class EncryptionKeyStore<TAggregateId> : IEncryptionKeyStore<TAg
         return encryptionKey;
     }
 
-    public async ValueTask<EncryptionKey?> GetKeyAsync(TAggregateId aggregateId)
-        => await GetKeyAsync(GetFileInfo(aggregateId));
+    public async ValueTask<EncryptionKey?> GetKeyAsync(string encryptionKeyName)
+        => await GetKeyAsync(GetFileInfo(encryptionKeyName));
     
     private static async ValueTask<EncryptionKey?> GetKeyAsync(FileInfo file)
     {
@@ -44,9 +43,9 @@ internal sealed class EncryptionKeyStore<TAggregateId> : IEncryptionKeyStore<TAg
         return new EncryptionKey(await File.ReadAllBytesAsync(file.FullName));
     }
 
-    public ValueTask DeleteKeyAsync(TAggregateId aggregateId)
+    public ValueTask DeleteKeyAsync(string encryptionKeyName)
     {
-        if (GetFileInfo(aggregateId) is {Exists: true} file)
+        if (GetFileInfo(encryptionKeyName) is {Exists: true} file)
         {
             file.Delete();
         }
@@ -54,10 +53,10 @@ internal sealed class EncryptionKeyStore<TAggregateId> : IEncryptionKeyStore<TAg
         return ValueTask.CompletedTask;
     }
     
-    private FileInfo GetFileInfo(TAggregateId aggregateId)
+    private FileInfo GetFileInfo(string encryptionKeyName)
     {
         var storagePath = _settings.StoragePath ?? "keys";
         return new FileInfo(
-            Path.Combine(storagePath, TAggregateId.AggregateName, aggregateId.AsString() ?? string.Empty));
+            Path.Combine(storagePath, encryptionKeyName));
     }
 }

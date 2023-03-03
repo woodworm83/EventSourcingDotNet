@@ -16,6 +16,7 @@ public static class RegistrationExtensions
         configure(builder);
         builder.ConfigureServices(services);
         return services
+            .AddSingleton<IEventTypeResolver, EventTypeResolver>()
             .AddTransient(typeof(IAggregateRepository<,>), typeof(AggregateRepository<,>));
     }
 
@@ -38,14 +39,14 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
 
     public AggregateBuilder AddAggregate<TAggregateId, TState>()
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>
+        where TState : IAggregateState<TState>
         => CreateAggregateBuilder(typeof(TAggregateId), ImmutableArray.Create(typeof(TState)));
 
     public AggregateBuilder AddAggregate<TAggregateId>(params Type[] stateTypes)
         where TAggregateId : IAggregateId
     {
         var aggregateIdType = typeof(TAggregateId);
-        CheckStateTypes(aggregateIdType, stateTypes);
+        CheckStateTypes(stateTypes);
         return CreateAggregateBuilder(aggregateIdType, stateTypes.ToImmutableArray());
     }
 
@@ -61,10 +62,10 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
             ? configuration.Builder
             : _defaults;
 
-    private static void CheckStateTypes(Type aggregateIdType, IEnumerable<Type> stateTypes)
+    private static void CheckStateTypes(IEnumerable<Type> stateTypes)
     {
         var exceptions = stateTypes
-            .Where(stateType => !IsValidStateType(stateType, aggregateIdType))
+            .Where(stateType => !IsValidStateType(stateType))
             .Select(stateType => new InvalidOperationException(
                 $"Type {stateType.Name} is not assignable to type IAggregateState<TState, TAggregateId>"))
             .ToList();
@@ -80,13 +81,12 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
         }
     }
 
-    private static bool IsValidStateType(Type stateType, Type aggregateIdType)
+    private static bool IsValidStateType(Type stateType)
     {
         var hasAggregateIdType = false;
         foreach (var typeArguments in GetAggregateStateTypeArguments(stateType))
         {
             if (typeArguments[0] != stateType) return false;
-            if (typeArguments[1] != aggregateIdType) continue;
 
             hasAggregateIdType = true;
         }
@@ -97,7 +97,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
     private static IEnumerable<Type[]> GetAggregateStateTypeArguments(Type stateType)
         => stateType.GetInterfaces()
             .Where(x => x.IsGenericType)
-            .Where(x => x.GetGenericTypeDefinition() == typeof(IAggregateState<,>))
+            .Where(x => x.GetGenericTypeDefinition() == typeof(IAggregateState<>))
             .Select(x => x.GenericTypeArguments);
 
     public AggregateBuilder Scan(params Type[] assemblyMarkerTypes)
@@ -134,7 +134,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
         {
             if (!@interface.IsGenericType) continue;
             var genericTypeDefinition = @interface.GetGenericTypeDefinition();
-            if (genericTypeDefinition != typeof(IAggregateState<,>)) continue;
+            if (genericTypeDefinition != typeof(IAggregateState<>)) continue;
             if (@interface.GenericTypeArguments is not [{ } stateType, { } aggregateIdType]) continue;
 
             yield return (aggregateIdType, stateType);

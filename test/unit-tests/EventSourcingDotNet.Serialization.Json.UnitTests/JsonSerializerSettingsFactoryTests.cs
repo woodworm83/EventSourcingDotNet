@@ -10,9 +10,9 @@ public class JsonSerializerSettingsFactoryTests
     [Fact]
     public async Task ShouldReturnDefaultContractResolverWhenTypeDoesNotHaveEncryptedProperties()
     {
-        var settingsFactory = new JsonSerializerSettingsFactory<TestId>(NullLoggerFactory.Instance);
+        var settingsFactory = new JsonSerializerSettingsFactory(NullLoggerFactory.Instance);
 
-        var settings = await settingsFactory.CreateForSerializationAsync(new TestId(), typeof(TestTypeWithoutEncryptedProperties));
+        var settings = await settingsFactory.CreateForSerializationAsync(typeof(TestTypeWithoutEncryptedProperties), "");
 
         settings.ContractResolver.Should().BeOfType<DefaultContractResolver>();
     }
@@ -20,9 +20,9 @@ public class JsonSerializerSettingsFactoryTests
     [Fact]
     public async Task ShouldReturnSerializationContractResolverWhenTypeHasEncryptedProperties()
     {
-        var settingsFactory = new JsonSerializerSettingsFactory<TestId>(NullLoggerFactory.Instance);
+        var settingsFactory = new JsonSerializerSettingsFactory(NullLoggerFactory.Instance);
 
-        var settings = await settingsFactory.CreateForSerializationAsync(new TestId(), typeof(TestTypeWithEncryptedProperties));
+        var settings = await settingsFactory.CreateForSerializationAsync(typeof(TestTypeWithEncryptedProperties), "");
 
         settings.ContractResolver.Should().BeOfType<SerializationContractResolver>();
     }
@@ -30,9 +30,9 @@ public class JsonSerializerSettingsFactoryTests
     [Fact]
     public async Task ShouldReturnDeserializationContractResolver()
     {
-        var settingsFactory = new JsonSerializerSettingsFactory<TestId>(NullLoggerFactory.Instance);
+        var settingsFactory = new JsonSerializerSettingsFactory(NullLoggerFactory.Instance);
 
-        var settings = await settingsFactory.CreateForDeserializationAsync(new TestId());
+        var settings = await settingsFactory.CreateForDeserializationAsync("");
 
         settings.ContractResolver.Should().BeOfType<DeserializationContractResolver>();
     }

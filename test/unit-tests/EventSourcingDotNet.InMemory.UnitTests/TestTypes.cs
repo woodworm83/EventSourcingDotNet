@@ -10,10 +10,10 @@ internal readonly record struct TestId(Guid Id) : IAggregateId
     
     public static string AggregateName => "test";
 
-    public string AsString() => string.Empty;
+    public string AsString() => Id.ToString();
 }
 
-internal sealed record TestState : IAggregateState<TestState, TestId>
+internal sealed record TestState : IAggregateState<TestState>
 {
     public TestState ApplyEvent(IDomainEvent @event) => this;
 }

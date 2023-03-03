@@ -4,51 +4,48 @@ using Newtonsoft.Json.Serialization;
 
 namespace EventSourcingDotNet.Serialization.Json;
 
-public sealed class JsonSerializerSettingsFactory<TAggregateId> : IJsonSerializerSettingsFactory<TAggregateId>
-    where TAggregateId : IAggregateId
+public sealed class JsonSerializerSettingsFactory : IJsonSerializerSettingsFactory
 {
     private readonly ILoggerFactory _loggerFactory;
-    private readonly IEncryptionKeyStore<TAggregateId>? _encryptionKeyStore;
     private readonly ICryptoProvider? _cryptoProvider;
+    private readonly IEncryptionKeyStore? _encryptionKeyStore;
 
     public JsonSerializerSettingsFactory(
-        ILoggerFactory loggerFactory,
-        IEncryptionKeyStore<TAggregateId>? encryptionKeyStore = null,
-        ICryptoProvider? cryptoProvider = null)
+        ILoggerFactory loggerFactory, 
+        ICryptoProvider? cryptoProvider = null, 
+        IEncryptionKeyStore? encryptionKeyStore = null)
     {
         _loggerFactory = loggerFactory;
         _encryptionKeyStore = encryptionKeyStore;
         _cryptoProvider = cryptoProvider;
     }
 
-    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(
-        TAggregateId aggregateId,
-        Type objectType)
+    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(Type objectType, string? encryptionKeyName = null)
         => new()
         {
             ContractResolver = objectType.HasEncryptedProperties()
                 ? new SerializationContractResolver(
                     _cryptoProvider,
-                    await GetEncryptionKey(aggregateId),
+                    await GetKeyForEncryptionAsync(encryptionKeyName),
                     _loggerFactory.CreateLogger<SerializationContractResolver>())
                 : new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()}
         };
 
-    private async Task<EncryptionKey?> GetEncryptionKey(TAggregateId aggregateId)
-        => _encryptionKeyStore is not null
-            ? await _encryptionKeyStore.GetOrCreateKeyAsync(aggregateId)
+    private async ValueTask<EncryptionKey?> GetKeyForEncryptionAsync(string? encryptionKeyName)
+        => _encryptionKeyStore is not null && encryptionKeyName is not null
+            ? await _encryptionKeyStore.GetOrCreateKeyAsync(encryptionKeyName)
             : null;
 
-    public async ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(TAggregateId aggregateId)
+    public async ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(string? encryptionKeyName = null)
         => new()
         {
             ContractResolver = new DeserializationContractResolver(
                 _cryptoProvider,
-                await GetDecryptionKey(aggregateId))
+                await GetKeyForDecryptionAsync(encryptionKeyName))
         };
 
-    private async Task<EncryptionKey?> GetDecryptionKey(TAggregateId aggregateId)
-        => _encryptionKeyStore is not null
-            ? await _encryptionKeyStore.GetKeyAsync(aggregateId)
+    private async ValueTask<EncryptionKey?> GetKeyForDecryptionAsync(string? encryptionKeyName)
+        => _encryptionKeyStore is not null && encryptionKeyName is not null
+            ? await _encryptionKeyStore.GetKeyAsync(encryptionKeyName)
             : null;
 }

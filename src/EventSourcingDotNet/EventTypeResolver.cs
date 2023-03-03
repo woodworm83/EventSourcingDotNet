@@ -1,6 +1,6 @@
-﻿namespace EventSourcingDotNet.EventStore;
+﻿namespace EventSourcingDotNet;
 
-internal interface IEventTypeResolver
+public interface IEventTypeResolver
 {
     Type? GetEventType(string eventName);
 }
@@ -11,13 +11,11 @@ internal sealed class EventTypeResolver : IEventTypeResolver
 
     public EventTypeResolver()
     {
-        var eventTypes = AppDomain.CurrentDomain
+        _eventTypes = AppDomain.CurrentDomain
             .GetAssemblies()
             .SelectMany(assembly => assembly.GetTypes())
             .Where(type => !type.IsAbstract && type.IsAssignableTo(typeof(IDomainEvent)))
-            .ToList();
-            
-        _eventTypes = eventTypes.ToDictionary(StreamNamingConvention.GetEventTypeName);
+            .ToDictionary(type => type.Name);
     }
 
     public Type? GetEventType(string eventName)
