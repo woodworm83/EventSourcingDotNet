@@ -1,11 +1,8 @@
-﻿using LiteDB;
-
-namespace EventSourcingDotNet.LiteDb;
+﻿namespace EventSourcingDotNet.LiteDb;
 
 internal sealed class LiteDbEventStore<TAggregateId> : IEventStore<TAggregateId> 
     where TAggregateId : IAggregateId
 {
-    private readonly BsonMapper _mapper = new();
     private readonly ILiteDbEventStream _eventStream;
     private readonly IEventSerializer _eventSerializer;
 

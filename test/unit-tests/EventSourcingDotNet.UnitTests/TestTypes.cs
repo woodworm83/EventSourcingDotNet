@@ -18,8 +18,8 @@ internal sealed record TestState(int Value) : IAggregateState<TestState, TestId>
     public TestState ApplyEvent(IDomainEvent @event)
         => @event switch
         {
-            TestEvent testEvent => this with {Value = testEvent.NewValue},
-            ValueUpdatedEvent valueUpdated => this with {Value = valueUpdated.NewValue},
+            TestEvent testEvent => new TestState(testEvent.NewValue),
+            ValueUpdatedEvent valueUpdated => new TestState(valueUpdated.NewValue),
             _ => this
         };
     

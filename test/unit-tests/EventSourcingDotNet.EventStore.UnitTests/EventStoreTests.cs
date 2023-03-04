@@ -1,8 +1,8 @@
 using System.Text;
 using EventSourcingDotNet.Serialization.Json;
+using EventStore.Client;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
@@ -153,8 +153,8 @@ public class EventStoreTests
 
     private EventStore<TestId> CreateEventStore(IEventSerializer? eventSerializer = null)
         => new(
-            Options.Create(_container.ClientSettings),
-            eventSerializer ?? new EventSerializer(_eventTypeResolver, _serializerSettingsFactory));
+            eventSerializer ?? new EventSerializer(_eventTypeResolver, _serializerSettingsFactory),
+            new EventStoreClient(_container.ClientSettings));
 
     private IAsyncEnumerable<EventMetadata?> ReadEventMetadata(TestId aggregateId) 
         => _container.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))

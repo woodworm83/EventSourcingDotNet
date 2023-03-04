@@ -110,7 +110,6 @@ public class EventSerializerTests
     [Fact]
     public async Task ShouldGetDeserializationOptionsFromFactory()
     {
-        var aggregateId = new TestId();
         var serializerSettingsFactoryMock = new Mock<IJsonSerializerSettingsFactory>();
         var serializer = new EventSerializer(_eventTypeResolver, serializerSettingsFactoryMock.Object);
 
