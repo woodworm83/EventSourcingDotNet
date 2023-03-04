@@ -1,5 +1,4 @@
 ﻿using EventStore.Client;
-using Microsoft.Extensions.Options;
 
 namespace EventSourcingDotNet.EventStore;
 
@@ -9,16 +8,13 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
     private readonly EventStoreClient _client;
     private readonly IEventSerializer _eventSerializer;
 
-    public EventStore(
-        IOptions<EventStoreClientSettings> clientSettings, 
-        IEventSerializer eventSerializer)
+    public EventStore( 
+        IEventSerializer eventSerializer,
+        EventStoreClient eventStoreClient)
     {
         _eventSerializer = eventSerializer;
-        ClientSettings = clientSettings.Value;
-        _client = new EventStoreClient(clientSettings);
+        _client = eventStoreClient;
     }
-    
-    public EventStoreClientSettings ClientSettings { get; }
 
     public async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
     {
