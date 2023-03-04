@@ -39,7 +39,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
 
     public AggregateBuilder AddAggregate<TAggregateId, TState>()
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState>
+        where TState : IAggregateState<TState, TAggregateId>
         => CreateAggregateBuilder(typeof(TAggregateId), ImmutableArray.Create(typeof(TState)));
 
     public AggregateBuilder AddAggregate<TAggregateId>(params Type[] stateTypes)
@@ -97,7 +97,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
     private static IEnumerable<Type[]> GetAggregateStateTypeArguments(Type stateType)
         => stateType.GetInterfaces()
             .Where(x => x.IsGenericType)
-            .Where(x => x.GetGenericTypeDefinition() == typeof(IAggregateState<>))
+            .Where(x => x.GetGenericTypeDefinition() == typeof(IAggregateState<,>))
             .Select(x => x.GenericTypeArguments);
 
     public AggregateBuilder Scan(params Type[] assemblyMarkerTypes)
@@ -134,7 +134,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
         {
             if (!@interface.IsGenericType) continue;
             var genericTypeDefinition = @interface.GetGenericTypeDefinition();
-            if (genericTypeDefinition != typeof(IAggregateState<>)) continue;
+            if (genericTypeDefinition != typeof(IAggregateState<,>)) continue;
             if (@interface.GenericTypeArguments is not [{ } stateType, { } aggregateIdType]) continue;
 
             yield return (aggregateIdType, stateType);

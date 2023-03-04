@@ -55,14 +55,10 @@ public class RegistrationTests
     }
 
 
-    [Theory]
-    [MemberData(nameof(GetAddAggregateMethods))]
-    public void EventStoreCanBeResolved(Func<EventSourcingBuilder, AggregateBuilder> addAggregateCallback)
+    [Fact]
+    public void EventStoreCanBeResolved()
     {
-        var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => addAggregateCallback(
-                builder.UseEventStoreProvider(_eventStoreProviderMock.Object)))
-            .BuildServiceProvider();
+        var serviceProvider = BuildServiceProvider();
 
         var eventStore = serviceProvider.GetService<IEventStore<TestId>>();
 
@@ -73,11 +69,7 @@ public class RegistrationTests
     [MemberData(nameof(GetAddAggregateMethods))]
     public void SnapshotProviderCanBeResolved(Func<EventSourcingBuilder, AggregateBuilder> addAggregateCallback)
     {
-        var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => addAggregateCallback(
-                    builder.UseEventStoreProvider(_eventStoreProviderMock.Object))
-                .UseSnapshotProvider(_snapshotProviderMock.Object))
-            .BuildServiceProvider();
+        var serviceProvider = BuildServiceProvider(addAggregateCallback, useSnapshotProvider: true);
 
         var eventStore = serviceProvider.GetService<ISnapshotStore<TestId, TestState>>();
 
@@ -87,9 +79,7 @@ public class RegistrationTests
     [Fact]
     public void ShouldResolveAesCryptoProviderByDefault()
     {
-        var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => builder.UseEventStoreProvider(Mock.Of<IEventStoreProvider>()))
-            .BuildServiceProvider();
+        var serviceProvider = BuildServiceProvider();
 
         serviceProvider.GetService<ICryptoProvider>()
             .Should().BeOfType<AesCryptoProvider>();
@@ -98,11 +88,7 @@ public class RegistrationTests
     [Fact]
     public void ShouldResolveAesCryptoProviderWhenSpecified()
     {
-        var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => builder
-                .UseEventStoreProvider(Mock.Of<IEventStoreProvider>())
-                .UseAesCryptoProvider())
-            .BuildServiceProvider();
+        var serviceProvider = BuildServiceProvider(useAesCryptoProvider: true);
 
         serviceProvider.GetService<ICryptoProvider>()
             .Should().BeOfType<AesCryptoProvider>();
@@ -111,15 +97,34 @@ public class RegistrationTests
     [Fact]
     public void ShouldResolveSpecifiedCryptoProvider()
     {
-        var serviceProvider = new ServiceCollection()
-            .AddEventSourcing(builder => builder
-                .UseEventStoreProvider(Mock.Of<IEventStoreProvider>())
-                .UseCryptoProvider<TestCryptoProvider>())
-            .BuildServiceProvider();
+        var serviceProvider = BuildServiceProvider(useTestCryptoProvider: true);
 
         serviceProvider.GetService<ICryptoProvider>()
             .Should().BeOfType<TestCryptoProvider>();
     }
+
+    private IServiceProvider BuildServiceProvider(
+        Func<EventSourcingBuilder, AggregateBuilder>? addAggregateCallback = null,
+        bool useSnapshotProvider = false,
+        bool useTestCryptoProvider = false,
+        bool useAesCryptoProvider = false)
+        => new ServiceCollection()
+            .AddEventSourcing(
+                builder =>
+                {
+                    builder.UseEventStoreProvider(_eventStoreProviderMock.Object);
+                    var aggregate = addAggregateCallback?.Invoke(builder);
+
+                    if (useSnapshotProvider)
+                        aggregate?.UseSnapshotProvider(_snapshotProviderMock.Object);
+
+                    if (useTestCryptoProvider)
+                        builder.UseCryptoProvider<TestCryptoProvider>();
+
+                    if (useAesCryptoProvider)
+                        builder.UseAesCryptoProvider();
+                })
+            .BuildServiceProvider();
 
     private static IEnumerable<object[]> GetAddAggregateMethods()
         => new Func<EventSourcingBuilder, AggregateBuilder>[]

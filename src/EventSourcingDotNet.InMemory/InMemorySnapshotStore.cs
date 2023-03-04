@@ -2,7 +2,7 @@
 
 public sealed class InMemorySnapshotStore<TAggregateId, TState> : ISnapshotStore<TAggregateId, TState> 
     where TAggregateId : IAggregateId 
-    where TState : IAggregateState<TState>, new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     private readonly Dictionary<TAggregateId, Aggregate<TAggregateId, TState>> _snapshots = new();
     private readonly SemaphoreSlim _semaphore = new(1);

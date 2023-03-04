@@ -9,7 +9,7 @@ internal readonly record struct TestId(int Id = default) : IAggregateId
     public string AsString() => Id.ToString();
 }
 
-internal sealed record TestState(int Value) : IAggregateState<TestState>
+internal sealed record TestState(int Value) : IAggregateState<TestState, TestId>
 {
     public TestState() : this(0)
     {

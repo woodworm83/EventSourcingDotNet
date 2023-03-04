@@ -9,7 +9,7 @@ namespace EventSourcingDotNet;
 /// <typeparam name="TState">The aggregate state</typeparam>
 public interface IAggregateRepository<TAggregateId, TState> 
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState>, new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     /// <summary>
     /// Creates an aggregate and replays the events from the event store
@@ -43,7 +43,7 @@ public interface IAggregateRepository<TAggregateId, TState>
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState>, new()
+    where TState : IAggregateState<TState, TAggregateId>, new()
 {
     private readonly IEventStore<TAggregateId> _eventStore;
     private readonly ISnapshotStore<TAggregateId, TState>? _snapshotStore;

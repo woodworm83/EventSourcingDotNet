@@ -9,8 +9,8 @@ public interface IAggregateId
     string? AsString();
 }
 
-public interface IAggregateState<out TSelf>
-    where TSelf : IAggregateState<TSelf>
+public interface IAggregateState<out TSelf, TId>
+    where TSelf : IAggregateState<TSelf, TId>
 {
     TSelf ApplyEvent(IDomainEvent @event);
 
@@ -21,7 +21,7 @@ public interface IAggregateState<out TSelf>
 public sealed record Aggregate<TId, TState>(
     TId Id)
     where TId : IAggregateId
-    where TState : IAggregateState<TState>, new()
+    where TState : IAggregateState<TState, TId>, new()
 {
     /// <summary>
     /// Current version of the aggregate

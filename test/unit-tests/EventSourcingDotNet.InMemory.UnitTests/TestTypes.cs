@@ -13,7 +13,7 @@ internal readonly record struct TestId(Guid Id) : IAggregateId
     public string AsString() => Id.ToString();
 }
 
-internal sealed record TestState : IAggregateState<TestState>
+internal sealed record TestState : IAggregateState<TestState, TestId>
 {
     public TestState ApplyEvent(IDomainEvent @event) => this;
 }
