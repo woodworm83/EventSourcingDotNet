@@ -56,7 +56,7 @@ public class RegistrationTests
 
 
     [Fact]
-    public void EventStoreCanBeResolved()
+    public void ShouldResolveEventStore()
     {
         var serviceProvider = BuildServiceProvider();
 

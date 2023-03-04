@@ -19,7 +19,7 @@ public static class EventStoreRegistrationExtensions
 
     public static EventSourcingBuilder UseEventStore(
         this EventSourcingBuilder builder,
-        EventStoreClientSettings? clientSettings = null)
+        EventStoreClientSettings clientSettings)
         => builder.UseEventStoreProvider(
             new EventStoreProvider(clientSettings));
 }

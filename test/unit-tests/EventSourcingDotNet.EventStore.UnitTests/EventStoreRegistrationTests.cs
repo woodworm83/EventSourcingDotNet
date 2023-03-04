@@ -9,34 +9,11 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 
 public class EventStoreRegistrationTests
 {
-    private static ServiceProvider BuildServiceProvider(string? connectionStringForTestAggregate = null)
-    {
-        return new ServiceCollection()
-            .ConfigureEventStore("esdb://localhost:2113")
-            .AddEventSourcing(builder => AddTestAggregate(connectionStringForTestAggregate, builder))
-            .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
-            .BuildServiceProvider();
-    }
-
-    private static void AddTestAggregate(string? connectionStringForTestAggregate, EventSourcingBuilder builder)
-    {
-        builder.AddAggregate<TestId>();
-        
-        if (connectionStringForTestAggregate is not null)
-        {
-            builder.UseEventStore(connectionStringForTestAggregate);
-        }
-        else
-        {
-            builder.UseEventStore();
-        }
-    }
-
     [Fact]
     public void ShouldResolveEventStore()
     {
         var serviceProvider = BuildServiceProvider();
-        
+
         var eventStore = serviceProvider.GetService<IEventStore<TestId>>();
 
         eventStore.Should().BeOfType<EventStore<TestId>>();
@@ -46,37 +23,29 @@ public class EventStoreRegistrationTests
     public void ShouldResolveEventPublisher()
     {
         var serviceProvider = BuildServiceProvider();
-        
+
         var eventStore = serviceProvider.GetService<IEventListener>();
-        
+
         eventStore.Should().BeOfType<EventListener>();
     }
 
-    [Fact]
-    public void ShouldResolveEventStoreWithConnectionString()
+    [Theory]
+    [InlineData(typeof(IEventListener), typeof(EventListener))]
+    [InlineData(typeof(IEventReader), typeof(EventReader))]
+    public void ShouldResolveService(Type serviceType, Type implementationType)
     {
-        const string connectionString = "esdb://localhost:9876";
-        var clientSettings = EventStoreClientSettings.Create(connectionString);
-        var serviceProvider = BuildServiceProvider(connectionString);
+        var serviceProvider = BuildServiceProvider();
 
-        var eventStore = serviceProvider.GetService<IEventStore<TestId>>();
+        var service = serviceProvider.GetService(serviceType);
 
-        eventStore.Should().BeOfType<EventStore<TestId>>()
-            .Which
-            .ClientSettings.ConnectivitySettings.Should().BeEquivalentTo(clientSettings.ConnectivitySettings);
+        service.Should().BeOfType(implementationType);
     }
 
-    [Fact]
-    public void ShouldResolveEventPublisherWithConnectionString()
-    {
-        const string connectionString = "esdb://localhost:9876";
-        var clientSettings = EventStoreClientSettings.Create(connectionString);
-        var serviceProvider = BuildServiceProvider(connectionString);
-
-        var eventStore = serviceProvider.GetService<IEventListener>();
-
-        eventStore.Should().BeOfType<EventListener>()
-            .Which
-            .ClientSettings.ConnectivitySettings.Should().BeEquivalentTo(clientSettings.ConnectivitySettings);
-    }
+    private IServiceProvider BuildServiceProvider()
+        => new ServiceCollection()
+            .AddEventSourcing(builder => builder
+                .UseEventStore(EventStoreClientSettings.Create("esdb://localhost:2113"))
+                .AddAggregate<TestId>())
+            .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
+            .BuildServiceProvider();
 }

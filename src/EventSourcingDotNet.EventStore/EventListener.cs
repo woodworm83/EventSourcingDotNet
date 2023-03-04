@@ -1,28 +1,21 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using EventStore.Client;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace EventSourcingDotNet.EventStore;
 
 internal sealed class EventListener : IEventListener, IAsyncDisposable
 {
+    private readonly IEventSerializer _eventSerializer;
     private readonly EventStoreClient _client;
-    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public EventListener(
-        IOptions<EventStoreClientSettings> options,
-        IServiceScopeFactory serviceScopeFactory)
+        IEventSerializer eventSerializer,
+        EventStoreClient eventStoreClient)
     {
-        _serviceScopeFactory = serviceScopeFactory;
-        ClientSettings = options.Value;
-
-        _client = new EventStoreClient(options);
+        _eventSerializer = eventSerializer;
+        _client = eventStoreClient;
     }
-
-    public EventStoreClientSettings ClientSettings { get; }
 
     public IObservable<ResolvedEvent> ByAggregateId<TAggregateId>(
         TAggregateId aggregateId,
@@ -61,23 +54,15 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         bool resolveLinkTos,
         IObserver<ResolvedEvent> observer)
     {
-        var scope = _serviceScopeFactory.CreateScope();
-        
-        var listener = new Listener(
-            observer, 
-            scope.ServiceProvider.GetRequiredService<IEventSerializer>());
-        
-        var subscription = await _client.SubscribeToStreamAsync(
+        var listener = new Listener(observer, _eventSerializer);
+
+        return await _client.SubscribeToStreamAsync(
             streamName,
             GetFromStream(fromStreamPosition),
             listener.EventAppeared,
             resolveLinkTos,
             listener.SubscriptionDropped
         );
-
-        return new CompositeDisposable(
-            subscription,
-            scope);
     }
 
     private static FromStream GetFromStream(StreamPosition fromStreamPosition)

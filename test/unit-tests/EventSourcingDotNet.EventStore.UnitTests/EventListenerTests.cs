@@ -1,8 +1,8 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using EventSourcingDotNet.Serialization.Json;
+using EventStore.Client;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -89,18 +89,12 @@ public class EventListenerTests
         }
     }
 
-    private EventListener CreateEventListener()
-    {
-        var serviceProvider = new ServiceCollection()
-            .AddSingleton<IEventSerializer>(
-                new EventSerializer(
-                    new TestEventTypeResolver(),
-                    new JsonSerializerSettingsFactory(NullLoggerFactory.Instance)))
-            .BuildServiceProvider();
-        return new(
-            Options.Create(_container.ClientSettings),
-            serviceProvider.GetRequiredService<IServiceScopeFactory>());
-    }
+    private EventListener CreateEventListener() 
+        => new(
+            new EventSerializer(
+                new TestEventTypeResolver(),
+                new JsonSerializerSettingsFactory(NullLoggerFactory.Instance)),
+            new EventStoreClient(Options.Create(_container.ClientSettings)));
 
     private static async Task<IReadOnlyList<ResolvedEvent>> WaitForEvents(
         IObservable<ResolvedEvent> source,
