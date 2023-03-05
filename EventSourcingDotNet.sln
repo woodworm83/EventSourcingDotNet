@@ -49,8 +49,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.FileSto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.FileStorage.UnitTests", "test\unit-tests\EventSourcingDotNet.FileStorage.UnitTests\EventSourcingDotNet.FileStorage.UnitTests.csproj", "{760A9902-4744-45EB-8823-EC3CA26ED22D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.LiteDb", "src\EventSourcingDotNet.LiteDb\EventSourcingDotNet.LiteDb.csproj", "{CA8B9853-F978-4B54-AE34-C3D2049EE8BC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,10 +95,6 @@ Global
 		{760A9902-4744-45EB-8823-EC3CA26ED22D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{760A9902-4744-45EB-8823-EC3CA26ED22D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{760A9902-4744-45EB-8823-EC3CA26ED22D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CA8B9853-F978-4B54-AE34-C3D2049EE8BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CA8B9853-F978-4B54-AE34-C3D2049EE8BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CA8B9853-F978-4B54-AE34-C3D2049EE8BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CA8B9853-F978-4B54-AE34-C3D2049EE8BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3E70E2F2-859F-4D09-8FAF-893599FED3E6} = {41B61C0A-2E17-4B3D-867E-18F9B897D1B2}
@@ -115,6 +109,5 @@ Global
 		{9518230E-B4BE-409D-84AB-8F53084F2C34} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
 		{6437F134-5CA8-48A2-99EF-A1853EC061CE} = {093BA0AA-083A-4612-A2F5-A01B0C756125}
 		{760A9902-4744-45EB-8823-EC3CA26ED22D} = {3E70E2F2-859F-4D09-8FAF-893599FED3E6}
-		{CA8B9853-F978-4B54-AE34-C3D2049EE8BC} = {093BA0AA-083A-4612-A2F5-A01B0C756125}
 	EndGlobalSection
 EndGlobal

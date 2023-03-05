@@ -16,6 +16,9 @@ internal interface IEventSerializer
         where TAggregateId : IAggregateId;
 
     ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent);
+    ValueTask<ResolvedEvent<TAggregateId>> DeserializeAsync<TAggregateId>(
+        global::EventStore.Client.ResolvedEvent resolvedEvent)
+        where TAggregateId :  IAggregateId;
 }
 
 internal sealed class EventSerializer : IEventSerializer
@@ -41,7 +44,7 @@ internal sealed class EventSerializer : IEventSerializer
             Uuid.NewUuid(),
             @event.GetType().Name,
             await SerializeEventData(aggregateId, @event),
-            SerializeEventMetadata(correlationId?.Id, causationId?.Id));
+            SerializeEventMetadata(aggregateId, correlationId?.Id, causationId?.Id));
 
     private async ValueTask<ReadOnlyMemory<byte>> SerializeEventData<TAggregateId>(
         TAggregateId aggregateId,
@@ -54,19 +57,18 @@ internal sealed class EventSerializer : IEventSerializer
                     @event.GetType(),
                     StreamNamingConvention.GetAggregateStreamName(aggregateId))));
 
-    private static ReadOnlyMemory<byte>? SerializeEventMetadata(
+    private static ReadOnlyMemory<byte>? SerializeEventMetadata<TAggregateId>(
+        TAggregateId aggregateId,
         Guid? correlationId,
         Guid? causationId)
-        => correlationId.HasValue || causationId.HasValue
-            ? Encoding.UTF8.GetBytes(
+        => Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
-                    new EventMetadata(correlationId, causationId),
+                    new EventMetadata<TAggregateId>(aggregateId, correlationId, causationId),
                     new JsonSerializerSettings
                     {
                         ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
                         NullValueHandling = NullValueHandling.Ignore
-                    }))
-            : null;
+                    }));
 
     public async ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent)
     {
@@ -88,8 +90,39 @@ internal sealed class EventSerializer : IEventSerializer
                 : null);
     }
 
+    public async ValueTask<ResolvedEvent<TAggregateId>> DeserializeAsync<TAggregateId>(
+        global::EventStore.Client.ResolvedEvent resolvedEvent)
+        where TAggregateId : IAggregateId
+    {
+        var metadata = DeserializeEventMetadata<TAggregateId>(resolvedEvent.Event);
+        var @event = await DeserializeEventDataAsync(resolvedEvent.Event.EventStreamId, resolvedEvent.Event);
+
+        return new ResolvedEvent<TAggregateId>(
+            new EventId(resolvedEvent.Event.EventId.ToGuid()),
+            resolvedEvent.Event.EventStreamId,
+            metadata is not null ? metadata.AggregateId : default,
+            new AggregateVersion(resolvedEvent.Event.EventNumber.ToUInt64() + 1),
+            new StreamPosition(resolvedEvent.OriginalEvent.EventNumber.ToUInt64()),
+            @event,
+            resolvedEvent.Event.Created,
+            metadata?.CorrelationId is { } correlationId
+                ? new CorrelationId(correlationId)
+                : null,
+            metadata?.CausationId is { } causationId
+                ? new CausationId(causationId)
+                : null);
+    }
+
     private static EventMetadata? DeserializeEventMetadata(EventRecord eventRecord)
         => JsonConvert.DeserializeObject<EventMetadata>(
+            Encoding.UTF8.GetString(eventRecord.Metadata.Span),
+            new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
+            });
+
+    private static EventMetadata<TAggregateId>? DeserializeEventMetadata<TAggregateId>(EventRecord eventRecord)
+        => JsonConvert.DeserializeObject<EventMetadata<TAggregateId>>(
             Encoding.UTF8.GetString(eventRecord.Metadata.Span),
             new JsonSerializerSettings
             {

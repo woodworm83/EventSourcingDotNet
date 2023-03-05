@@ -105,14 +105,15 @@ public class AggregateRepositoryTests
             .Returns<TestId, AggregateVersion>(ResolveEvents);
         return mock;
 
-        async IAsyncEnumerable<ResolvedEvent> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
+        async IAsyncEnumerable<ResolvedEvent<TestId>> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
         {
             var streamPosition = currentVersion.Version;
             foreach (var @event in events)
             {
-                yield return new ResolvedEvent(
+                yield return new ResolvedEvent<TestId>(
                     new EventId(Guid.NewGuid()),
                     "",
+                    aggregateId,
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,

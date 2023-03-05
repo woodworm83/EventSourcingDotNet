@@ -3,7 +3,6 @@ using EventSourcingDotNet.Serialization.Json;
 using EventStore.Client;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -84,22 +83,6 @@ public class EventStoreTests
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
 
         result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task ShouldSetEventNullForUnknownEvents()
-    {
-        var aggregateId = new TestId();
-        await _container.AppendEvents(
-            StreamNamingConvention.GetAggregateStreamName(aggregateId),
-            EventDataHelper.CreateEventData(aggregateId, new TestEvent()));
-        var eventSerializerMock = new Mock<IEventSerializer>();
-        await using var eventStore = CreateEventStore(eventSerializerMock.Object);
-
-        var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
-
-        result.Should().Satisfy(
-            resolvedEvent => resolvedEvent.Event == null);
     }
 
     [Fact]

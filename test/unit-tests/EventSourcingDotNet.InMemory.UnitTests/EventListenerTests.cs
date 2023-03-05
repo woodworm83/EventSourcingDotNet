@@ -83,7 +83,7 @@ public class EventListenerTests
                 It.Is<ResolvedEvent>(e => ReferenceEquals(e.Event, @event))),
             Times.Never);
     }
-    
+
 
     private static IInMemoryEventStream MockEventStream(out Action<TestId, IDomainEvent> publishEvent)
     {
@@ -92,7 +92,18 @@ public class EventListenerTests
         eventStreamMock.Setup(x => x.Listen(It.IsAny<StreamPosition>()))
             .Returns(eventSubject);
 
-        publishEvent = (aggregateId, @event) => eventSubject.OnNext(new ResolvedEvent { StreamName = $"{TestId.AggregateName}-{aggregateId.AsString()}", Event = @event });
+        publishEvent = (aggregateId, @event) => eventSubject.OnNext(
+            new ResolvedEvent<TestId>(
+                new EventId(),
+                $"{TestId.AggregateName}-{aggregateId.AsString()}",
+                aggregateId,
+                default,
+                default,
+                @event,
+                DateTime.Now,
+                null,
+                null));
+        
         return eventStreamMock.Object;
     }
 }

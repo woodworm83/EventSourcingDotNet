@@ -12,7 +12,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         _eventReader = new EventReader(eventStream);
     }
 
-    public IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
+    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(
         TAggregateId aggregateId,
         AggregateVersion fromVersion)
         => _eventReader.ByAggregate(aggregateId)

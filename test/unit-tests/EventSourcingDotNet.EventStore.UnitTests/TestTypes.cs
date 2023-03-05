@@ -21,6 +21,8 @@ public sealed record EncryptedTestEvent(
     [property: Encrypted] string Value)
     : IDomainEvent;
 
+public sealed record UnknownEvent : IDomainEvent;
+
 internal sealed class TestEventTypeResolver : IEventTypeResolver
 {
     public Type? GetEventType(string eventName)

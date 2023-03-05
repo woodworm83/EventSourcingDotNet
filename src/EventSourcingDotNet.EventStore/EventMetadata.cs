@@ -2,7 +2,14 @@
 
 namespace EventSourcingDotNet.EventStore;
 
-internal sealed record EventMetadata(
-    [property: JsonProperty(PropertyName = "$correlationId")] Guid? CorrelationId,
-    [property: JsonProperty(PropertyName = "$causationId")] Guid? CausationId);
-    
+internal record EventMetadata(
+    [property: JsonProperty(PropertyName = "$correlationId")]
+    Guid? CorrelationId,
+    [property: JsonProperty(PropertyName = "$causationId")]
+    Guid? CausationId);
+
+internal sealed record EventMetadata<TAggregateId>(
+        TAggregateId AggregateId,
+        Guid? CorrelationId,
+        Guid? CausationId)
+    : EventMetadata(CorrelationId, CausationId);
