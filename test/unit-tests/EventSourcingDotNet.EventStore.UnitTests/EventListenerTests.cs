@@ -27,7 +27,7 @@ public class EventListenerTests
         using var receiver = new ReplaySubject<ResolvedEvent>();
         var @event = new TestEvent();
 
-        using (publisher.ByAggregateId(aggregateId).Subscribe(receiver))
+        using (publisher.ByAggregate(aggregateId).Subscribe(receiver))
         {
             await _container.AppendEvents(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),

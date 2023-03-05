@@ -17,7 +17,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         _client = eventStoreClient;
     }
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByAggregateId<TAggregateId>(
+    public IObservable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>

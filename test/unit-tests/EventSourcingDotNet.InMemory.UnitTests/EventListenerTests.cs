@@ -15,7 +15,7 @@ public class EventListenerTests
         var observerMock = new Mock<IObserver<ResolvedEvent>>();
         var @event = new TestEvent();
 
-        using (eventListener.ByAggregateId(aggregateId).Subscribe(observerMock.Object))
+        using (eventListener.ByAggregate(aggregateId).Subscribe(observerMock.Object))
         {
             publishEvent(aggregateId, @event);
         }
@@ -53,7 +53,7 @@ public class EventListenerTests
         var aggregateId = new TestId();
         var @event = new TestEvent();
 
-        using (eventListener.ByAggregateId(aggregateId).Subscribe(observerMock.Object))
+        using (eventListener.ByAggregate(aggregateId).Subscribe(observerMock.Object))
         {
             publishEvent(new TestId(), @event);
         }
