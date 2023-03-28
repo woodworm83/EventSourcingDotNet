@@ -63,7 +63,7 @@ internal sealed class EventSerializer : IEventSerializer
         Guid? causationId)
         => Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
-                    new EventMetadata<TAggregateId>(aggregateId, correlationId, causationId),
+                    new EventMetadata<TAggregateId>(correlationId, causationId, aggregateId),
                     new JsonSerializerSettings
                     {
                         ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},

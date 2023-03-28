@@ -92,6 +92,33 @@ public class EventSerializerTests
     }
 
     [Fact]
+    public async Task ShouldGetAggregateIdFromMetadata()
+    {
+        var aggregateId = new TestId();
+        var resolvedEvent = CreateResolvedEvent(aggregateId: aggregateId);
+        var serializer = new EventSerializer(_eventTypeResolver, _serializerSettingsFactory);
+
+        var result = await serializer.DeserializeAsync<TestId>(resolvedEvent);
+
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
+            .Which
+            .AggregateId.Should().Be(aggregateId);
+    }
+
+    [Fact]
+    public async Task ShouldNotFailWhenAggregateIdIsNotIncludedInMetadata()
+    {
+        var resolvedEvent = CreateResolvedEvent(invalidMetadata: true);
+        var serializer = new EventSerializer(_eventTypeResolver, _serializerSettingsFactory);
+
+        var result = await serializer.DeserializeAsync<TestId>(resolvedEvent);
+
+        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
+            .Which
+            .AggregateId.Should().Be(default(TestId));
+    }
+
+    [Fact]
     public async Task ShouldSetStreamPosition()
     {
         var resolvedEvent = CreateResolvedEvent(streamPosition: 5);
@@ -143,7 +170,8 @@ public class EventSerializerTests
         DateTime? created = null,
         CausationId? causationId = null,
         CorrelationId? correlationId = null,
-        bool invalidMetadata = false)
+        bool invalidMetadata = false,
+        TestId? aggregateId = null)
         => new(
             new EventRecord(
                 eventStreamId,
@@ -160,9 +188,9 @@ public class EventSerializerTests
                 invalidMetadata
                     ? new ReadOnlyMemory<byte>()
                     : Serialize(new EventMetadata<TestId>(
-                        new TestId(),
                         correlationId?.Id ?? Guid.NewGuid(),
-                        causationId?.Id))),
+                        causationId?.Id,
+                        aggregateId ?? new TestId()))),
             null,
             null);
 
