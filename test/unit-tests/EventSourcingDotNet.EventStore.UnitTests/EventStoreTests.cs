@@ -12,12 +12,12 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 public class EventStoreTests
 {
     private static readonly TestEventTypeResolver _eventTypeResolver = new();
-    private readonly EventStoreTestContainer _container;
+    private readonly EventStoreFixture _fixture;
     private readonly JsonSerializerSettingsFactory _serializerSettingsFactory = new(NullLoggerFactory.Instance);
 
     public EventStoreTests(EventStoreFixture fixture)
     {
-        _container = fixture.Container;
+        _fixture = fixture;
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class EventStoreTests
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event);
-        await _container.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
+        await _fixture.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
         await using var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
@@ -45,7 +45,7 @@ public class EventStoreTests
 
         await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
 
-        var appendedEvents = await _container.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
+        var appendedEvents = await _fixture.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
             .ToListAsync();
 
         appendedEvents.Count.Should().Be(1);
@@ -108,7 +108,7 @@ public class EventStoreTests
         var @event = new TestEvent(42);
         var correlationId = new CorrelationId();
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event, correlationId: correlationId);
-        await _container.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
+        await _fixture.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
         await using var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default)
@@ -137,10 +137,10 @@ public class EventStoreTests
     private EventStore<TestId> CreateEventStore(IEventSerializer? eventSerializer = null)
         => new(
             eventSerializer ?? new EventSerializer(_eventTypeResolver, _serializerSettingsFactory),
-            new EventStoreClient(_container.ClientSettings));
+            new EventStoreClient(_fixture.ClientSettings));
 
     private IAsyncEnumerable<EventMetadata?> ReadEventMetadata(TestId aggregateId) 
-        => _container.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
+        => _fixture.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
             .Select(
                 resolvedEvent => JsonConvert.DeserializeObject<EventMetadata>(
                     Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span)));

@@ -12,11 +12,11 @@ namespace EventSourcingDotNet.EventStore.UnitTests;
 [Collection(nameof(EventStoreCollection))]
 public class EventListenerTests
 {
-    private readonly EventStoreTestContainer _container;
+    private readonly EventStoreFixture _fixture;
 
     public EventListenerTests(EventStoreFixture fixture)
     {
-        _container = fixture.Container;
+        _fixture = fixture;
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class EventListenerTests
 
         using (publisher.ByAggregate(aggregateId).Subscribe(receiver))
         {
-            await _container.AppendEvents(
+            await _fixture.AppendEvents(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 EventDataHelper.CreateEventData(aggregateId, @event));
 
@@ -52,7 +52,7 @@ public class EventListenerTests
             foreach (var @event in events)
             {
                 var aggregateId = new ByCategoryId();
-                await _container.AppendEvents(
+                await _fixture.AppendEvents(
                     StreamNamingConvention.GetAggregateStreamName(aggregateId),
                     EventDataHelper.CreateEventData(aggregateId, @event));
             }
@@ -76,7 +76,7 @@ public class EventListenerTests
             foreach (var @event in events)
             {
                 var aggregateId = new ByEventTypeId();
-                await _container.AppendEvents(
+                await _fixture.AppendEvents(
                     StreamNamingConvention.GetAggregateStreamName(aggregateId),
                     EventDataHelper.CreateEventData(aggregateId, @event),
                     EventDataHelper.CreateEventData(aggregateId, new TestEvent()));
@@ -94,7 +94,7 @@ public class EventListenerTests
             new EventSerializer(
                 new TestEventTypeResolver(),
                 new JsonSerializerSettingsFactory(NullLoggerFactory.Instance)),
-            new EventStoreClient(Options.Create(_container.ClientSettings)));
+            new EventStoreClient(Options.Create(_fixture.ClientSettings)));
 
     private static async Task<IReadOnlyList<ResolvedEvent>> WaitForEvents(
         IObservable<ResolvedEvent> source,
