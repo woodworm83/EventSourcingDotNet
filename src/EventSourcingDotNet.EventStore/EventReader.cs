@@ -28,7 +28,8 @@ internal sealed class EventReader : IEventReader
         => ReadEventsAsync(
             StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
             fromStreamPosition,
-            _eventSerializer.DeserializeAsync<TAggregateId>);
+            _eventSerializer.DeserializeAsync<TAggregateId>,
+            resolveLinkTos: true);
 
     public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
@@ -36,7 +37,8 @@ internal sealed class EventReader : IEventReader
         => ReadEventsAsync(
             StreamNamingConvention.GetByEventStreamName<TEvent>(),
             fromStreamPosition,
-            _eventSerializer.DeserializeAsync);
+            _eventSerializer.DeserializeAsync,
+            resolveLinkTos: true);
 
     private static global::EventStore.Client.StreamPosition GetRevision(StreamPosition streamPosition)
         => global::EventStore.Client.StreamPosition.FromStreamRevision(
@@ -45,9 +47,10 @@ internal sealed class EventReader : IEventReader
     private async IAsyncEnumerable<TResolvedEvent> ReadEventsAsync<TResolvedEvent>(
         string streamName, 
         StreamPosition fromStreamPosition,
-        Func<global::EventStore.Client.ResolvedEvent, ValueTask<TResolvedEvent>> deserializeEvent)
+        Func<global::EventStore.Client.ResolvedEvent, ValueTask<TResolvedEvent>> deserializeEvent,
+        bool resolveLinkTos = false)
     {
-        if (_client.ReadStreamAsync(Direction.Forwards, streamName, GetRevision(fromStreamPosition)) is not { } result)
+        if (_client.ReadStreamAsync(Direction.Forwards, streamName, GetRevision(fromStreamPosition), resolveLinkTos: resolveLinkTos) is not { } result)
             yield break;
 
         if (await result.ReadState == ReadState.StreamNotFound)
