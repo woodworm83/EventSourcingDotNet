@@ -9,7 +9,7 @@ internal record EventMetadata(
     Guid? CausationId);
 
 internal sealed record EventMetadata<TAggregateId>(
-        TAggregateId AggregateId,
+        TAggregateId? AggregateId,
         Guid? CorrelationId,
         Guid? CausationId)
     : EventMetadata(CorrelationId, CausationId);
