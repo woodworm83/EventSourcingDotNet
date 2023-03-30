@@ -116,7 +116,7 @@ public class EventSerializerTests
 
         result.Should().BeAssignableTo<ResolvedEvent>()
             .Which
-            .GetAggregateId<TestId>().Should().Be(default(TestId));
+            .GetAggregateId<TestId>().Should().Be(null);
     }
 
     [Fact]

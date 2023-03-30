@@ -77,7 +77,7 @@ internal sealed class EventSerializer : IEventSerializer
         return new ResolvedEvent(
             new EventId(resolvedEvent.Event.EventId.ToGuid()),
             resolvedEvent.Event.EventStreamId,
-            metadata.AggregateId,
+            metadata?.AggregateId ?? JValue.CreateNull(),
             new AggregateVersion(resolvedEvent.Event.EventNumber.ToUInt64() + 1),
             new StreamPosition(resolvedEvent.OriginalEvent.EventNumber.ToUInt64()),
             @event,

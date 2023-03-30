@@ -14,7 +14,10 @@ public record ResolvedEvent(
     CausationId? CausationId)
 {
     public TAggregateId? GetAggregateId<TAggregateId>()
-        => AggregateId.Value<TAggregateId?>();
+        where TAggregateId : struct
+        => AggregateId.Type == JTokenType.Object
+            ? AggregateId.ToObject<TAggregateId>()
+            : null;
 }
 
 public readonly record struct EventId(Guid Id);
