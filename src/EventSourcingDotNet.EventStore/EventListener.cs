@@ -26,7 +26,6 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 fromStreamPosition,
                 false,
-                _eventSerializer.DeserializeAsync,
                 observer));
 
     public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
@@ -37,7 +36,6 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
                 fromStreamPosition,
                 true,
-                _eventSerializer.DeserializeAsync,
                 observer));
 
     public IObservable<ResolvedEvent> ByEventType<TEvent>(
@@ -48,17 +46,15 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
                 StreamNamingConvention.GetByEventStreamName<TEvent>(),
                 fromStreamPosition,
                 true,
-                _eventSerializer.DeserializeAsync,
                 observer));
 
-    private async Task<IDisposable> SubscribeAsync<TResolvedEvent>(
+    private async Task<IDisposable> SubscribeAsync(
         string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos,
-        Func<global::EventStore.Client.ResolvedEvent, ValueTask<TResolvedEvent>> deserializeEvent,
-        IObserver<TResolvedEvent> observer)
+        IObserver<ResolvedEvent> observer)
     {
-        var listener = new Listener<TResolvedEvent>(observer, deserializeEvent);
+        var listener = new Listener(observer, _eventSerializer);
 
         return await _client.SubscribeToStreamAsync(
             streamName,
@@ -79,17 +75,17 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         await _client.DisposeAsync();
     }
 
-    private sealed class Listener<TResolvedEvent>
+    private sealed class Listener
     {
-        private readonly IObserver<TResolvedEvent> _observer;
-        private readonly Func<global::EventStore.Client.ResolvedEvent, ValueTask<TResolvedEvent>> _deserializeEvent;
+        private readonly IObserver<ResolvedEvent> _observer;
+        private readonly IEventSerializer _eventSerializer;
 
         public Listener(
-            IObserver<TResolvedEvent> observer,
-            Func<global::EventStore.Client.ResolvedEvent, ValueTask<TResolvedEvent>> deserializeEvent)
+            IObserver<ResolvedEvent> observer,
+            IEventSerializer eventSerializer)
         {
             _observer = observer;
-            _deserializeEvent = deserializeEvent;
+            _eventSerializer = eventSerializer;
         }
 
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed")]
@@ -98,7 +94,9 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
             global::EventStore.Client.ResolvedEvent resolvedEvent,
             CancellationToken cancellationToken)
         {
-            _observer.OnNext(await _deserializeEvent(resolvedEvent));
+            if (!resolvedEvent.IsResolved) return;
+            
+            _observer.OnNext(await _eventSerializer.DeserializeAsync(resolvedEvent));
         }
 
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed",

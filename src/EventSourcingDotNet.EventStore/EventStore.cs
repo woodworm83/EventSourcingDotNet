@@ -27,6 +27,8 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
         
         await foreach (var resolvedEvent in result)
         {
+            if (!resolvedEvent.IsResolved) continue;
+            
             yield return await _eventSerializer.DeserializeAsync(resolvedEvent);
         }
     }

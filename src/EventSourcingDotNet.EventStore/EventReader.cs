@@ -19,8 +19,7 @@ internal sealed class EventReader : IEventReader
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
         => ReadEventsAsync(
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
-            fromStreamPosition,
-            _eventSerializer.DeserializeAsync);
+            fromStreamPosition);
 
     public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default) 
@@ -28,7 +27,6 @@ internal sealed class EventReader : IEventReader
         => ReadEventsAsync(
             StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
             fromStreamPosition,
-            _eventSerializer.DeserializeAsync,
             resolveLinkTos: true);
 
     public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
@@ -37,17 +35,15 @@ internal sealed class EventReader : IEventReader
         => ReadEventsAsync(
             StreamNamingConvention.GetByEventStreamName<TEvent>(),
             fromStreamPosition,
-            _eventSerializer.DeserializeAsync,
             resolveLinkTos: true);
 
     private static global::EventStore.Client.StreamPosition GetRevision(StreamPosition streamPosition)
         => global::EventStore.Client.StreamPosition.FromStreamRevision(
             new StreamRevision(streamPosition.Position));
     
-    private async IAsyncEnumerable<TResolvedEvent> ReadEventsAsync<TResolvedEvent>(
+    private async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
         string streamName, 
         StreamPosition fromStreamPosition,
-        Func<global::EventStore.Client.ResolvedEvent, ValueTask<TResolvedEvent>> deserializeEvent,
         bool resolveLinkTos = false)
     {
         if (_client.ReadStreamAsync(Direction.Forwards, streamName, GetRevision(fromStreamPosition), resolveLinkTos: resolveLinkTos) is not { } result)
@@ -58,7 +54,9 @@ internal sealed class EventReader : IEventReader
 
         await foreach (var @event in result)
         {
-            yield return await deserializeEvent(@event);
+            if (!@event.IsResolved) continue;
+            
+            yield return await _eventSerializer.DeserializeAsync(@event);
         }
     }
 }
