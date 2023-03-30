@@ -94,7 +94,8 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
             global::EventStore.Client.ResolvedEvent resolvedEvent,
             CancellationToken cancellationToken)
         {
-            if (!resolvedEvent.IsResolved) return;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (resolvedEvent.Event is null) return;
             
             _observer.OnNext(await _eventSerializer.DeserializeAsync(resolvedEvent));
         }

@@ -54,7 +54,8 @@ internal sealed class EventReader : IEventReader
 
         await foreach (var @event in result)
         {
-            if (!@event.IsResolved) continue;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (@event.Event is null) continue;
             
             yield return await _eventSerializer.DeserializeAsync(@event);
         }
