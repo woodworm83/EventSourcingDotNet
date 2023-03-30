@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace EventSourcingDotNet.EventStore.UnitTests;
@@ -98,11 +99,11 @@ public class EventSerializerTests
         var resolvedEvent = CreateResolvedEvent(aggregateId: aggregateId);
         var serializer = new EventSerializer(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = await serializer.DeserializeAsync<TestId>(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent>()
             .Which
-            .AggregateId.Should().Be(aggregateId);
+            .GetAggregateId<TestId>().Should().Be(aggregateId);
     }
 
     [Fact]
@@ -111,11 +112,11 @@ public class EventSerializerTests
         var resolvedEvent = CreateResolvedEvent(invalidMetadata: true);
         var serializer = new EventSerializer(_eventTypeResolver, _serializerSettingsFactory);
 
-        var result = await serializer.DeserializeAsync<TestId>(resolvedEvent);
+        var result = await serializer.DeserializeAsync(resolvedEvent);
 
-        result.Should().BeAssignableTo<ResolvedEvent<TestId>>()
+        result.Should().BeAssignableTo<ResolvedEvent>()
             .Which
-            .AggregateId.Should().Be(default(TestId));
+            .GetAggregateId<TestId>().Should().Be(default(TestId));
     }
 
     [Fact]
@@ -187,10 +188,7 @@ public class EventSerializerTests
                 Serialize(@event ?? new TestEvent()),
                 invalidMetadata
                     ? new ReadOnlyMemory<byte>()
-                    : Serialize(new EventMetadata<TestId>(
-                        correlationId?.Id ?? Guid.NewGuid(),
-                        causationId?.Id,
-                        aggregateId ?? new TestId()))),
+                    : Serialize(new EventMetadata(JToken.FromObject(aggregateId ?? new TestId()), correlationId?.Id ?? Guid.NewGuid(), causationId?.Id))),
             null,
             null);
 

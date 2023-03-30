@@ -13,22 +13,22 @@ internal sealed class EventReader : IEventReader
         _client = client;
     }
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
+    public IAsyncEnumerable<ResolvedEvent> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
         => ReadEventsAsync(
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
             fromStreamPosition,
-            _eventSerializer.DeserializeAsync<TAggregateId>);
+            _eventSerializer.DeserializeAsync);
 
-    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
+    public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default) 
         where TAggregateId : IAggregateId
         => ReadEventsAsync(
             StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
             fromStreamPosition,
-            _eventSerializer.DeserializeAsync<TAggregateId>,
+            _eventSerializer.DeserializeAsync,
             resolveLinkTos: true);
 
     public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(

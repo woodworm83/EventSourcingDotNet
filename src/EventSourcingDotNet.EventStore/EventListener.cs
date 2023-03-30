@@ -17,27 +17,27 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         _client = eventStoreClient;
     }
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
+    public IObservable<ResolvedEvent> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
-        => Observable.Create<ResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 fromStreamPosition,
                 false,
-                _eventSerializer.DeserializeAsync<TAggregateId>,
+                _eventSerializer.DeserializeAsync,
                 observer));
 
-    public IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
+    public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        => Observable.Create<ResolvedEvent<TAggregateId>>(
+        => Observable.Create<ResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
                 fromStreamPosition,
                 true,
-                _eventSerializer.DeserializeAsync<TAggregateId>,
+                _eventSerializer.DeserializeAsync,
                 observer));
 
     public IObservable<ResolvedEvent> ByEventType<TEvent>(

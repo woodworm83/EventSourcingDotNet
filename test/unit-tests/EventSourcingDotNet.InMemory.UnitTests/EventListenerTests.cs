@@ -1,5 +1,6 @@
 ﻿using System.Reactive.Subjects;
 using Moq;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;
@@ -93,10 +94,10 @@ public class EventListenerTests
             .Returns(eventSubject);
 
         publishEvent = (aggregateId, @event) => eventSubject.OnNext(
-            new ResolvedEvent<TestId>(
+            new ResolvedEvent(
                 new EventId(),
                 $"{TestId.AggregateName}-{aggregateId.AsString()}",
-                aggregateId,
+                JToken.FromObject(aggregateId),
                 default,
                 default,
                 @event,

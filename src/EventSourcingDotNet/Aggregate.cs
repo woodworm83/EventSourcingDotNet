@@ -56,7 +56,7 @@ public sealed record Aggregate<TId, TState>(
             _ => throw new NotSupportedException($"Validation result is not supported")
         };
 
-    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent<TId> resolvedEvent)
+    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent resolvedEvent)
         => resolvedEvent.Event switch
         {
             null => this,

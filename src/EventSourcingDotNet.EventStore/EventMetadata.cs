@@ -1,15 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace EventSourcingDotNet.EventStore;
 
-internal record EventMetadata(
-    [property: JsonProperty(PropertyName = "$correlationId")]
+internal record EventMetadata(JToken AggregateId, [property: JsonProperty(PropertyName = "$correlationId")]
     Guid? CorrelationId,
     [property: JsonProperty(PropertyName = "$causationId")]
     Guid? CausationId);
-
-internal sealed record EventMetadata<TAggregateId>(
-        Guid? CorrelationId,
-        Guid? CausationId, 
-        TAggregateId? AggregateId = default)
-    : EventMetadata(CorrelationId, CausationId);

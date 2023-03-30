@@ -2,12 +2,12 @@
 
 public interface IEventListener 
 {
-    IObservable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
+    IObservable<ResolvedEvent> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>;
 
-    IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
+    IObservable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId;
 

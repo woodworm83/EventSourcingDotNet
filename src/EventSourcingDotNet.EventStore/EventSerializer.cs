@@ -2,6 +2,7 @@
 using EventSourcingDotNet.Serialization.Json;
 using EventStore.Client;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace EventSourcingDotNet.EventStore;
@@ -16,9 +17,6 @@ internal interface IEventSerializer
         where TAggregateId : IAggregateId;
 
     ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent);
-    ValueTask<ResolvedEvent<TAggregateId>> DeserializeAsync<TAggregateId>(
-        global::EventStore.Client.ResolvedEvent resolvedEvent)
-        where TAggregateId :  IAggregateId;
 }
 
 internal sealed class EventSerializer : IEventSerializer
@@ -61,9 +59,10 @@ internal sealed class EventSerializer : IEventSerializer
         TAggregateId aggregateId,
         Guid? correlationId,
         Guid? causationId)
+        where TAggregateId: notnull
         => Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
-                    new EventMetadata<TAggregateId>(correlationId, causationId, aggregateId),
+                    new EventMetadata(JToken.FromObject(aggregateId), correlationId, causationId),
                     new JsonSerializerSettings
                     {
                         ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
@@ -78,29 +77,7 @@ internal sealed class EventSerializer : IEventSerializer
         return new ResolvedEvent(
             new EventId(resolvedEvent.Event.EventId.ToGuid()),
             resolvedEvent.Event.EventStreamId,
-            new AggregateVersion(resolvedEvent.Event.EventNumber.ToUInt64() + 1),
-            new StreamPosition(resolvedEvent.OriginalEvent.EventNumber.ToUInt64()),
-            @event,
-            resolvedEvent.Event.Created,
-            metadata?.CorrelationId is { } correlationId
-                ? new CorrelationId(correlationId)
-                : null,
-            metadata?.CausationId is { } causationId
-                ? new CausationId(causationId)
-                : null);
-    }
-
-    public async ValueTask<ResolvedEvent<TAggregateId>> DeserializeAsync<TAggregateId>(
-        global::EventStore.Client.ResolvedEvent resolvedEvent)
-        where TAggregateId : IAggregateId
-    {
-        var metadata = DeserializeEventMetadata<TAggregateId>(resolvedEvent.Event);
-        var @event = await DeserializeEventDataAsync(resolvedEvent.Event.EventStreamId, resolvedEvent.Event);
-
-        return new ResolvedEvent<TAggregateId>(
-            new EventId(resolvedEvent.Event.EventId.ToGuid()),
-            resolvedEvent.Event.EventStreamId,
-            metadata is not null ? metadata.AggregateId : default,
+            metadata.AggregateId,
             new AggregateVersion(resolvedEvent.Event.EventNumber.ToUInt64() + 1),
             new StreamPosition(resolvedEvent.OriginalEvent.EventNumber.ToUInt64()),
             @event,
@@ -115,14 +92,6 @@ internal sealed class EventSerializer : IEventSerializer
 
     private static EventMetadata? DeserializeEventMetadata(EventRecord eventRecord)
         => JsonConvert.DeserializeObject<EventMetadata>(
-            Encoding.UTF8.GetString(eventRecord.Metadata.Span),
-            new JsonSerializerSettings
-            {
-                ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
-            });
-
-    private static EventMetadata<TAggregateId>? DeserializeEventMetadata<TAggregateId>(EventRecord eventRecord)
-        => JsonConvert.DeserializeObject<EventMetadata<TAggregateId>>(
             Encoding.UTF8.GetString(eventRecord.Metadata.Span),
             new JsonSerializerSettings
             {

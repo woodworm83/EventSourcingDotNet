@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Moq;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 #pragma warning disable CS1998
@@ -105,15 +106,15 @@ public class AggregateRepositoryTests
             .Returns<TestId, AggregateVersion>(ResolveEvents);
         return mock;
 
-        async IAsyncEnumerable<ResolvedEvent<TestId>> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
+        async IAsyncEnumerable<ResolvedEvent> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
         {
             var streamPosition = currentVersion.Version;
             foreach (var @event in events)
             {
-                yield return new ResolvedEvent<TestId>(
+                yield return new ResolvedEvent(
                     new EventId(Guid.NewGuid()),
                     "",
-                    aggregateId,
+                    JToken.FromObject(aggregateId),
                     ++currentVersion,
                     new StreamPosition(streamPosition++),
                     @event,

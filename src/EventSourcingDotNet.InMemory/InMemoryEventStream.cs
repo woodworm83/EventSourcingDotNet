@@ -2,6 +2,7 @@
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using DynamicData;
+using Newtonsoft.Json.Linq;
 
 namespace EventSourcingDotNet.InMemory;
 
@@ -91,6 +92,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
                     @event => new ResolvedEvent(
                         new EventId(Guid.NewGuid()),
                         $"{TAggregateId.AggregateName}-{aggregateId.AsString()}",
+                        JToken.FromObject(aggregateId),
                         ++currentVersion,
                         new StreamPosition(streamPosition++),
                         @event,

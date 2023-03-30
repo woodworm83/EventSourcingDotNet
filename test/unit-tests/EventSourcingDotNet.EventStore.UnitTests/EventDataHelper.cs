@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using EventStore.Client;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace EventSourcingDotNet.EventStore.UnitTests;
@@ -26,6 +27,6 @@ internal static class EventDataHelper
             Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, _serializerSettings)),
             Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
-                    new EventMetadata<TAggregateId>(correlationId?.Id ?? Guid.NewGuid(), causationId?.Id, aggregateId),
+                    new EventMetadata(JToken.FromObject(aggregateId), correlationId?.Id ?? Guid.NewGuid(), causationId?.Id),
                     _serializerSettings)));
 }

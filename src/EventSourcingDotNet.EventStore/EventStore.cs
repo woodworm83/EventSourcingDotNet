@@ -16,7 +16,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
         _client = eventStoreClient;
     }
 
-    public async IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
+    public async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
     {
         var result = _client.ReadStreamAsync(
             Direction.Forwards,
@@ -27,7 +27,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
         
         await foreach (var resolvedEvent in result)
         {
-            yield return await _eventSerializer.DeserializeAsync<TAggregateId>(resolvedEvent);
+            yield return await _eventSerializer.DeserializeAsync(resolvedEvent);
         }
     }
 
