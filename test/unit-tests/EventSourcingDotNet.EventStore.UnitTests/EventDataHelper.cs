@@ -10,12 +10,12 @@ internal static class EventDataHelper
 {
     private static readonly JsonSerializerSettings _serializerSettings = new()
     {
-        ContractResolver = new DefaultContractResolver{NamingStrategy = new CamelCaseNamingStrategy()},
+        ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
         NullValueHandling = NullValueHandling.Ignore
     };
-    
+
     public static EventData CreateEventData<TAggregateId>(
-        TAggregateId aggregateId, 
+        TAggregateId aggregateId,
         IDomainEvent @event,
         Guid? eventId = null,
         CorrelationId? correlationId = null,
@@ -27,6 +27,79 @@ internal static class EventDataHelper
             Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, _serializerSettings)),
             Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
-                    new EventMetadata(JToken.FromObject(aggregateId), correlationId?.Id ?? Guid.NewGuid(), causationId?.Id),
+                    new EventMetadata(JToken.FromObject(aggregateId), correlationId?.Id ?? Guid.NewGuid(),
+                        causationId?.Id),
                     _serializerSettings)));
+
+
+    public static global::EventStore.Client.ResolvedEvent CreateResolvedEvent(
+        string eventStreamId = "",
+        Uuid? uuid = null,
+        ulong streamPosition = 0,
+        IDomainEvent? @event = null,
+        DateTime? created = null,
+        CausationId? causationId = null,
+        CorrelationId? correlationId = null,
+        bool invalidMetadata = false,
+        TestId? aggregateId = null)
+    {
+        return CreateResolvedEvent(
+            @event is not null
+                ? StreamNamingConvention.GetEventTypeName(@event)
+                : StreamNamingConvention.GetEventTypeName(typeof(TestEvent)),
+            Serialize(@event ?? new TestEvent()),
+            invalidMetadata
+                ? new ReadOnlyMemory<byte>()
+                : Serialize(new EventMetadata(JToken.FromObject(aggregateId ?? new TestId()),
+                    correlationId?.Id ?? Guid.NewGuid(), causationId?.Id)),
+            eventStreamId,
+            uuid,
+            streamPosition,
+            created);
+    }
+
+    private static global::EventStore.Client.ResolvedEvent CreateResolvedEvent(
+        string eventType,
+        ReadOnlyMemory<byte> data,
+        ReadOnlyMemory<byte> metadata,
+        string eventStreamId,
+        Uuid? uuid,
+        ulong streamPosition,
+        DateTime? created)
+        => new(
+            new EventRecord(
+                eventStreamId,
+                uuid ?? Uuid.NewUuid(),
+                new global::EventStore.Client.StreamPosition(streamPosition),
+                new Position(streamPosition, streamPosition),
+                new Dictionary<string, string>
+                {
+                    {"type", eventType},
+                    {"created", ToUnixEpochTime(created ?? DateTime.UtcNow).ToString()},
+                    {"content-type", "application/json"}
+                },
+                data,
+                metadata),
+            null,
+            null);
+
+    public static global::EventStore.Client.ResolvedEvent CreateResolvedEvent(
+        EventData eventData,
+        string eventStreamId = "",
+        ulong streamPosition = 0,
+        DateTime? created = null)
+        => CreateResolvedEvent(
+            eventData.Type,
+            eventData.Data,
+            eventData.Metadata,
+            eventStreamId,
+            eventData.EventId,
+            streamPosition,
+            created);
+
+    private static long ToUnixEpochTime(DateTime dateTime)
+        => dateTime.Ticks - DateTime.UnixEpoch.Ticks;
+
+    private static ReadOnlyMemory<byte> Serialize(object value)
+        => Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value));
 }

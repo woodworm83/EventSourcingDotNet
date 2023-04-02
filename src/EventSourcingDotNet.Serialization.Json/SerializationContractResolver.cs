@@ -27,12 +27,14 @@ internal sealed class SerializationContractResolver : DefaultContractResolver
         if (!type.HasEncryptedProperties()) return properties;
         if (!CheckCryptoProviderAndEncryptionKey(type)) return properties;
 
+        var cryptoJsonConverter = new CryptoJsonConverter(_cryptoProvider, _encryptionKey.Value);
+        
         foreach (var jsonProperty in properties)
         {
             if (!jsonProperty.HasEncryptedAttribute(type)) continue;
 
             jsonProperty.PropertyName = $"#{jsonProperty.PropertyName}";
-            jsonProperty.Converter = new CryptoJsonConverter(_cryptoProvider, _encryptionKey.Value);
+            jsonProperty.Converter = cryptoJsonConverter;
         }
 
         return properties;

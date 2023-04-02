@@ -27,6 +27,7 @@ internal sealed class CryptoJsonConverter : JsonConverter
         var memoryStream = new MemoryStream();
         using var streamWriter = new StreamWriter(memoryStream, leaveOpen: true);
         serializer.Serialize(streamWriter, value);
+        streamWriter.Flush();
         memoryStream.Seek(0, SeekOrigin.Begin);
         return memoryStream;
     }
@@ -39,6 +40,8 @@ internal sealed class CryptoJsonConverter : JsonConverter
         using var inputStream = new MemoryStream();
         if (!TryGetEncryptedValue(token, inputStream))
             return token.ToObject(objectType, serializer);
+
+        inputStream.Seek(0, SeekOrigin.Begin);
 
         using var outputStream = new MemoryStream();
         if (!_cryptoProvider.TryDecrypt(inputStream, outputStream, _encryptionKey)) 

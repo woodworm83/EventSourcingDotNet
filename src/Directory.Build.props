@@ -9,7 +9,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <MinVerTagPrefix>v</MinVerTagPrefix>
         <MinVerAutoIncrement>minor</MinVerAutoIncrement>
-        <MinVerDefaultPreReleasePhase>pre</MinVerDefaultPreReleasePhase>
+        <MinVerDefaultPreReleaseIdentifiers>pre.0</MinVerDefaultPreReleaseIdentifiers>
         <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>

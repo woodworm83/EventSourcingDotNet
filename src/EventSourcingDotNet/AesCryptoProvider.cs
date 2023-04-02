@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace EventSourcingDotNet;
 
-internal sealed class AesCryptoProvider : ICryptoProvider
+public sealed class AesCryptoProvider : ICryptoProvider
 {
     public void Encrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey)
     {
