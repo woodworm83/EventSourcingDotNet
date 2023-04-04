@@ -2,7 +2,7 @@
 
 namespace EventSourcingDotNet.EventStore;
 
-internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsyncDisposable
+internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
     where TAggregateId : IAggregateId
 {
     private readonly EventStoreClient _client;
@@ -59,10 +59,5 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>, IAsy
         {
             yield return await _eventSerializer.SerializeAsync(aggregateId, @event, correlationId, causationId);
         }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _client.DisposeAsync();
     }
 }
