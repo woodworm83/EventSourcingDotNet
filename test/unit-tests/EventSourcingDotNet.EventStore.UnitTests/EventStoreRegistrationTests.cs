@@ -1,5 +1,4 @@
-﻿using EventStore.Client;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -44,8 +43,9 @@ public class EventStoreRegistrationTests
     private IServiceProvider BuildServiceProvider()
         => new ServiceCollection()
             .AddEventSourcing(builder => builder
-                .UseEventStore(EventStoreClientSettings.Create("esdb://localhost:2113"))
+                .UseEventStore("esdb://localhost:2113")
                 .AddAggregate<TestId>())
+            .AddSingleton<IEventTypeResolver>(new TestEventTypeResolver())
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 }
