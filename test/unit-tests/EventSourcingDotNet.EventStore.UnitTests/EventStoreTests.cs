@@ -27,7 +27,7 @@ public class EventStoreTests
         var @event = new TestEvent(42);
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event);
         await _fixture.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
 
@@ -41,7 +41,7 @@ public class EventStoreTests
     {
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
 
@@ -55,7 +55,7 @@ public class EventStoreTests
     public async Task ShouldReturnCurrentAggregateVersionWhenAddingZeroEvents()
     {
         var aggregateId = new TestId();
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         var result = await eventStore.AppendEventsAsync(aggregateId, Array.Empty<IDomainEvent>(), default);
 
@@ -66,7 +66,7 @@ public class EventStoreTests
     public async Task ShouldReturnNextExpectedAggregateVersionWhenAddingEvents()
     {
         var aggregateId = new TestId();
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
         var events = Enumerable.Range(0, 5).Select(i => new TestEvent(i)).ToList();
 
         var result = await eventStore.AppendEventsAsync(aggregateId, events, default);
@@ -78,7 +78,7 @@ public class EventStoreTests
     public async Task ShouldReturnEmptyEnumerableWhenStreamDoesNotExist()
     {
         var aggregateId = new TestId();
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
 
@@ -92,7 +92,7 @@ public class EventStoreTests
         var correlationId = new CorrelationId(Guid.NewGuid());
         var @event = new TestEvent();
 
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default, correlationId: correlationId);
 
@@ -109,7 +109,7 @@ public class EventStoreTests
         var correlationId = new CorrelationId();
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event, correlationId: correlationId);
         await _fixture.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default)
             .Select(x => x.CorrelationId)
@@ -125,7 +125,7 @@ public class EventStoreTests
         var causationId = new CausationId(Guid.NewGuid());
         var @event = new TestEvent();
 
-        await using var eventStore = CreateEventStore();
+        var eventStore = CreateEventStore();
 
         await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default, causationId: causationId);
 
