@@ -41,6 +41,11 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// <param name="correlationId">The correlation id of the process</param>
     /// <param name="causationId">The causation id which initiated the events</param>
     /// <param name="events">The events to be appended to the event store</param>
+    /// <returns>The aggregate with Version updated to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that there was any other change between reading of the events and storing new events to the stream.
+    /// </exception>
     sealed async Task UpdateAsync(
         TAggregateId id, 
         CorrelationId? correlationId, 
