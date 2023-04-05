@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Diagnostics.Contracts;
 
 namespace EventSourcingDotNet;
 
@@ -14,12 +15,12 @@ public interface IAggregateState<out TSelf, TId>
 {
     TSelf ApplyEvent(IDomainEvent @event);
 
-    EventValidationResult ValidateEvent(IDomainEvent @event) 
+    EventValidationResult ValidateEvent(IDomainEvent @event)
         => EventValidationResult.Fire;
 }
 
-public sealed record Aggregate<TId, TState>(
-    TId Id)
+[Pure]
+public sealed record Aggregate<TId, TState>(TId Id)
     where TId : IAggregateId
     where TState : IAggregateState<TState, TId>, new()
 {
@@ -42,7 +43,8 @@ public sealed record Aggregate<TId, TState>(
     /// </summary>
     /// <param name="event">The event to apply and to be added to the collection of uncommitted events</param>
     /// <returns></returns>
-    public Aggregate<TId, TState> AddEvent(IDomainEvent @event)
+    [Pure]
+    public Aggregate<TId, TState> AddEvent([Pure]IDomainEvent @event)
         => State.ValidateEvent(@event) switch
         {
             EventValidationResult.Fired
@@ -56,6 +58,7 @@ public sealed record Aggregate<TId, TState>(
             _ => throw new NotSupportedException($"Validation result is not supported")
         };
 
+    [Pure]
     public Aggregate<TId, TState> ApplyEvent(ResolvedEvent resolvedEvent)
         => resolvedEvent.Event switch
         {
