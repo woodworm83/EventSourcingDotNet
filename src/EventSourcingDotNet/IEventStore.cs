@@ -43,7 +43,11 @@ public readonly record struct CausationId(Guid Id)
             : null;
 }
 
-public readonly record struct StreamPosition(ulong Position);
+public readonly record struct StreamPosition(ulong Position)
+{
+    public static StreamPosition Start { get; } = new(0);
+    public static StreamPosition End { get; } = new(ulong.MaxValue);
+}
 
 public readonly record struct AggregateVersion(ulong Version)
 {

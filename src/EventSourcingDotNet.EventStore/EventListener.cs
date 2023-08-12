@@ -66,9 +66,12 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
     }
     
     private static FromStream GetFromStream(StreamPosition fromStreamPosition)
-        => fromStreamPosition == default
-            ? FromStream.Start
-            : FromStream.After(new global::EventStore.Client.StreamPosition(fromStreamPosition.Position - 1));
+        => fromStreamPosition.Position switch
+        {
+            0 => FromStream.Start,
+            ulong.MaxValue => FromStream.End,
+            var position => FromStream.After(new global::EventStore.Client.StreamPosition(position - 1)),
+        };
 
     public async ValueTask DisposeAsync()
     {
