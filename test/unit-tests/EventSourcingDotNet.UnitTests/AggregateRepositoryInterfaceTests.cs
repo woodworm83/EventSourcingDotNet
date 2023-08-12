@@ -33,7 +33,8 @@ public class AggregateRepositoryInterfaceTests
             x => x.SaveAsync(
                 aggregate, 
                 It.IsAny<CorrelationId?>(), 
-                It.IsAny<CausationId?>()), Times.Once);
+                It.IsAny<CausationId?>()), 
+            Times.Once);
     }
 
     [Fact]
