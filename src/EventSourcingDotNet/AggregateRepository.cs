@@ -22,23 +22,70 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// Save uncommitted events of an aggregate to an event store
     /// </summary>
     /// <param name="aggregate">The aggregate with zero to many uncommitted events</param>
+    /// <param name="correlationId">The correlation id of the process</param>
+    /// <param name="causationId">The causation id which initiated the events</param>
     /// <returns>The aggregate with Version updated to allow additional changes without reloading.</returns>
     /// <exception cref="OptimisticConcurrencyException">
     /// Thrown when expected version of the aggregate does not match actual version of the event store.
     /// This indicates that there was any other change storing new events to the stream.
     /// </exception>
-    Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate);
+    Task<Aggregate<TAggregateId, TState>> SaveAsync(
+        Aggregate<TAggregateId, TState> aggregate,
+        CorrelationId? correlationId = null,
+        CausationId? causationId = null);
+
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="id">The id of the aggregate</param>
+    /// <param name="correlationId">The correlation id of the process</param>
+    /// <param name="causationId">The causation id which initiated the events</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    sealed async Task UpdateAsync(
+        TAggregateId id, 
+        CorrelationId? correlationId, 
+        CausationId? causationId, 
+        params IDomainEvent[] events)
+        => await SaveAsync(
+            events.Aggregate(
+                await GetByIdAsync(id), 
+                (aggregate, @event) => aggregate.AddEvent(@event)),
+            correlationId,
+            causationId);
+
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="id">The id of the aggregate</param>
+    /// <param name="correlationId">The correlation id of the process</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    sealed async Task UpdateAsync(
+        TAggregateId id,
+        CorrelationId? correlationId,
+        params IDomainEvent[] events)
+        => await UpdateAsync(id, correlationId, null, events);
+
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="id">The id of the aggregate</param>
+    /// <param name="causationId">The causation id which initiated the events</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    sealed async Task UpdateAsync(
+        TAggregateId id,
+        CausationId? causationId,
+        params IDomainEvent[] events)
+        => await UpdateAsync(id, null, causationId, events);
 
     /// <summary>
     /// In-place update of an aggregate.
     /// </summary>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="events">The events to be appended to the event store</param>
-    sealed async Task UpdateAsync(TAggregateId id, params IDomainEvent[] events)
-        => await SaveAsync(
-            events.Aggregate(
-                await GetByIdAsync(id), 
-                (aggregate, @event) => aggregate.AddEvent(@event)));
+    sealed async Task UpdateAsync(
+        TAggregateId id,
+        params IDomainEvent[] events)
+        => await UpdateAsync(id, null, null, events);
 }
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
@@ -75,9 +122,17 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         return await _snapshotStore.GetAsync(aggregateId);
     }
 
-    public async Task<Aggregate<TAggregateId, TState>> SaveAsync(Aggregate<TAggregateId, TState> aggregate)
+    public async Task<Aggregate<TAggregateId, TState>> SaveAsync(
+        Aggregate<TAggregateId, TState> aggregate,
+        CorrelationId? correlationId = null,
+        CausationId? causationId = null)
     {
-        var version = await _eventStore.AppendEventsAsync(aggregate.Id, aggregate.UncommittedEvents, aggregate.Version);
+        var version = await _eventStore.AppendEventsAsync(
+            aggregate.Id, 
+            aggregate.UncommittedEvents, 
+            aggregate.Version, 
+            correlationId, 
+            causationId);
         
         return aggregate with
         {
