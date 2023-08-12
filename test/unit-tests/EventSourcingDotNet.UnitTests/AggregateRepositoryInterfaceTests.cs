@@ -30,10 +30,7 @@ public class AggregateRepositoryInterfaceTests
         await aggregateRepositoryMock.Object.UpdateAsync(new TestId());
 
         aggregateRepositoryMock.Verify(
-            x => x.SaveAsync(
-                aggregate, 
-                It.IsAny<CorrelationId?>(), 
-                It.IsAny<CausationId?>()), 
+            x => x.SaveAsync(aggregate, null, null),
             Times.Once);
     }
 
@@ -52,8 +49,6 @@ public class AggregateRepositoryInterfaceTests
 
         aggregateRepositoryMock.Verify(
             x => x.SaveAsync(
-                It.Is<Aggregate<TestId, TestState>>(a => a.State.Value == 42),
-                It.IsAny<CorrelationId>(),
-                It.IsAny<CausationId>()));
+                It.Is<Aggregate<TestId, TestState>>(a => a.State.Value == 42), null, null));
     }
 }
