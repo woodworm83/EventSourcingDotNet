@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		README.md = README.md
+		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.InMemory", "src\EventSourcingDotNet.InMemory\EventSourcingDotNet.InMemory.csproj", "{CA32380B-BCEE-4279-B275-EBBA896327D7}"

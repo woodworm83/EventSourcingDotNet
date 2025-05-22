@@ -1,6 +1,6 @@
 <Project>
-    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
-    
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))"/>
+
     <PropertyGroup>
         <Authors>Reto Kühni</Authors>
         <ProductName>EventSourcingDotNet</ProductName>
@@ -19,17 +19,17 @@
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
-    
+
     <ItemGroup>
-        <InternalsVisibleTo Include="$(AssemblyName).UnitTests" />
+        <InternalsVisibleTo Include="$(AssemblyName).UnitTests"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="true" PackagePath="/" /> 
+        <None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="MinVer" Version="4.3.0" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+        <PackageReference Include="MinVer" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All"/>
     </ItemGroup>
 </Project>

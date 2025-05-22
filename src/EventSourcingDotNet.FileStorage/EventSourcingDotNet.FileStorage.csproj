@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>    
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
-    
+
     <ItemGroup>
-      <ProjectReference Include="..\EventSourcingDotNet\EventSourcingDotNet.csproj" />
+        <ProjectReference Include="..\EventSourcingDotNet\EventSourcingDotNet.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0" />
-      <PackageReference Include="System.Text.Json" Version="8.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+        <PackageReference Include="System.Text.Json"/>
     </ItemGroup>
 
 </Project>

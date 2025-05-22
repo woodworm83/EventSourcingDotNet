@@ -1,24 +1,10 @@
-using System.Runtime.Serialization;
-
 namespace EventSourcingDotNet;
 
 public interface IDomainEvent
 {
 }
 
-[Serializable]
-public sealed class EventValidationException : ApplicationException
-{
-    public EventValidationException(string message)
-        : base($"Event validation failed:\n{message}")
-    {
-    }
-
-    private EventValidationException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-    }
-}
+public sealed class EventValidationException(string message) : Exception($"Event validation failed:\n{message}");
 
 public abstract record EventValidationResult
 {

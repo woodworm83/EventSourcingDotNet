@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Core library of EventSourcingDotNet</Description>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Description>Core library of EventSourcingDotNet</Description>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="$(AssemblyName).*.UnitTests" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="$(AssemblyName).*.UnitTests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="System.Linq.Async"/>
+    </ItemGroup>
 </Project>

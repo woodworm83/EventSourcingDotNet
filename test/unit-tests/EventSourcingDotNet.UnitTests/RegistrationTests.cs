@@ -126,7 +126,7 @@ public class RegistrationTests
                 })
             .BuildServiceProvider();
 
-    private static IEnumerable<object[]> GetAddAggregateMethods()
+    public static IEnumerable<object[]> GetAddAggregateMethods()
         => new Func<EventSourcingBuilder, AggregateBuilder>[]
             {
                 builder => builder.AddAggregate<TestId, TestState>(),
