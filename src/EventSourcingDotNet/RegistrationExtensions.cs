@@ -70,15 +70,12 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
                 $"Type {stateType.Name} is not assignable to type IAggregateState<TState, TAggregateId>"))
             .ToList();
 
-        switch (exceptions)
+        throw exceptions switch
         {
             // cannot use List Pattern here because it is not supported by Sonar Analyzer
-            case {Count: 1}:
-                throw exceptions.First();
-
-            case {Count: > 1}:
-                throw new AggregateException(exceptions);
-        }
+            [var exception] => exception,
+            _ => new AggregateException(exceptions)
+        };
     }
 
     private static bool IsValidStateType(Type stateType)
@@ -119,7 +116,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
         return builder;
     }
 
-    private IEnumerable<(Type IdType, ImmutableArray<Type> StateTypes)> Scan(Assembly assembly)
+    private static IEnumerable<(Type IdType, ImmutableArray<Type> StateTypes)> Scan(Assembly assembly)
         => assembly.GetTypes()
             .Where(type => !type.IsAbstract)
             .SelectMany(GetAggregateIdAndStateTypes)
