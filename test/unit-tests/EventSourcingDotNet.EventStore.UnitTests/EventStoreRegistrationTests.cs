@@ -40,7 +40,7 @@ public class EventStoreRegistrationTests
         service.Should().BeOfType(implementationType);
     }
 
-    private IServiceProvider BuildServiceProvider()
+    private static IServiceProvider BuildServiceProvider()
         => new ServiceCollection()
             .AddEventSourcing(builder => builder
                 .UseEventStore("esdb://localhost:2113")

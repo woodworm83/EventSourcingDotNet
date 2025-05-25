@@ -40,7 +40,7 @@ public class DeserializationContractResolverTests
 
         contract.Should().BeOfType<JsonObjectContract>()
             .Which
-            .Properties.Should().NotContain(property => property.PropertyName!.StartsWith("#"));
+            .Properties.Should().NotContain(property => property.PropertyName!.StartsWith('#'));
     }
     
     [Fact]
@@ -52,6 +52,6 @@ public class DeserializationContractResolverTests
 
         contract.Should().BeOfType<JsonObjectContract>()
             .Which
-            .Properties.Should().NotContain(property => property.PropertyName!.StartsWith("#"));
+            .Properties.Should().NotContain(property => property.PropertyName!.StartsWith('#'));
     }
 }

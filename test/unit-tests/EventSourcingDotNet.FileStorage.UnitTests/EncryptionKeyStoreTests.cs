@@ -90,7 +90,7 @@ public sealed class EncryptionKeyStoreTests : IDisposable
         File.Exists(filePath).Should().BeFalse();
     }
 
-    private string GetTestKeyName([CallerMemberName] string testMethodName = "")
+    private static string GetTestKeyName([CallerMemberName] string testMethodName = "")
         => testMethodName;
 
     private string GetTestKeyPath([CallerMemberName] string testMethodName = "") 

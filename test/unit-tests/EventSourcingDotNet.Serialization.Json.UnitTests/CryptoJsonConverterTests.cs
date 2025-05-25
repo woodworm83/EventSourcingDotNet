@@ -53,7 +53,7 @@ public class CryptoJsonConverterTests
         decrypted.Should().Be(plain);
     }
 
-    private byte[] Encrypt(string plain, CryptoJsonConverter converter)
+    private static byte[] Encrypt(string plain, CryptoJsonConverter converter)
     {
         using var stream = new MemoryStream();
         
@@ -65,7 +65,7 @@ public class CryptoJsonConverterTests
         return stream.ToArray();
     }
 
-    private string? Decrypt(byte[] encrypted, CryptoJsonConverter converter)
+    private static string? Decrypt(byte[] encrypted, CryptoJsonConverter converter)
     {
         using var stream = new MemoryStream(encrypted);
         using var reader = new JsonTextReader(new StreamReader(stream));
