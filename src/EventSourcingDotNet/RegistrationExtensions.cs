@@ -7,7 +7,7 @@ namespace EventSourcingDotNet;
 public static class RegistrationExtensions
 {
     public delegate void ConfigureEventSourcing(EventSourcingBuilder builder);
-    
+
     public static IServiceCollection AddEventSourcing(
         this IServiceCollection services,
         ConfigureEventSourcing configure)
@@ -70,12 +70,14 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
                 $"Type {stateType.Name} is not assignable to type IAggregateState<TState, TAggregateId>"))
             .ToList();
 
-        throw exceptions switch
+        switch (exceptions)
         {
             // cannot use List Pattern here because it is not supported by Sonar Analyzer
-            [var exception] => exception,
-            _ => new AggregateException(exceptions)
-        };
+            case [var exception]:
+                throw exception;
+            case {Count: > 0}:
+                throw new AggregateException(exceptions);
+        }
     }
 
     private static bool IsValidStateType(Type stateType)
@@ -124,7 +126,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
                 x => x.IdType,
                 x => x.StateType,
                 (idType, stateTypes) => (idType, stateTypes.ToImmutableArray()));
-    
+
     private static IEnumerable<(Type IdType, Type StateType)> GetAggregateIdAndStateTypes(Type type)
     {
         foreach (var @interface in type.GetInterfaces())
@@ -140,7 +142,7 @@ public sealed class EventSourcingBuilder : IAggregateBuilder<EventSourcingBuilde
 
     internal void ConfigureServices(
         IServiceCollection services)
-    {        
+    {
         if (_eventStoreProvider is not { } eventStoreProvider)
             throw new InvalidOperationException($"Event store provider was not specified");
 

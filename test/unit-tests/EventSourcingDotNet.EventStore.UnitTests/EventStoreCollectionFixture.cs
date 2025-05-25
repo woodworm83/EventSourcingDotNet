@@ -1,12 +1,13 @@
 ﻿using DotNet.Testcontainers.Containers;
 using EventStore.Client;
+using Testcontainers.EventStoreDb;
 using Xunit;
 
 namespace EventSourcingDotNet.EventStore.UnitTests;
 
 public class EventStoreFixture : IAsyncLifetime
 {
-    public IContainer Container { get; } = EventStoreTestContainer.BuildContainer();
+    public IContainer Container { get; } = new EventStoreDbBuilder().Build();
     
     public EventStoreClientSettings ClientSettings
         => EventStoreClientSettings.Create($"esdb://localhost:{Container.GetMappedPublicPort(2113)}?tls=false");
