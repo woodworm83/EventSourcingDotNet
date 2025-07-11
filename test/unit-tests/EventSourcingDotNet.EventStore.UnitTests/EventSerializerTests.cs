@@ -141,7 +141,8 @@ public class EventSerializerTests
 
         serializerSettingsFactoryMock.Verify(x => x.CreateForSerializationAsync(
             typeof(EncryptedTestEvent),
-            StreamNamingConvention.GetAggregateStreamName(aggregateId)));
+            StreamNamingConvention.GetAggregateStreamName(aggregateId),
+            It.IsAny<JsonSerializerSettings?>()));
     }
 
     [Fact]
@@ -153,7 +154,8 @@ public class EventSerializerTests
         await serializer.DeserializeAsync(
             EventDataHelper.CreateResolvedEvent("stream", @event: new EncryptedTestEvent("value")));
 
-        serializerSettingsFactoryMock.Verify(x => x.CreateForDeserializationAsync("stream"));
+        serializerSettingsFactoryMock.Verify(x =>
+            x.CreateForDeserializationAsync("stream", It.IsAny<JsonSerializerSettings?>()));
     }
 
     private static T? Deserialize<T>(ReadOnlyMemory<byte> data)

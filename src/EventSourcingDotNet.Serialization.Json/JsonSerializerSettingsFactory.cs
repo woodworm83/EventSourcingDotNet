@@ -11,8 +11,8 @@ public sealed class JsonSerializerSettingsFactory : IJsonSerializerSettingsFacto
     private readonly IEncryptionKeyStore? _encryptionKeyStore;
 
     public JsonSerializerSettingsFactory(
-        ILoggerFactory loggerFactory, 
-        ICryptoProvider? cryptoProvider = null, 
+        ILoggerFactory loggerFactory,
+        ICryptoProvider? cryptoProvider = null,
         IEncryptionKeyStore? encryptionKeyStore = null)
     {
         _loggerFactory = loggerFactory;
@@ -20,15 +20,18 @@ public sealed class JsonSerializerSettingsFactory : IJsonSerializerSettingsFacto
         _cryptoProvider = cryptoProvider;
     }
 
-    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(Type objectType, string? encryptionKeyName = null)
-        => new()
+    public async ValueTask<JsonSerializerSettings> CreateForSerializationAsync(
+        Type objectType,
+        string? encryptionKeyName = null,
+        JsonSerializerSettings? serializerSettings = null)
+        => new(serializerSettings ?? new JsonSerializerSettings())
         {
             ContractResolver = objectType.HasEncryptedProperties()
                 ? new SerializationContractResolver(
                     _cryptoProvider,
                     await GetKeyForEncryptionAsync(encryptionKeyName),
                     _loggerFactory.CreateLogger<SerializationContractResolver>())
-                : new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()}
+                : new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() }
         };
 
     private async ValueTask<EncryptionKey?> GetKeyForEncryptionAsync(string? encryptionKeyName)
@@ -36,8 +39,10 @@ public sealed class JsonSerializerSettingsFactory : IJsonSerializerSettingsFacto
             ? await _encryptionKeyStore.GetOrCreateKeyAsync(encryptionKeyName)
             : null;
 
-    public async ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(string? encryptionKeyName = null)
-        => new()
+    public async ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(
+        string? encryptionKeyName = null,
+        JsonSerializerSettings? serializerSettings = null)
+        => new(serializerSettings ?? new JsonSerializerSettings())
         {
             ContractResolver = new DeserializationContractResolver(
                 _cryptoProvider,

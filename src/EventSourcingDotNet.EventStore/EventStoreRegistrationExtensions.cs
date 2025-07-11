@@ -2,6 +2,7 @@
 using EventStore.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 // ReSharper disable once CheckNamespace
 namespace EventSourcingDotNet;
@@ -14,12 +15,16 @@ public static class EventStoreRegistrationExtensions
 
     public static EventSourcingBuilder UseEventStore(
         this EventSourcingBuilder builder, 
-        string connectionString)
-        => builder.UseEventStore(EventStoreClientSettings.Create(connectionString));
+        string connectionString,
+        JsonSerializerSettings? serializerSettings = null)
+        => builder.UseEventStore(EventStoreClientSettings.Create(connectionString), serializerSettings);
 
     public static EventSourcingBuilder UseEventStore(
         this EventSourcingBuilder builder,
-        EventStoreClientSettings clientSettings)
+        EventStoreClientSettings clientSettings,
+        JsonSerializerSettings? serializerSettings = null)
         => builder.UseEventStoreProvider(
-            new EventStoreProvider(clientSettings));
+            new EventStoreProvider(
+                clientSettings, 
+                new EventSerializerSettings(serializerSettings)));
 }

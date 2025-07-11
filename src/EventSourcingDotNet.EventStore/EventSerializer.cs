@@ -23,13 +23,16 @@ internal sealed class EventSerializer : IEventSerializer
 {
     private readonly IEventTypeResolver _eventTypeResolver;
     private readonly IJsonSerializerSettingsFactory _serializerSettingsFactory;
+    private readonly EventSerializerSettings? _settings;
 
     public EventSerializer(
         IEventTypeResolver eventTypeResolver,
-        IJsonSerializerSettingsFactory serializerSettingsFactory)
+        IJsonSerializerSettingsFactory serializerSettingsFactory,
+        EventSerializerSettings? settings = null)
     {
         _eventTypeResolver = eventTypeResolver;
         _serializerSettingsFactory = serializerSettingsFactory;
+        _settings = settings;
     }
 
     public async ValueTask<EventData> SerializeAsync<TAggregateId>(
@@ -53,21 +56,22 @@ internal sealed class EventSerializer : IEventSerializer
                 @event,
                 await _serializerSettingsFactory.CreateForSerializationAsync(
                     @event.GetType(),
-                    StreamNamingConvention.GetAggregateStreamName(aggregateId))));
+                    StreamNamingConvention.GetAggregateStreamName(aggregateId),
+                    _settings?.SerializerSettings)));
 
     private static ReadOnlyMemory<byte>? SerializeEventMetadata<TAggregateId>(
         TAggregateId aggregateId,
         Guid? correlationId,
         Guid? causationId)
-        where TAggregateId: notnull
+        where TAggregateId : notnull
         => Encoding.UTF8.GetBytes(
-                JsonConvert.SerializeObject(
-                    new EventMetadata(JToken.FromObject(aggregateId), correlationId, causationId),
-                    new JsonSerializerSettings
-                    {
-                        ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
-                        NullValueHandling = NullValueHandling.Ignore
-                    }));
+            JsonConvert.SerializeObject(
+                new EventMetadata(JToken.FromObject(aggregateId), correlationId, causationId),
+                new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
+                    NullValueHandling = NullValueHandling.Ignore
+                }));
 
     public async ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent)
     {
@@ -95,7 +99,7 @@ internal sealed class EventSerializer : IEventSerializer
             Encoding.UTF8.GetString(eventRecord.Metadata.Span),
             new JsonSerializerSettings
             {
-                ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
+                ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
             });
 
     private async ValueTask<IDomainEvent?> DeserializeEventDataAsync(string streamName, EventRecord eventRecord)
@@ -105,7 +109,9 @@ internal sealed class EventSerializer : IEventSerializer
         return JsonConvert.DeserializeObject(
                 Encoding.UTF8.GetString(eventRecord.Data.Span),
                 eventType,
-                await _serializerSettingsFactory.CreateForDeserializationAsync(streamName))
+                await _serializerSettingsFactory.CreateForDeserializationAsync(
+                    streamName,
+                    _settings?.SerializerSettings))
             as IDomainEvent;
     }
 }
