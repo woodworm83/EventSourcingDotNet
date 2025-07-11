@@ -2,6 +2,7 @@
 using EventSourcingDotNet.Serialization.Json;
 using EventStore.Client;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
@@ -21,6 +22,13 @@ internal interface IEventSerializer
 
 internal sealed class EventSerializer : IEventSerializer
 {
+    private static readonly JsonSerializerSettings MetadataSerializerSettings = new()
+    {
+        ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
+        NullValueHandling = NullValueHandling.Ignore,
+        Converters = { new StringEnumConverter() }
+    };
+
     private readonly IEventTypeResolver _eventTypeResolver;
     private readonly IJsonSerializerSettingsFactory _serializerSettingsFactory;
     private readonly EventSerializerSettings? _settings;
@@ -67,11 +75,7 @@ internal sealed class EventSerializer : IEventSerializer
         => Encoding.UTF8.GetBytes(
             JsonConvert.SerializeObject(
                 new EventMetadata(JToken.FromObject(aggregateId), correlationId, causationId),
-                new JsonSerializerSettings
-                {
-                    ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
-                    NullValueHandling = NullValueHandling.Ignore
-                }));
+                MetadataSerializerSettings));
 
     public async ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent)
     {
@@ -97,10 +101,7 @@ internal sealed class EventSerializer : IEventSerializer
     private static EventMetadata? DeserializeEventMetadata(EventRecord eventRecord)
         => JsonConvert.DeserializeObject<EventMetadata>(
             Encoding.UTF8.GetString(eventRecord.Metadata.Span),
-            new JsonSerializerSettings
-            {
-                ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
-            });
+            MetadataSerializerSettings);
 
     private async ValueTask<IDomainEvent?> DeserializeEventDataAsync(string streamName, EventRecord eventRecord)
     {
