@@ -1,14 +1,14 @@
 ﻿using System.Text;
-using EventStore.Client;
+using KurrentDB.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 internal static class EventDataHelper
 {
-    private static readonly JsonSerializerSettings _serializerSettings = new()
+    private static readonly JsonSerializerSettings SerializerSettings = new()
     {
         ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
         NullValueHandling = NullValueHandling.Ignore
@@ -24,15 +24,15 @@ internal static class EventDataHelper
         => new(
             eventId is null ? Uuid.NewUuid() : Uuid.FromGuid(eventId.Value),
             StreamNamingConvention.GetEventTypeName(@event),
-            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, _serializerSettings)),
+            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, SerializerSettings)),
             Encoding.UTF8.GetBytes(
                 JsonConvert.SerializeObject(
                     new EventMetadata(JToken.FromObject(aggregateId), correlationId?.Id ?? Guid.NewGuid(),
                         causationId?.Id),
-                    _serializerSettings)));
+                    SerializerSettings)));
 
 
-    public static global::EventStore.Client.ResolvedEvent CreateResolvedEvent(
+    public static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
         string eventStreamId = "",
         Uuid? uuid = null,
         ulong streamPosition = 0,
@@ -58,7 +58,7 @@ internal static class EventDataHelper
             created);
     }
 
-    private static global::EventStore.Client.ResolvedEvent CreateResolvedEvent(
+    private static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
         string eventType,
         ReadOnlyMemory<byte> data,
         ReadOnlyMemory<byte> metadata,
@@ -70,7 +70,7 @@ internal static class EventDataHelper
             new EventRecord(
                 eventStreamId,
                 uuid ?? Uuid.NewUuid(),
-                new global::EventStore.Client.StreamPosition(streamPosition),
+                new global::KurrentDB.Client.StreamPosition(streamPosition),
                 new Position(streamPosition, streamPosition),
                 new Dictionary<string, string>
                 {
@@ -83,7 +83,7 @@ internal static class EventDataHelper
             null,
             null);
 
-    public static global::EventStore.Client.ResolvedEvent CreateResolvedEvent(
+    public static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
         EventData eventData,
         string eventStreamId = "",
         ulong streamPosition = 0,

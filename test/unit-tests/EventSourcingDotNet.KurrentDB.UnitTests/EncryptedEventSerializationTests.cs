@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 public class EncryptedEventSerializationTests
 {

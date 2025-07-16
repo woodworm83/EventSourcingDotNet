@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\src\EventSourcingDotNet.EventStore\EventSourcingDotNet.EventStore.csproj"/>
+        <ProjectReference Include="..\..\..\src\EventSourcingDotNet.KurrentDB\EventSourcingDotNet.KurrentDB.csproj" />
     </ItemGroup>
 
 </Project>

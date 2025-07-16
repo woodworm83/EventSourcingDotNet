@@ -1,4 +1,4 @@
-﻿namespace EventSourcingDotNet.EventStore;
+﻿namespace EventSourcingDotNet.KurrentDB;
 
 internal static class StreamNamingConvention
 {

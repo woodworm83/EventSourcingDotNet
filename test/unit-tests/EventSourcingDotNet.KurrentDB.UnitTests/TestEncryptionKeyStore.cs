@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 internal sealed class TestEncryptionKeyStore : IEncryptionKeyStore
 {

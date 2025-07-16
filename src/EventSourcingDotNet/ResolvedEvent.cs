@@ -1,7 +1,9 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using JetBrains.Annotations;
+using Newtonsoft.Json.Linq;
 
 namespace EventSourcingDotNet;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public record ResolvedEvent(
     EventId Id,
     string StreamName,

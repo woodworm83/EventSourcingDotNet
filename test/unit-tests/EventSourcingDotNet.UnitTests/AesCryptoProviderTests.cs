@@ -7,15 +7,15 @@ namespace EventSourcingDotNet.UnitTests;
 
 public class AesCryptoProviderTests
 {
-    private static readonly IReadOnlyList<int> _legalAesKeySizes = GetLegalAesKeySizes()
+    private static readonly IReadOnlyList<int> LegalAesKeySizes = GetLegalAesKeySizes()
         .Distinct()
         .ToList();
 
-    private static readonly EncryptionKey _encryptionKey
+    private static readonly EncryptionKey EncryptionKey
         = new(Convert.FromBase64String("E/fetTS2G/JtwsovU32b4dtx2JD+yjH+v0MItdGi+tI="));
-    private static readonly byte[] _cypherText 
+    private static readonly byte[] CypherText 
         = Convert.FromBase64String("eyJpdiI6Im1uUWZ6dkt4aS9QWGZ2d3FQcVNqM3c9PSIsImN5cGhlciI6IklGRjJ5QnlLNHA0b29CRVZxLzM0TkE9PSJ9");
-    private const string _plainText = "plainText";
+    private const string PlainText = "plainText";
 
     [Fact]
     public void ShouldGenerateKeyWithValidKeySize()
@@ -24,7 +24,7 @@ public class AesCryptoProviderTests
         
         var encryptionKey = provider.GenerateKey();
 
-        _legalAesKeySizes.Should().Contain(encryptionKey.Key.Length * 8);
+        LegalAesKeySizes.Should().Contain(encryptionKey.Key.Length * 8);
     }
     
     [Fact]
@@ -32,14 +32,14 @@ public class AesCryptoProviderTests
     {
         var provider = new AesCryptoProvider();
 
-        using var inputStream = new MemoryStream(_cypherText);
+        using var inputStream = new MemoryStream(CypherText);
         using var outputStream = new MemoryStream();
         
-        provider.TryDecrypt(inputStream, outputStream, _encryptionKey)
+        provider.TryDecrypt(inputStream, outputStream, EncryptionKey)
             .Should().BeTrue();
         
         Encoding.UTF8.GetString(outputStream.ToArray())
-            .Should().Be(_plainText);
+            .Should().Be(PlainText);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class AesCryptoProviderTests
         using var inputStream = new MemoryStream();
         using var outputStream = new MemoryStream();
         
-        provider.TryDecrypt(inputStream, outputStream, _encryptionKey)
+        provider.TryDecrypt(inputStream, outputStream, EncryptionKey)
             .Should().BeFalse();
 
         outputStream.Length.Should().Be(0);
@@ -61,9 +61,9 @@ public class AesCryptoProviderTests
     {
         var provider = new AesCryptoProvider();
 
-        using var inputStream = new MemoryStream(Encoding.UTF8.GetBytes(_plainText));
+        using var inputStream = new MemoryStream(Encoding.UTF8.GetBytes(PlainText));
         using var outputStream = new MemoryStream();
-        provider.Encrypt(inputStream, outputStream, _encryptionKey);
+        provider.Encrypt(inputStream, outputStream, EncryptionKey);
 
         outputStream.Length.Should().BeGreaterThan(0);
     }

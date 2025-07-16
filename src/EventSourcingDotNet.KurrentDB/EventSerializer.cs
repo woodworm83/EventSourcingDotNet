@@ -1,12 +1,12 @@
 ﻿using System.Text;
 using EventSourcingDotNet.Serialization.Json;
-using EventStore.Client;
+using KurrentDB.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
-namespace EventSourcingDotNet.EventStore;
+namespace EventSourcingDotNet.KurrentDB;
 
 internal interface IEventSerializer
 {
@@ -17,7 +17,7 @@ internal interface IEventSerializer
         CausationId? causationId = null)
         where TAggregateId : IAggregateId;
 
-    ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent);
+    ValueTask<ResolvedEvent> DeserializeAsync(global::KurrentDB.Client.ResolvedEvent resolvedEvent);
 }
 
 internal sealed class EventSerializer : IEventSerializer
@@ -77,7 +77,7 @@ internal sealed class EventSerializer : IEventSerializer
                 new EventMetadata(JToken.FromObject(aggregateId), correlationId, causationId),
                 MetadataSerializerSettings));
 
-    public async ValueTask<ResolvedEvent> DeserializeAsync(global::EventStore.Client.ResolvedEvent resolvedEvent)
+    public async ValueTask<ResolvedEvent> DeserializeAsync(global::KurrentDB.Client.ResolvedEvent resolvedEvent)
     {
         var metadata = DeserializeEventMetadata(resolvedEvent.Event);
         var @event = await DeserializeEventDataAsync(resolvedEvent.Event.EventStreamId, resolvedEvent.Event);

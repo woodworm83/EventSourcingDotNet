@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 public class EventStoreRegistrationTests
 {
@@ -43,7 +43,7 @@ public class EventStoreRegistrationTests
     private static IServiceProvider BuildServiceProvider()
         => new ServiceCollection()
             .AddEventSourcing(builder => builder
-                .UseEventStore("esdb://localhost:2113")
+                .UseKurrentDB("esdb://localhost:2113")
                 .AddAggregate<TestId>())
             .AddSingleton<IEventTypeResolver>(new TestEventTypeResolver())
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)

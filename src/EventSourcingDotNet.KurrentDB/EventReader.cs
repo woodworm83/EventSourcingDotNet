@@ -1,13 +1,13 @@
-﻿using EventStore.Client;
+﻿using KurrentDB.Client;
 
-namespace EventSourcingDotNet.EventStore;
+namespace EventSourcingDotNet.KurrentDB;
 
 internal sealed class EventReader : IEventReader
 {
-    private readonly EventStoreClient _client;
+    private readonly KurrentDBClient _client;
     private readonly IEventSerializer _eventSerializer;
 
-    public EventReader(IEventSerializer eventSerializer, EventStoreClient client)
+    public EventReader(IEventSerializer eventSerializer, KurrentDBClient client)
     {
         _eventSerializer = eventSerializer;
         _client = client;
@@ -37,9 +37,8 @@ internal sealed class EventReader : IEventReader
             fromStreamPosition,
             resolveLinkTos: true);
 
-    private static global::EventStore.Client.StreamPosition GetRevision(StreamPosition streamPosition)
-        => global::EventStore.Client.StreamPosition.FromStreamRevision(
-            new StreamRevision(streamPosition.Position));
+    private static global::KurrentDB.Client.StreamPosition GetRevision(StreamPosition streamPosition)
+        => global::KurrentDB.Client.StreamPosition.FromStreamRevision(streamPosition.Position);
     
     private async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
         string streamName, 

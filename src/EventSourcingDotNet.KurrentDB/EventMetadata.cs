@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace EventSourcingDotNet.EventStore;
+namespace EventSourcingDotNet.KurrentDB;
 
 internal record EventMetadata(
     JToken AggregateId,

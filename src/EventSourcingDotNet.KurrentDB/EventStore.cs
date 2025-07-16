@@ -1,19 +1,19 @@
-﻿using EventStore.Client;
+﻿using KurrentDB.Client;
 
-namespace EventSourcingDotNet.EventStore;
+namespace EventSourcingDotNet.KurrentDB;
 
 internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
     where TAggregateId : IAggregateId
 {
-    private readonly EventStoreClient _client;
+    private readonly KurrentDBClient _client;
     private readonly IEventSerializer _eventSerializer;
 
     public EventStore( 
         IEventSerializer eventSerializer,
-        EventStoreClient eventStoreClient)
+        KurrentDBClient client)
     {
         _eventSerializer = eventSerializer;
-        _client = eventStoreClient;
+        _client = client;
     }
 
     public async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
@@ -21,7 +21,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
         var result = _client.ReadStreamAsync(
             Direction.Forwards,
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
-            new global::EventStore.Client.StreamPosition(fromVersion.Version));
+            new global::KurrentDB.Client.StreamPosition(fromVersion.Version));
 
         if (await result.ReadState == ReadState.StreamNotFound) yield break;
         
@@ -43,10 +43,10 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
     {
         var result = await _client.AppendToStreamAsync(
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
-            new StreamRevision(expectedVersion.Version - 1),
+            StreamState.StreamRevision(expectedVersion.Version - 1),
             await SerializeEventsAsync(aggregateId, events, correlationId, causationId).ToListAsync());
 
-        return new AggregateVersion(result.NextExpectedStreamRevision.ToUInt64() + 1);
+        return new AggregateVersion((uint)(result.NextExpectedStreamState.ToInt64() + 1));
     }
 
     private async IAsyncEnumerable<EventData> SerializeEventsAsync(

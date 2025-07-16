@@ -1,4 +1,4 @@
-﻿namespace EventSourcingDotNet.EventStore.UnitTests;
+﻿namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 public readonly record struct TestId(Guid Id) : IAggregateId
 {

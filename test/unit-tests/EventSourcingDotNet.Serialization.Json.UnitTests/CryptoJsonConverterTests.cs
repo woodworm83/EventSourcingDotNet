@@ -7,7 +7,7 @@ namespace EventSourcingDotNet.Serialization.Json.UnitTests;
 
 public class CryptoJsonConverterTests
 {
-    private const string _plainText = "plainText";
+    private const string PlainText = "plainText";
 
     [Fact]
     public void ShouldEncryptPropertyValue()
@@ -16,7 +16,7 @@ public class CryptoJsonConverterTests
         var writerMock = new Mock<TextWriter>();
 
         var converter = new CryptoJsonConverter(cryptoProviderMock.Object, new EncryptionKey());
-        converter.WriteJson(new JsonTextWriter(writerMock.Object), _plainText, new JsonSerializer());
+        converter.WriteJson(new JsonTextWriter(writerMock.Object), PlainText, new JsonSerializer());
 
         cryptoProviderMock.Verify(x => x.Encrypt(It.IsAny<Stream>(), It.IsAny<Stream>(), It.IsAny<EncryptionKey>()));
     }

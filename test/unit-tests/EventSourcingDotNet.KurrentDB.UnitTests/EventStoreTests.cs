@@ -1,17 +1,18 @@
 using System.Text;
 using EventSourcingDotNet.Serialization.Json;
-using EventStore.Client;
 using FluentAssertions;
+using KurrentDB.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 [Collection(nameof(EventStoreCollection))]
 public class EventStoreTests
 {
-    private static readonly TestEventTypeResolver _eventTypeResolver = new();
+    private static readonly TestEventTypeResolver EventTypeResolver = new();
+    
     private readonly EventStoreFixture _fixture;
     private readonly JsonSerializerSettingsFactory _serializerSettingsFactory = new(NullLoggerFactory.Instance);
 
@@ -136,8 +137,8 @@ public class EventStoreTests
 
     private EventStore<TestId> CreateEventStore(IEventSerializer? eventSerializer = null)
         => new(
-            eventSerializer ?? new EventSerializer(_eventTypeResolver, _serializerSettingsFactory),
-            new EventStoreClient(_fixture.ClientSettings));
+            eventSerializer ?? new EventSerializer(EventTypeResolver, _serializerSettingsFactory),
+            new KurrentDBClient(_fixture.ClientSettings));
 
     private IAsyncEnumerable<EventMetadata?> ReadEventMetadata(TestId aggregateId) 
         => _fixture.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))

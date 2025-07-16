@@ -1,13 +1,13 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using EventSourcingDotNet.Serialization.Json;
-using EventStore.Client;
 using FluentAssertions;
+using KurrentDB.Client;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 [Collection(nameof(EventStoreCollection))]
 public class EventListenerTests
@@ -94,7 +94,7 @@ public class EventListenerTests
             new EventSerializer(
                 new TestEventTypeResolver(),
                 new JsonSerializerSettingsFactory(NullLoggerFactory.Instance)),
-            new EventStoreClient(Options.Create(_fixture.ClientSettings)));
+            new KurrentDBClient(Options.Create(_fixture.ClientSettings)));
 
     private static async Task<IReadOnlyList<ResolvedEvent>> WaitForEvents(
         IObservable<ResolvedEvent> source,

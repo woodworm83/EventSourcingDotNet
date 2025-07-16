@@ -6,7 +6,7 @@ using Moq;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace EventSourcingDotNet.EventStore.UnitTests;
+namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 public class EventSerializerTests
 {

@@ -1,20 +1,20 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Reactive.Linq;
-using EventStore.Client;
+using KurrentDB.Client;
 
-namespace EventSourcingDotNet.EventStore;
+namespace EventSourcingDotNet.KurrentDB;
 
 internal sealed class EventListener : IEventListener, IAsyncDisposable
 {
     private readonly IEventSerializer _eventSerializer;
-    private readonly EventStoreClient _client;
+    private readonly KurrentDBClient _client;
 
     public EventListener(
         IEventSerializer eventSerializer,
-        EventStoreClient eventStoreClient)
+        KurrentDBClient client)
     {
         _eventSerializer = eventSerializer;
-        _client = eventStoreClient;
+        _client = client;
     }
 
     public IObservable<ResolvedEvent> ByAggregate<TAggregateId>(
@@ -70,7 +70,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         {
             0 => FromStream.Start,
             ulong.MaxValue => FromStream.End,
-            var position => FromStream.After(new global::EventStore.Client.StreamPosition(position - 1)),
+            var position => FromStream.After(new global::KurrentDB.Client.StreamPosition(position - 1)),
         };
 
     public async ValueTask DisposeAsync()
@@ -94,7 +94,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed")]
         public async Task EventAppeared(
             StreamSubscription subscription,
-            global::EventStore.Client.ResolvedEvent resolvedEvent,
+            global::KurrentDB.Client.ResolvedEvent resolvedEvent,
             CancellationToken cancellationToken)
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract

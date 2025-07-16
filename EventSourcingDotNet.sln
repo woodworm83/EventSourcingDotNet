@@ -38,9 +38,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.EventStore", "src\EventSourcingDotNet.EventStore\EventSourcingDotNet.EventStore.csproj", "{0B20EA7A-11EC-429A-B6AC-136003D89DA7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.KurrentDB", "src\EventSourcingDotNet.KurrentDB\EventSourcingDotNet.KurrentDB.csproj", "{0B20EA7A-11EC-429A-B6AC-136003D89DA7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.EventStore.UnitTests", "test\unit-tests\EventSourcingDotNet.EventStore.UnitTests\EventSourcingDotNet.EventStore.UnitTests.csproj", "{2734617D-70D4-41F1-953B-1519931ECF99}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.KurrentDB.UnitTests", "test\unit-tests\EventSourcingDotNet.KurrentDB.UnitTests\EventSourcingDotNet.KurrentDB.UnitTests.csproj", "{2734617D-70D4-41F1-953B-1519931ECF99}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDotNet.Serialization.Json", "src\EventSourcingDotNet.Serialization.Json\EventSourcingDotNet.Serialization.Json.csproj", "{C6BE1CF6-0EBC-4C5B-83BA-818D7465F14E}"
 EndProject
