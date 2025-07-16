@@ -144,12 +144,12 @@ You must add a reference to [EventSourcingDotNet.InMemory](https://www.nuget.org
         builder.AddAggregate<MyOtherAggregateId, MyOtherAggregateState>();
     }
 
-#### Register an aggregate using EventStoreDB storage provider:
-You must add a reference to [EventSourcingDotNet.EventStore](https://www.nuget.org/packages/EventSourcingDotNet.EventStore) package to use the EventStoreDB Provider.
+#### Register an aggregate using KurrentDB storage provider:
+You must add a reference to [EventSourcingDotNet.KurrentDB](https://www.nuget.org/packages/EventSourcingDotNet.KurrentDB) package to use the KurrentDB Provider.
 
     sevrices.AddEventSourcing(builder =>
     {
-        builder.UseEventStore("esdb://localhost:2113");
+        builder.UseKurrentDB("esdb://localhost:2113");
         builder.AddAggregate<MyAggregateId, MyAggregateState>();
     }
 
@@ -243,7 +243,7 @@ The configuration section is bound to the configuration class `EncryptionKeyStor
 # Supported Data Stores
 ### Event Storage Providers
 * In-Memory
-* [Event Store DB](https://www.eventstore.com/)
+* [KurrentDB](https://www.kurrent.io/) (former EventStoreDB)
 
 ### Snapshot Providers
 * In-Memory
