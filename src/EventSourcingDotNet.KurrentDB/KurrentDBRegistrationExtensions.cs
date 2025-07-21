@@ -12,7 +12,7 @@ namespace EventSourcingDotNet;
 // ReSharper disable once InconsistentNaming
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 [SuppressMessage("Info Code Smell", "S1133:Deprecated code should be removed")]
-[UsedImplicitly]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public static class KurrentDBRegistrationExtensions
 {
     public static IServiceCollection ConfigureKurrentDB(this IServiceCollection services, string connectionString)
