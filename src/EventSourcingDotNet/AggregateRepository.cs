@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using JetBrains.Annotations;
 
 namespace EventSourcingDotNet;
 
@@ -7,6 +8,7 @@ namespace EventSourcingDotNet;
 /// </summary>
 /// <typeparam name="TAggregateId">The aggregate identifier</typeparam>
 /// <typeparam name="TState">The aggregate state</typeparam>
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public interface IAggregateRepository<TAggregateId, TState> 
     where TAggregateId : IAggregateId
     where TState : IAggregateState<TState, TAggregateId>, new()
@@ -24,10 +26,10 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// <param name="aggregate">The aggregate with zero to many uncommitted events</param>
     /// <param name="correlationId">The correlation id of the process</param>
     /// <param name="causationId">The causation id which initiated the events</param>
-    /// <returns>The aggregate with Version updated to allow additional changes without reloading.</returns>
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
     /// <exception cref="OptimisticConcurrencyException">
     /// Thrown when expected version of the aggregate does not match actual version of the event store.
-    /// This indicates that there was any other change storing new events to the stream.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
     /// </exception>
     Task<Aggregate<TAggregateId, TState>> SaveAsync(
         Aggregate<TAggregateId, TState> aggregate,
@@ -41,12 +43,12 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// <param name="correlationId">The correlation id of the process</param>
     /// <param name="causationId">The causation id which initiated the events</param>
     /// <param name="events">The events to be appended to the event store</param>
-    /// <returns>The aggregate with Version updated to allow additional changes without reloading.</returns>
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
     /// <exception cref="OptimisticConcurrencyException">
     /// Thrown when expected version of the aggregate does not match actual version of the event store.
-    /// This indicates that there was any other change between reading of the events and storing new events to the stream.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
     /// </exception>
-    sealed async Task UpdateAsync(
+    sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id, 
         CorrelationId? correlationId, 
         CausationId? causationId, 
@@ -64,7 +66,12 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="correlationId">The correlation id of the process</param>
     /// <param name="events">The events to be appended to the event store</param>
-    sealed async Task UpdateAsync(
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
+    /// </exception>
+    sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id,
         CorrelationId? correlationId,
         params IDomainEvent[] events)
@@ -76,7 +83,12 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="causationId">The causation id which initiated the events</param>
     /// <param name="events">The events to be appended to the event store</param>
-    sealed async Task UpdateAsync(
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
+    /// </exception>
+    sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id,
         CausationId? causationId,
         params IDomainEvent[] events)
@@ -87,7 +99,12 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// </summary>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="events">The events to be appended to the event store</param>
-    sealed async Task UpdateAsync(
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
+    /// </exception>
+    sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id,
         params IDomainEvent[] events)
         => await UpdateAsync(id, null, null, events);
