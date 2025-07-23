@@ -4,6 +4,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <VersionPrefix>0.0.1</VersionPrefix>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

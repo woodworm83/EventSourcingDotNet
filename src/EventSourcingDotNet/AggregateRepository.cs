@@ -52,7 +52,7 @@ public interface IAggregateRepository<TAggregateId, TState>
         TAggregateId id, 
         CorrelationId? correlationId, 
         CausationId? causationId, 
-        params IDomainEvent[] events)
+        params IEnumerable<IDomainEvent> events)
         => await SaveAsync(
             events.Aggregate(
                 await GetByIdAsync(id), 
@@ -74,7 +74,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id,
         CorrelationId? correlationId,
-        params IDomainEvent[] events)
+        params IEnumerable<IDomainEvent> events)
         => await UpdateAsync(id, correlationId, null, events);
 
     /// <summary>
@@ -91,7 +91,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id,
         CausationId? causationId,
-        params IDomainEvent[] events)
+        params IEnumerable<IDomainEvent> events)
         => await UpdateAsync(id, null, causationId, events);
 
     /// <summary>
@@ -106,7 +106,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// </exception>
     sealed async Task<Aggregate<TAggregateId, TState>> UpdateAsync(
         TAggregateId id,
-        params IDomainEvent[] events)
+        params IEnumerable<IDomainEvent> events)
         => await UpdateAsync(id, null, null, events);
 }
 
