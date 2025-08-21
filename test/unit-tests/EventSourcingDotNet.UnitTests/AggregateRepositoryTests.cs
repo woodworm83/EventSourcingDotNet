@@ -14,7 +14,7 @@ public class AggregateRepositoryTests
     {
         var eventStoreMock = MockEventStore();
         var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object);
-        
+
         var result = await repository.GetByIdAsync(new TestId(42));
 
         result.Id.Id.Should().Be(42);
@@ -37,8 +37,11 @@ public class AggregateRepositoryTests
     {
         var snapshot = new Aggregate<TestId, TestState>(new TestId());
         var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
-        snapshotProviderMock.Setup(x => x.GetAsync(It.IsAny<TestId>()))
+
+        snapshotProviderMock
+            .Setup(x => x.GetAsync(It.IsAny<TestId>()))
             .ReturnsAsync(snapshot);
+
         var eventStoreMock = MockEventStore();
         var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object, snapshotProviderMock.Object);
 
@@ -57,14 +60,13 @@ public class AggregateRepositoryTests
             .AddEvent(@event);
 
         await repository.SaveAsync(aggregate);
-        
-        eventStoreMock.Verify(
-            x => x.AppendEventsAsync(
-                aggregate.Id, 
-                It.Is<IEnumerable<IDomainEvent>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
-                aggregate.Version,
-                It.IsAny<CorrelationId?>(),
-                It.IsAny<CausationId?>()));
+
+        eventStoreMock.Verify(x => x.AppendEventsAsync(
+            aggregate.Id,
+            It.Is<IEnumerable<IDomainEvent>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
+            aggregate.Version,
+            It.IsAny<CorrelationId?>(),
+            It.IsAny<CausationId?>()));
     }
 
     [Fact]
@@ -84,13 +86,12 @@ public class AggregateRepositoryTests
     {
         var aggregate = new Aggregate<TestId, TestState>(new TestId());
         var eventStoreMock = new Mock<IEventStore<TestId>>();
-        eventStoreMock.Setup(
-                x => x.AppendEventsAsync(
-                    It.IsAny<TestId>(), 
-                    It.IsAny<IEnumerable<IDomainEvent>>(),
-                    It.IsAny<AggregateVersion>(),
-                    null,
-                    null))
+        eventStoreMock.Setup(x => x.AppendEventsAsync(
+                It.IsAny<TestId>(),
+                It.IsAny<IEnumerable<IDomainEvent>>(),
+                It.IsAny<AggregateVersion>(),
+                null,
+                null))
             .ReturnsAsync(new AggregateVersion(42));
         var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object);
 
@@ -98,7 +99,32 @@ public class AggregateRepositoryTests
 
         result.Version.Version.Should().Be(42);
     }
-    
+
+    [Fact]
+    public async Task ShouldUpdateSnapshotAfterReplay()
+    {
+        var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
+        var eventStoreMock = MockEventStore(new TestEvent());
+        var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object, snapshotProviderMock.Object);
+
+        var aggregate = await repository.GetByIdAsync(new TestId());
+
+        snapshotProviderMock.Verify(x => x.SetAsync(aggregate), Times.Once);
+    }
+
+    [Fact]
+    public async Task ShouldUpdateSnapshotAfterSave()
+    {
+        var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
+        var eventStoreMock = MockEventStore();
+        var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object, snapshotProviderMock.Object);
+
+        var aggregate = await repository.SaveAsync(
+            new Aggregate<TestId, TestState>(new TestId()).AddEvent(new TestEvent()));
+
+        snapshotProviderMock.Verify(x => x.SetAsync(aggregate), Times.Once);
+    }
+
     private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent[] events)
     {
         var mock = new Mock<IEventStore<TestId>>();

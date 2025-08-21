@@ -133,6 +133,8 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         {
             aggregate = aggregate.ApplyEvent(resolvedEvent);
         }
+        
+        await UpdateSnapshot(aggregate);
 
         return aggregate;
     }
@@ -156,10 +158,22 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
             correlationId, 
             causationId);
         
-        return aggregate with
+        aggregate = aggregate with
         {
             UncommittedEvents = ImmutableList<IDomainEvent>.Empty,
             Version = version
         };
+        
+        await UpdateSnapshot(aggregate).ConfigureAwait(false);
+
+        return aggregate;
+    }
+
+    private async Task UpdateSnapshot(Aggregate<TAggregateId, TState> aggregate)
+    {
+        if (_snapshotStore is not null)
+        {
+            await _snapshotStore.SetAsync(aggregate).ConfigureAwait(false);
+        }
     }
 }

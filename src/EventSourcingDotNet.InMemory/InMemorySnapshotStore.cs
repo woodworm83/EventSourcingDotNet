@@ -13,16 +13,16 @@ public sealed class InMemorySnapshotStore<TAggregateId, TState> : ISnapshotStore
     public async Task SetAsync(Aggregate<TAggregateId, TState> aggregate)
     {
         await _semaphore.WaitAsync();
+        
         try
         {
             if (!IsNewer(aggregate)) return;
 
             _snapshots[aggregate.Id] = aggregate;
         }
-        catch (Exception e)
+        finally
         {
-            Console.WriteLine(e);
-            throw;
+            _semaphore.Release();
         }
     }
 
