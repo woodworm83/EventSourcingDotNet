@@ -39,6 +39,73 @@ public static class AggregateRepositoryExtensions
     /// In-place update of an aggregate.
     /// </summary>
     /// <param name="repository">The repository to update</param>
+    /// <param name="aggregate">The aggregate to be updated</param>
+    /// <param name="correlationId">The correlation id of the process</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
+    /// </exception>
+    public static async Task<Aggregate<TAggregateId, TState>> UpdateAsync<TAggregateId, TState>(
+        this IAggregateRepository<TAggregateId, TState> repository,
+        Aggregate<TAggregateId, TState> aggregate,
+        CorrelationId? correlationId,
+        params IEnumerable<IDomainEvent> events)
+        where TAggregateId : IAggregateId
+        where TState : IAggregateState<TState, TAggregateId>, new()
+        => await repository
+            .UpdateAsync(aggregate, correlationId, causationId: null, events)
+            .ConfigureAwait(false);
+
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="repository">The repository to update</param>
+    /// <param name="aggregate">The aggregate to be updated</param>
+    /// <param name="causationId">The causation id which initiated the events</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
+    /// </exception>
+    public static async Task<Aggregate<TAggregateId, TState>> UpdateAsync<TAggregateId, TState>(
+        this IAggregateRepository<TAggregateId, TState> repository,
+        Aggregate<TAggregateId, TState> aggregate,
+        CausationId? causationId,
+        params IEnumerable<IDomainEvent> events)
+        where TAggregateId : IAggregateId
+        where TState : IAggregateState<TState, TAggregateId>, new()
+        => await repository
+            .UpdateAsync(aggregate, correlationId: null, causationId, events)
+            .ConfigureAwait(false);
+    
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="repository">The repository to update</param>
+    /// <param name="aggregate">The aggregate to be updated</param>
+    /// <param name="events">The events to be appended to the event store</param>
+    /// <returns>The aggregate with updated version and uncommitted events cleared to allow additional changes without reloading.</returns>
+    /// <exception cref="OptimisticConcurrencyException">
+    /// Thrown when expected version of the aggregate does not match actual version of the event store.
+    /// This indicates that new events were added to the stream since the aggregate was replayed.
+    /// </exception>
+    public static async Task<Aggregate<TAggregateId, TState>> UpdateAsync<TAggregateId, TState>(
+        this IAggregateRepository<TAggregateId, TState> repository,
+        Aggregate<TAggregateId, TState> aggregate,
+        params IEnumerable<IDomainEvent> events)
+        where TAggregateId : IAggregateId
+        where TState : IAggregateState<TState, TAggregateId>, new()
+        => await repository
+            .UpdateAsync(aggregate, correlationId: null, causationId: null, events)
+            .ConfigureAwait(false);
+
+    /// <summary>
+    /// In-place update of an aggregate.
+    /// </summary>
+    /// <param name="repository">The repository to update</param>
     /// <param name="id">The id of the aggregate</param>
     /// <param name="correlationId">The correlation id of the process</param>
     /// <param name="causationId">The causation id which initiated the events</param>
