@@ -12,7 +12,7 @@ public sealed class InMemorySnapshotStore<TAggregateId, TState> : ISnapshotStore
 
     public async Task SetAsync(Aggregate<TAggregateId, TState> aggregate)
     {
-        await _semaphore.WaitAsync();
+        await _semaphore.WaitAsync().ConfigureAwait(false);
         
         try
         {

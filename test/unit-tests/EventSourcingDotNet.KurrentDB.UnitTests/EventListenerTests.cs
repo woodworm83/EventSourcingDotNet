@@ -103,7 +103,7 @@ public class EventListenerTests
             .Take(count)
             .Timeout(TimeSpan.FromSeconds(2))
             .ToAsyncEnumerable()
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
     // ReSharper disable once MemberCanBePrivate.Global
     internal readonly record struct AggregateId(Guid Id) : IAggregateId

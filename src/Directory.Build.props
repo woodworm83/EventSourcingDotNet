@@ -10,7 +10,6 @@
         <MinVerTagPrefix>v</MinVerTagPrefix>
         <MinVerAutoIncrement>minor</MinVerAutoIncrement>
         <MinVerDefaultPreReleaseIdentifiers>pre.0</MinVerDefaultPreReleaseIdentifiers>
-        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>

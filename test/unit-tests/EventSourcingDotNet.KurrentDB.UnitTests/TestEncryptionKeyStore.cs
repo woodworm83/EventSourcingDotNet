@@ -4,7 +4,7 @@ namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 internal sealed class TestEncryptionKeyStore : IEncryptionKeyStore
 {
-    private readonly ConcurrentDictionary<string, EncryptionKey> _encryptionKeys = new();
+    private readonly ConcurrentDictionary<string, EncryptionKey> _encryptionKeys = new(StringComparer.Ordinal);
     private readonly ICryptoProvider _cryptoProvider;
 
     public TestEncryptionKeyStore(ICryptoProvider cryptoProvider)

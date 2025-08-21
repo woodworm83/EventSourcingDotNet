@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using KurrentDB.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,8 +11,8 @@ internal static class EventDataHelper
 {
     private static readonly JsonSerializerSettings SerializerSettings = new()
     {
-        ContractResolver = new DefaultContractResolver {NamingStrategy = new CamelCaseNamingStrategy()},
-        NullValueHandling = NullValueHandling.Ignore
+        ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
+        NullValueHandling = NullValueHandling.Ignore,
     };
 
     public static EventData CreateEventData<TAggregateId>(
@@ -72,16 +73,16 @@ internal static class EventDataHelper
                 uuid ?? Uuid.NewUuid(),
                 new global::KurrentDB.Client.StreamPosition(streamPosition),
                 new Position(streamPosition, streamPosition),
-                new Dictionary<string, string>
+                new Dictionary<string, string>(StringComparer.Ordinal)
                 {
-                    {"type", eventType},
-                    {"created", ToUnixEpochTime(created ?? DateTime.UtcNow).ToString()},
-                    {"content-type", "application/json"}
+                    { "type", eventType },
+                    { "created", ToUnixEpochTime(created ?? DateTime.UtcNow).ToString(CultureInfo.InvariantCulture) },
+                    { "content-type", "application/json" },
                 },
                 data,
                 metadata),
-            null,
-            null);
+            link: null,
+            commitPosition: null);
 
     public static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
         EventData eventData,

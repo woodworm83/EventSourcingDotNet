@@ -24,5 +24,5 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         AggregateVersion expectedVersion,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
-        => await _eventStream.AppendEventsAsync(aggregateId, events, expectedVersion, correlationId, causationId);
+        => await _eventStream.AppendEventsAsync(aggregateId, events, expectedVersion, correlationId, causationId).ConfigureAwait(false);
 }

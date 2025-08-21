@@ -3,22 +3,6 @@ using System.Diagnostics.Contracts;
 
 namespace EventSourcingDotNet;
 
-public interface IAggregateId
-{
-    static abstract string AggregateName { get; }
-
-    string? AsString();
-}
-
-public interface IAggregateState<out TSelf, TId>
-    where TSelf : IAggregateState<TSelf, TId>
-{
-    TSelf ApplyEvent(IDomainEvent @event);
-
-    EventValidationResult ValidateEvent(IDomainEvent @event)
-        => EventValidationResult.Fire;
-}
-
 [Pure]
 public sealed record Aggregate<TId, TState>(TId Id)
     where TId : IAggregateId
@@ -51,11 +35,11 @@ public sealed record Aggregate<TId, TState>(TId Id)
                 => this with
                 {
                     State = State.ApplyEvent(@event),
-                    UncommittedEvents = UncommittedEvents.Add(@event)
+                    UncommittedEvents = UncommittedEvents.Add(@event),
                 },
             EventValidationResult.Skipped => this,
             EventValidationResult.Failed failed => throw new EventValidationException(failed.Message),
-            _ => throw new NotSupportedException($"Validation result is not supported")
+            _ => throw new NotSupportedException($"Validation result is not supported"),
         };
 
     [Pure]
@@ -67,7 +51,7 @@ public sealed record Aggregate<TId, TState>(TId Id)
             {
                 State = State.ApplyEvent(@event),
                 Version = resolvedEvent.AggregateVersion
-            }
+            },
         };
 
     /// <summary>

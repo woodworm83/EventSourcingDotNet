@@ -22,7 +22,7 @@ internal sealed class EventReader : IEventReader
             fromStreamPosition);
 
     public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
-        StreamPosition fromStreamPosition = default) 
+        StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => ReadEventsAsync(
             StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
@@ -39,24 +39,31 @@ internal sealed class EventReader : IEventReader
 
     private static global::KurrentDB.Client.StreamPosition GetRevision(StreamPosition streamPosition)
         => global::KurrentDB.Client.StreamPosition.FromStreamRevision(streamPosition.Position);
-    
+
     private async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
-        string streamName, 
+        string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos = false)
     {
-        if (_client.ReadStreamAsync(Direction.Forwards, streamName, GetRevision(fromStreamPosition), resolveLinkTos: resolveLinkTos) is not { } result)
+        if (_client.ReadStreamAsync(
+                Direction.Forwards,
+                streamName,
+                GetRevision(fromStreamPosition),
+                resolveLinkTos: resolveLinkTos)
+            is not { } result)
+        {
+            yield break;
+        }
+
+        if (await result.ReadState.ConfigureAwait(false) == ReadState.StreamNotFound)
             yield break;
 
-        if (await result.ReadState == ReadState.StreamNotFound)
-            yield break;
-
-        await foreach (var @event in result)
+        await foreach (var @event in result.ConfigureAwait(false))
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (@event.Event is null) continue;
-            
-            yield return await _eventSerializer.DeserializeAsync(@event);
+
+            yield return await _eventSerializer.DeserializeAsync(@event).ConfigureAwait(false);
         }
     }
 }

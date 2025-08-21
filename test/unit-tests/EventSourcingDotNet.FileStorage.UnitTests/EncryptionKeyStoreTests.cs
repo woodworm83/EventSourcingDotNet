@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
@@ -117,6 +118,6 @@ public sealed class EncryptionKeyStoreTests : IDisposable
     {
         public static string AggregateName => "test";
 
-        public string? AsString() => Id?.ToString();
+        public string? AsString() => Id?.ToString(CultureInfo.InvariantCulture);
     }
 }

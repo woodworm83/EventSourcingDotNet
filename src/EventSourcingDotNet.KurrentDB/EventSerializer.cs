@@ -8,25 +8,13 @@ using Newtonsoft.Json.Serialization;
 
 namespace EventSourcingDotNet.KurrentDB;
 
-internal interface IEventSerializer
-{
-    ValueTask<EventData> SerializeAsync<TAggregateId>(
-        TAggregateId aggregateId,
-        IDomainEvent @event,
-        CorrelationId? correlationId = null,
-        CausationId? causationId = null)
-        where TAggregateId : IAggregateId;
-
-    ValueTask<ResolvedEvent> DeserializeAsync(global::KurrentDB.Client.ResolvedEvent resolvedEvent);
-}
-
 internal sealed class EventSerializer : IEventSerializer
 {
     private static readonly JsonSerializerSettings MetadataSerializerSettings = new()
     {
         ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
         NullValueHandling = NullValueHandling.Ignore,
-        Converters = { new StringEnumConverter() }
+        Converters = { new StringEnumConverter() },
     };
 
     private readonly IEventTypeResolver _eventTypeResolver;
@@ -52,7 +40,7 @@ internal sealed class EventSerializer : IEventSerializer
         => new(
             Uuid.NewUuid(),
             @event.GetType().Name,
-            await SerializeEventData(aggregateId, @event),
+            await SerializeEventData(aggregateId, @event).ConfigureAwait(false),
             SerializeEventMetadata(aggregateId, correlationId?.Id, causationId?.Id));
 
     private async ValueTask<ReadOnlyMemory<byte>> SerializeEventData<TAggregateId>(
@@ -62,10 +50,12 @@ internal sealed class EventSerializer : IEventSerializer
         => Encoding.UTF8.GetBytes(
             JsonConvert.SerializeObject(
                 @event,
-                await _serializerSettingsFactory.CreateForSerializationAsync(
-                    @event.GetType(),
-                    StreamNamingConvention.GetAggregateStreamName(aggregateId),
-                    _settings?.SerializerSettings)));
+                await _serializerSettingsFactory
+                    .CreateForSerializationAsync(
+                        @event.GetType(),
+                        StreamNamingConvention.GetAggregateStreamName(aggregateId),
+                        _settings?.SerializerSettings)
+                    .ConfigureAwait(false)));
 
     private static ReadOnlyMemory<byte>? SerializeEventMetadata<TAggregateId>(
         TAggregateId aggregateId,
@@ -80,7 +70,8 @@ internal sealed class EventSerializer : IEventSerializer
     public async ValueTask<ResolvedEvent> DeserializeAsync(global::KurrentDB.Client.ResolvedEvent resolvedEvent)
     {
         var metadata = DeserializeEventMetadata(resolvedEvent.Event);
-        var @event = await DeserializeEventDataAsync(resolvedEvent.Event.EventStreamId, resolvedEvent.Event);
+        var @event = await DeserializeEventDataAsync(resolvedEvent.Event.EventStreamId, resolvedEvent.Event)
+            .ConfigureAwait(false);
 
         return new ResolvedEvent(
             new EventId(resolvedEvent.Event.EventId.ToGuid()),
@@ -110,9 +101,11 @@ internal sealed class EventSerializer : IEventSerializer
         return JsonConvert.DeserializeObject(
                 Encoding.UTF8.GetString(eventRecord.Data.Span),
                 eventType,
-                await _serializerSettingsFactory.CreateForDeserializationAsync(
-                    streamName,
-                    _settings?.SerializerSettings))
+                await _serializerSettingsFactory
+                    .CreateForDeserializationAsync(
+                        streamName,
+                        _settings?.SerializerSettings)
+                    .ConfigureAwait(false))
             as IDomainEvent;
     }
 }

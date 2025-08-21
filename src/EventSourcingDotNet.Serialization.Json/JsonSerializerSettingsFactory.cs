@@ -29,14 +29,15 @@ public sealed class JsonSerializerSettingsFactory : IJsonSerializerSettingsFacto
             ContractResolver = objectType.HasEncryptedProperties()
                 ? new SerializationContractResolver(
                     _cryptoProvider,
-                    await GetKeyForEncryptionAsync(encryptionKeyName),
+                    await GetKeyForEncryptionAsync(encryptionKeyName).ConfigureAwait(false),
                     _loggerFactory.CreateLogger<SerializationContractResolver>())
-                : new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() }
+                : new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
         };
 
     private async ValueTask<EncryptionKey?> GetKeyForEncryptionAsync(string? encryptionKeyName)
         => _encryptionKeyStore is not null && encryptionKeyName is not null
             ? await _encryptionKeyStore.GetOrCreateKeyAsync(encryptionKeyName)
+                .ConfigureAwait(false)
             : null;
 
     public async ValueTask<JsonSerializerSettings> CreateForDeserializationAsync(
@@ -46,11 +47,12 @@ public sealed class JsonSerializerSettingsFactory : IJsonSerializerSettingsFacto
         {
             ContractResolver = new DeserializationContractResolver(
                 _cryptoProvider,
-                await GetKeyForDecryptionAsync(encryptionKeyName))
+                await GetKeyForDecryptionAsync(encryptionKeyName).ConfigureAwait(false)),
         };
 
     private async ValueTask<EncryptionKey?> GetKeyForDecryptionAsync(string? encryptionKeyName)
         => _encryptionKeyStore is not null && encryptionKeyName is not null
             ? await _encryptionKeyStore.GetKeyAsync(encryptionKeyName)
+                .ConfigureAwait(false)
             : null;
 }

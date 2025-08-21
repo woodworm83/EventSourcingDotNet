@@ -7,9 +7,3 @@ public readonly record struct TestId(Guid Id) : IAggregateId
     public static string AggregateName => "test";
     public string AsString() => Id.ToString();
 }
-
-public sealed record TestEvent(int Value = default) : IDomainEvent;
-
-public sealed record EncryptedTestEvent(
-    [property: Encrypted] string Value)
-    : IDomainEvent;

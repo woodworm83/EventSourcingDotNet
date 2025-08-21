@@ -17,13 +17,16 @@ internal sealed class EventListener : IEventListener
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
         => _eventStream.Listen(fromStreamPosition)
             .Where(resolvedEvent => resolvedEvent.StreamName.Equals(
-                $"{TAggregateId.AggregateName}-{aggregateId.AsString()}"));
+                $"{TAggregateId.AggregateName}-{aggregateId.AsString()}",
+                StringComparison.OrdinalIgnoreCase));
 
     public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => _eventStream.Listen(fromStreamPosition)
-            .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith($"{TAggregateId.AggregateName}-"));
+            .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith(
+                $"{TAggregateId.AggregateName}-",
+                StringComparison.OrdinalIgnoreCase));
 
     public IObservable<ResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)

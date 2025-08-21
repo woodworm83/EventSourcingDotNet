@@ -21,5 +21,3 @@ public record ResolvedEvent(
             ? AggregateId.ToObject<TAggregateId>()
             : null;
 }
-
-public readonly record struct EventId(Guid Id);

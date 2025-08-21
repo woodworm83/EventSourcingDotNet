@@ -21,7 +21,9 @@ internal sealed class EventReader : IEventReader
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => _eventStream.ReadEventsAsync(fromStreamPosition)
-            .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith($"{TAggregateId.AggregateName}-"));
+            .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith(
+                $"{TAggregateId.AggregateName}-",
+                StringComparison.OrdinalIgnoreCase));
 
     public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)

@@ -62,7 +62,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
             listener.EventAppeared,
             resolveLinkTos,
             listener.SubscriptionDropped
-        );
+        ).ConfigureAwait(false);
     }
     
     private static FromStream GetFromStream(StreamPosition fromStreamPosition)
@@ -75,7 +75,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _client.DisposeAsync();
+        await _client.DisposeAsync().ConfigureAwait(false);
     }
 
     private sealed class Listener
@@ -100,7 +100,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (resolvedEvent.Event is null) return;
             
-            _observer.OnNext(await _eventSerializer.DeserializeAsync(resolvedEvent));
+            _observer.OnNext(await _eventSerializer.DeserializeAsync(resolvedEvent).ConfigureAwait(false));
         }
 
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed",

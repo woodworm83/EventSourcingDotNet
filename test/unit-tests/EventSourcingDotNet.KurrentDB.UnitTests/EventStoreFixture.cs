@@ -1,11 +1,11 @@
-﻿using DotNet.Testcontainers.Containers;
+using DotNet.Testcontainers.Containers;
 using KurrentDB.Client;
 using Testcontainers.EventStoreDb;
 using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
-public class EventStoreFixture : IAsyncLifetime
+public sealed class EventStoreFixture : IAsyncLifetime
 {
     public IContainer Container { get; } = new EventStoreDbBuilder().Build();
     
@@ -17,7 +17,7 @@ public class EventStoreFixture : IAsyncLifetime
     public async Task<IWriteResult> AppendEvents(string streamName, params EventData[] events)
     {
         var client = CreateClient();
-        return await client.AppendToStreamAsync(streamName, StreamState.Any, events);
+        return await client.AppendToStreamAsync(streamName, StreamState.Any, events).ConfigureAwait(false);
     }
 
     public KurrentDBClient.ReadStreamResult ReadEvents(string streamName, bool resolveLinkTos = false)
@@ -30,16 +30,11 @@ public class EventStoreFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        await Container.StartAsync();
+        await Container.StartAsync().ConfigureAwait(false);
     }
 
     public async Task DisposeAsync()
     {
-        await Container.DisposeAsync();
+        await Container.DisposeAsync().ConfigureAwait(false);
     }
-}
-
-[CollectionDefinition(nameof(EventStoreCollection))]
-public class EventStoreCollection : ICollectionFixture<EventStoreFixture>
-{
 }

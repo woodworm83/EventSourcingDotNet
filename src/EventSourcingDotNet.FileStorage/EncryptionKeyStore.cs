@@ -2,11 +2,6 @@
 
 namespace EventSourcingDotNet.FileStorage;
 
-public sealed class EncryptionKeyStoreSettings
-{
-    public string? StoragePath { get; set; }
-};
-
 internal sealed class EncryptionKeyStore : IEncryptionKeyStore
 {
     private readonly EncryptionKeyStoreSettings _settings;
@@ -21,7 +16,7 @@ internal sealed class EncryptionKeyStore : IEncryptionKeyStore
     public async ValueTask<EncryptionKey> GetOrCreateKeyAsync(string encryptionKeyName)
     {
         var file = GetFileInfo(encryptionKeyName);
-        if (await GetKeyAsync(file) is { } encryptionKey) return encryptionKey;
+        if (await GetKeyAsync(file).ConfigureAwait(false) is { } encryptionKey) return encryptionKey;
 
         if (file.Directory is {Exists: false} directory)
         {
@@ -29,18 +24,18 @@ internal sealed class EncryptionKeyStore : IEncryptionKeyStore
         }
 
         encryptionKey = _cryptoProvider.GenerateKey();
-        await File.WriteAllBytesAsync(file.FullName, encryptionKey.Key);
+        await File.WriteAllBytesAsync(file.FullName, encryptionKey.Key).ConfigureAwait(false);
         return encryptionKey;
     }
 
     public async ValueTask<EncryptionKey?> GetKeyAsync(string encryptionKeyName)
-        => await GetKeyAsync(GetFileInfo(encryptionKeyName));
+        => await GetKeyAsync(GetFileInfo(encryptionKeyName)).ConfigureAwait(false);
     
     private static async ValueTask<EncryptionKey?> GetKeyAsync(FileInfo file)
     {
         if (!file.Exists) return null;
 
-        return new EncryptionKey(await File.ReadAllBytesAsync(file.FullName));
+        return new EncryptionKey(await File.ReadAllBytesAsync(file.FullName).ConfigureAwait(false));
     }
 
     public ValueTask DeleteKeyAsync(string encryptionKeyName)

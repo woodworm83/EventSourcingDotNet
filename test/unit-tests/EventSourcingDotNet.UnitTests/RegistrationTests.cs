@@ -131,7 +131,7 @@ public class RegistrationTests
             {
                 builder => builder.AddAggregate<TestId, TestState>(),
                 builder => builder.AddAggregate<TestId>(typeof(TestState)),
-                builder => builder.Scan(typeof(RegistrationTests))
+                builder => builder.Scan(typeof(RegistrationTests)),
             }
             .Select(method => new object[] {method});
 
