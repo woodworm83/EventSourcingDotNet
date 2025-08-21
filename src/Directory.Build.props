@@ -8,7 +8,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <MinVerTagPrefix>v</MinVerTagPrefix>
-        <MinVerAutoIncrement>minor</MinVerAutoIncrement>
+        <MinVerAutoIncrement>patch</MinVerAutoIncrement>
         <MinVerDefaultPreReleaseIdentifiers>pre.0</MinVerDefaultPreReleaseIdentifiers>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
