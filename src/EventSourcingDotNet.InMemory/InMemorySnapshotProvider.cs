@@ -10,12 +10,12 @@ public sealed class InMemorySnapshotProvider : ISnapshotProvider
         var snapshotType = typeof(InMemorySnapshotStore<,>).MakeGenericType(aggregateIdType, stateType);
         var serviceType = typeof(ISnapshotStore<,>).MakeGenericType(aggregateIdType, stateType);
 
-        object ImplementationFactory(IServiceProvider serviceProvider) =>
-            serviceProvider.GetRequiredService(snapshotType);
-
         services
             .AddSingleton(snapshotType)
             .AddSingleton(typeof(IHostedService), ImplementationFactory)
             .AddSingleton(serviceType, ImplementationFactory);
+        
+        object ImplementationFactory(IServiceProvider serviceProvider) =>
+            serviceProvider.GetRequiredService(snapshotType);
     }
 }

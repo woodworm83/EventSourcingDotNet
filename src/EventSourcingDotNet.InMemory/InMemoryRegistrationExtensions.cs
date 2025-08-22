@@ -1,12 +1,15 @@
-﻿using EventSourcingDotNet.InMemory;
+﻿using System.Reactive.Concurrency;
+using EventSourcingDotNet.InMemory;
 
 // ReSharper disable once CheckNamespace
 namespace EventSourcingDotNet;
 
 public static class InMemoryRegistrationExtensions
 {
-    public static EventSourcingBuilder UseInMemoryEventStore(this EventSourcingBuilder builder)
-        => builder.UseEventStoreProvider(new InMemoryEventStoreProvider());
+    public static EventSourcingBuilder UseInMemoryEventStore(
+        this EventSourcingBuilder builder,
+        IScheduler? scheduler = null)
+        => builder.UseEventStoreProvider(new InMemoryEventStoreProvider(scheduler));
 
     public static TBuilder UseInMemorySnapshot<TBuilder>(this TBuilder builder)
         where TBuilder : IAggregateBuilder<TBuilder>
