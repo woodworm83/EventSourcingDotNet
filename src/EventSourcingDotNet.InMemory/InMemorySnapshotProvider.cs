@@ -12,10 +12,11 @@ public sealed class InMemorySnapshotProvider : ISnapshotProvider
 
         services
             .AddSingleton(implementationType)
-            .AddHostedService(ImplementationFactory)
-            .AddSingleton(serviceType, ImplementationFactory);
-        
-        IHostedService ImplementationFactory(IServiceProvider serviceProvider) =>
-            (IHostedService)serviceProvider.GetRequiredService(implementationType);
+            .AddSingleton(
+                typeof(IHostedService),
+                implementationFactory: serviceProvider => serviceProvider.GetRequiredService(implementationType))
+            .AddSingleton(
+                serviceType,
+                implementationFactory: serviceProvider => serviceProvider.GetRequiredService(implementationType));
     }
 }
