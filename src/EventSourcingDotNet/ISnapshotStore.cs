@@ -5,6 +5,4 @@ public interface ISnapshotStore<TAggregateId, TState>
     where TState : IAggregateState<TState, TAggregateId>, new()
 {
     Task<Aggregate<TAggregateId, TState>?> GetAsync(TAggregateId aggregateId);
-
-    Task SetAsync(Aggregate<TAggregateId, TState> aggregate);
 }

@@ -100,31 +100,6 @@ public class AggregateRepositoryTests
         result.Version.Version.Should().Be(42);
     }
 
-    [Fact]
-    public async Task ShouldUpdateSnapshotAfterReplay()
-    {
-        var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
-        var eventStoreMock = MockEventStore(new TestEvent());
-        var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object, snapshotProviderMock.Object);
-
-        var aggregate = await repository.GetByIdAsync(new TestId());
-
-        snapshotProviderMock.Verify(x => x.SetAsync(aggregate), Times.Once);
-    }
-
-    [Fact]
-    public async Task ShouldUpdateSnapshotAfterSave()
-    {
-        var snapshotProviderMock = new Mock<ISnapshotStore<TestId, TestState>>();
-        var eventStoreMock = MockEventStore();
-        var repository = new AggregateRepository<TestId, TestState>(eventStoreMock.Object, snapshotProviderMock.Object);
-
-        var aggregate = await repository.SaveAsync(
-            new Aggregate<TestId, TestState>(new TestId()).AddEvent(new TestEvent()));
-
-        snapshotProviderMock.Verify(x => x.SetAsync(aggregate), Times.Once);
-    }
-
     private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent[] events)
     {
         var mock = new Mock<IEventStore<TestId>>();

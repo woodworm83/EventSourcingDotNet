@@ -19,14 +19,15 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
 
     public async Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id)
     {
+        using var activity = Instrumentation.ActivitySource.StartActivity();
+
         var aggregate = await GetSnapshotAsync(id).ConfigureAwait(false) ?? new Aggregate<TAggregateId, TState>(id);
 
-        await foreach (var resolvedEvent in _eventStore.ReadEventsAsync(aggregate.Id, aggregate.Version).ConfigureAwait(false))
+        await foreach (var resolvedEvent in _eventStore.ReadEventsAsync(aggregate.Id, aggregate.Version)
+                           .ConfigureAwait(false))
         {
             aggregate = aggregate.ApplyEvent(resolvedEvent);
         }
-        
-        await UpdateSnapshot(aggregate).ConfigureAwait(false);
 
         return aggregate;
     }
@@ -34,6 +35,8 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
     private async Task<Aggregate<TAggregateId, TState>?> GetSnapshotAsync(TAggregateId aggregateId)
     {
         if (_snapshotStore is null) return null;
+
+        using var activity = Instrumentation.ActivitySource.StartActivity();
 
         return await _snapshotStore.GetAsync(aggregateId).ConfigureAwait(false);
     }
@@ -43,29 +46,21 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
     {
+        using var activity = Instrumentation.ActivitySource.StartActivity();
+
         var version = await _eventStore.AppendEventsAsync(
-            aggregate.Id, 
-            aggregate.UncommittedEvents, 
-            aggregate.Version, 
-            correlationId, 
+            aggregate.Id,
+            aggregate.UncommittedEvents,
+            aggregate.Version,
+            correlationId,
             causationId).ConfigureAwait(false);
-        
+
         aggregate = aggregate with
         {
             UncommittedEvents = ImmutableList<IDomainEvent>.Empty,
             Version = version,
         };
-        
-        await UpdateSnapshot(aggregate).ConfigureAwait(false);
 
         return aggregate;
-    }
-
-    private async Task UpdateSnapshot(Aggregate<TAggregateId, TState> aggregate)
-    {
-        if (_snapshotStore is not null)
-        {
-            await _snapshotStore.SetAsync(aggregate).ConfigureAwait(false);
-        }
     }
 }
