@@ -2,16 +2,16 @@
 
 public interface IEventReader
 {
-    public IAsyncEnumerable<ResolvedEvent> ByAggregate<TAggregateId>(
+    public IAsyncEnumerable<IResolvedEvent> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>;
 
-    public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
+    public IAsyncEnumerable<IResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId;
 
-    public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
+    public IAsyncEnumerable<IResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent;
 }

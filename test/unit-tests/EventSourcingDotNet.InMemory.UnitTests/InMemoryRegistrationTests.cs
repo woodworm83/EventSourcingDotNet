@@ -4,7 +4,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;
 
-public class InMemoryRegistrationTests
+public sealed class InMemoryRegistrationTests
 {
     private static ServiceProvider CreateServiceProvider(Action<AggregateBuilder>? configureAggregate = null)
     {

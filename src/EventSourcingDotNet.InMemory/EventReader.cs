@@ -9,7 +9,7 @@ internal sealed class EventReader : IEventReader
         _eventStream = eventStream;
     }
 
-    public IAsyncEnumerable<ResolvedEvent> ByAggregate<TAggregateId>(
+    public IAsyncEnumerable<IResolvedEvent> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
@@ -17,7 +17,7 @@ internal sealed class EventReader : IEventReader
             .Where(resolvedEvent => resolvedEvent.StreamName.Equals(
                 $"{TAggregateId.AggregateName}-{aggregateId.AsString()}"));
 
-    public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
+    public IAsyncEnumerable<IResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => _eventStream.ReadEventsAsync(fromStreamPosition)
@@ -25,7 +25,7 @@ internal sealed class EventReader : IEventReader
                 $"{TAggregateId.AggregateName}-",
                 StringComparison.OrdinalIgnoreCase));
 
-    public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
+    public IAsyncEnumerable<IResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent
         => _eventStream.ReadEventsAsync(fromStreamPosition)

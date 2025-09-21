@@ -5,7 +5,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class RegistrationTests
+public sealed class RegistrationTests
 {
     private readonly Mock<IEventStore<TestId>> _eventStoreMock = new();
     private readonly Mock<IEventStoreProvider> _eventStoreProviderMock = new();

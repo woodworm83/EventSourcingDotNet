@@ -1,4 +1,4 @@
 namespace EventSourcingDotNet;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class EncryptedAttribute : Attribute;
+public sealed class EncryptedAttribute : Attribute;

@@ -5,7 +5,7 @@ using Moq;
 
 namespace EventSourcingDotNet.FileStorage.UnitTests;
 
-public class RegistrationTests
+public sealed class RegistrationTests
 {
     private static ServiceProvider BuildServiceProvider()
     {

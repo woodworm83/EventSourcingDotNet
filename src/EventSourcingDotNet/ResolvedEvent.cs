@@ -1,23 +1,21 @@
 ﻿using JetBrains.Annotations;
-using Newtonsoft.Json.Linq;
 
 namespace EventSourcingDotNet;
 
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-public record ResolvedEvent(
+public sealed record ResolvedEvent<TAggregateId>(
     EventId Id,
     string StreamName,
-    JToken AggregateId,
+    TAggregateId AggregateId,
     AggregateVersion AggregateVersion,
     StreamPosition StreamPosition,
-    IDomainEvent? Event,
+    IDomainEvent Event,
     DateTime Timestamp,
     CorrelationId? CorrelationId,
     CausationId? CausationId)
+    : IResolvedEvent
+    where TAggregateId : IAggregateId
 {
-    public TAggregateId? GetAggregateId<TAggregateId>()
-        where TAggregateId : struct
-        => AggregateId.Type == JTokenType.Object
-            ? AggregateId.ToObject<TAggregateId>()
-            : null;
+    IAggregateId IResolvedEvent.AggregateId => AggregateId;
+    IDomainEvent IResolvedEvent.Event => Event;
 }

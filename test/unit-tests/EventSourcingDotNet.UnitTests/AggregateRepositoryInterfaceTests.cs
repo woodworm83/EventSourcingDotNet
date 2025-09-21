@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class AggregateRepositoryInterfaceTests
+public sealed class AggregateRepositoryInterfaceTests
 {
     [Fact]
     public async Task ShouldGetAggregateFromRepository()

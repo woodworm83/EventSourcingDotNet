@@ -16,10 +16,10 @@ public sealed class InMemorySnapshotStore<TAggregateId, TState>(IEventListener e
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await foreach (var resolvedEvent in eventListener
-                           .ByCategory<TAggregateId>(_state.StreamPosition)
-                           .ToAsyncEnumerable()
-                           .WithCancellation(stoppingToken)
-                           .ConfigureAwait(false))
+            .ByCategory<TAggregateId>(_state.StreamPosition)
+            .ToAsyncEnumerable()
+            .WithCancellation(stoppingToken)
+            .ConfigureAwait(false))
         {
             _state = new State(
                 StreamPosition: resolvedEvent.StreamPosition,
@@ -29,18 +29,17 @@ public sealed class InMemorySnapshotStore<TAggregateId, TState>(IEventListener e
 
     private static IImmutableDictionary<TAggregateId, Aggregate<TAggregateId, TState>> ApplyEvent(
         IImmutableDictionary<TAggregateId, Aggregate<TAggregateId, TState>> snapshots,
-        ResolvedEvent resolvedEvent)
-        => resolvedEvent.GetAggregateId<TAggregateId>() is { } aggregateId
-            ? snapshots.SetItem(
-                aggregateId,
-                GetOrCreateAggregate(snapshots, aggregateId)
-                    .ApplyEvent(resolvedEvent))
-            : snapshots;
+        ResolvedEvent<TAggregateId> resolvedEvent)
+        => snapshots.SetItem(
+            resolvedEvent.AggregateId,
+            GetOrCreateAggregate(snapshots, resolvedEvent.AggregateId)
+                .ApplyEvent(resolvedEvent));
 
     private static Aggregate<TAggregateId, TState> GetOrCreateAggregate(
-        IImmutableDictionary<TAggregateId, Aggregate<TAggregateId, TState>> snapshots, TAggregateId aggregateId)
+        IImmutableDictionary<TAggregateId, Aggregate<TAggregateId, TState>> snapshots,
+        TAggregateId aggregateId)
         => snapshots.GetValueOrDefault(aggregateId)
-           ?? new Aggregate<TAggregateId, TState>(aggregateId);
+            ?? new Aggregate<TAggregateId, TState>(aggregateId);
 
     private sealed record State(
         StreamPosition StreamPosition,

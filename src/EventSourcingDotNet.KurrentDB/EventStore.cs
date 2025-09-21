@@ -16,21 +16,26 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
         _client = client;
     }
 
-    public async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(TAggregateId aggregateId, AggregateVersion fromVersion)
+    public async IAsyncEnumerable<IResolvedEvent> ReadEventsAsync(
+        TAggregateId aggregateId,
+        AggregateVersion fromVersion)
     {
         var result = _client.ReadStreamAsync(
             Direction.Forwards,
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
-            new global::KurrentDB.Client.StreamPosition(fromVersion.Version));
+            new(fromVersion.Version));
 
         if (await result.ReadState.ConfigureAwait(false) == ReadState.StreamNotFound) yield break;
 
-        await foreach (var resolvedEvent in result.ConfigureAwait(false))
+        await foreach (var serializedEvent in result.ConfigureAwait(false))
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (resolvedEvent.Event is null) continue;
+            if (await _eventSerializer.DeserializeAsync(serializedEvent).ConfigureAwait(false) is not { } resolvedEvent)
+            {
+                continue;
+            }
 
-            yield return await _eventSerializer.DeserializeAsync(resolvedEvent).ConfigureAwait(false);
+            yield return resolvedEvent;
         }
     }
 
@@ -61,7 +66,8 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
     {
         foreach (var @event in events)
         {
-            yield return await _eventSerializer.SerializeAsync(aggregateId, @event, correlationId, causationId)
+            yield return await _eventSerializer
+                .SerializeAsync(aggregateId, @event, correlationId, causationId)
                 .ConfigureAwait(false);
         }
     }

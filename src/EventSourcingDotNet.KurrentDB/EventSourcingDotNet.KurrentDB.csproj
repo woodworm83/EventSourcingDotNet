@@ -4,17 +4,16 @@
         <RootNamespace>EventSourcingDotNet.KurrentDB</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\EventSourcingDotNet.Serialization.Json\EventSourcingDotNet.Serialization.Json.csproj"/>
         <ProjectReference Include="..\EventSourcingDotNet\EventSourcingDotNet.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="DynamicProxyGenAssembly2"/>
+        <InternalsVisibleTo Include="EventSourcingDotNet.KurrentDB.SourceGeneratorTests"/>
     </ItemGroup>
   
     <ItemGroup>
         <PackageReference Include="KurrentDB.Client" />
-        <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="System.Reactive"/>
     </ItemGroup>
 </Project>

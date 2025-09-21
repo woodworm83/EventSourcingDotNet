@@ -4,7 +4,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;
 
-public class InMemorySnapshotTests
+public sealed class InMemorySnapshotTests
 {
     [Fact]
     public async Task ShouldReturnNullWhenNoEventsAreStored()

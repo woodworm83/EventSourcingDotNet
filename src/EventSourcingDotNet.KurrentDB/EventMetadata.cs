@@ -1,11 +1,13 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace EventSourcingDotNet.KurrentDB;
 
 internal record EventMetadata(
-    JToken AggregateId,
-    [property: JsonProperty(PropertyName = "$correlationId", DefaultValueHandling = DefaultValueHandling.Ignore)]
+    JsonElement AggregateId,
+    [property: JsonPropertyName("$correlationId")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     Guid? CorrelationId,
-    [property: JsonProperty(PropertyName = "$causationId", DefaultValueHandling = DefaultValueHandling.Ignore)]
+    [property: JsonPropertyName("$causationId")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     Guid? CausationId);

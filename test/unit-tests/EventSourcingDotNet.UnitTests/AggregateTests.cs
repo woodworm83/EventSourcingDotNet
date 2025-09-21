@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class AggregateTests
+public sealed class AggregateTests
 {
     [Fact]
     public void ShouldHaveEmptyUncommittedEvents()

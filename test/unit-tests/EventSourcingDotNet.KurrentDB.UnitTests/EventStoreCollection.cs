@@ -3,6 +3,6 @@
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 [CollectionDefinition(nameof(EventStoreCollection))]
-public class EventStoreCollection : ICollectionFixture<EventStoreFixture>
+public sealed class EventStoreCollection : ICollectionFixture<EventStoreFixture>
 {
 }

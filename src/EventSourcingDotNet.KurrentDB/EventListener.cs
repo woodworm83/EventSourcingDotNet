@@ -17,31 +17,33 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         _client = client;
     }
 
-    public IObservable<ResolvedEvent> ByAggregate<TAggregateId>(
+    public IObservable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
-        => Observable.Create<ResolvedEvent>(
+        => Observable.Create<IResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetAggregateStreamName(aggregateId),
                 fromStreamPosition,
                 false,
-                observer));
+                observer))
+            .OfType<ResolvedEvent<TAggregateId>>();
 
-    public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
+    public IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
-        => Observable.Create<ResolvedEvent>(
+        => Observable.Create<IResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByCategoryStreamName<TAggregateId>(),
                 fromStreamPosition,
                 true,
-                observer));
+                observer))
+            .OfType<ResolvedEvent<TAggregateId>>();
 
-    public IObservable<ResolvedEvent> ByEventType<TEvent>(
+    public IObservable<IResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent
-        => Observable.Create<ResolvedEvent>(
+        => Observable.Create<IResolvedEvent>(
             observer => SubscribeAsync(
                 StreamNamingConvention.GetByEventStreamName<TEvent>(),
                 fromStreamPosition,
@@ -52,7 +54,7 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos,
-        IObserver<ResolvedEvent> observer)
+        IObserver<IResolvedEvent> observer)
     {
         var listener = new Listener(observer, _eventSerializer);
 
@@ -80,11 +82,11 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
 
     private sealed class Listener
     {
-        private readonly IObserver<ResolvedEvent> _observer;
+        private readonly IObserver<IResolvedEvent> _observer;
         private readonly IEventSerializer _eventSerializer;
 
         public Listener(
-            IObserver<ResolvedEvent> observer,
+            IObserver<IResolvedEvent> observer,
             IEventSerializer eventSerializer)
         {
             _observer = observer;
@@ -94,13 +96,15 @@ internal sealed class EventListener : IEventListener, IAsyncDisposable
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed")]
         public async Task EventAppeared(
             StreamSubscription subscription,
-            global::KurrentDB.Client.ResolvedEvent resolvedEvent,
+            ResolvedEvent serializedEvent,
             CancellationToken cancellationToken)
         {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (resolvedEvent.Event is null) return;
+            if (await _eventSerializer.DeserializeAsync(serializedEvent).ConfigureAwait(false) is not { } resolvedEvent)
+            {
+                return;
+            }
             
-            _observer.OnNext(await _eventSerializer.DeserializeAsync(resolvedEvent).ConfigureAwait(false));
+            _observer.OnNext(resolvedEvent);
         }
 
         [SuppressMessage("Major Code Smell", "S1172:Unused method parameters should be removed",

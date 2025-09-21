@@ -1,20 +1,15 @@
 using System.Text;
-using EventSourcingDotNet.Serialization.Json;
 using FluentAssertions;
 using KurrentDB.Client;
-using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 [Collection(nameof(EventStoreCollection))]
-public class EventStoreTests
+public sealed class EventStoreTests
 {
-    private static readonly TestEventTypeResolver EventTypeResolver = new();
-    
     private readonly EventStoreFixture _fixture;
-    private readonly JsonSerializerSettingsFactory _serializerSettingsFactory = new(NullLoggerFactory.Instance);
 
     public EventStoreTests(EventStoreFixture fixture)
     {
@@ -26,14 +21,16 @@ public class EventStoreTests
     {
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
+
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event);
+
         await _fixture.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
         var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
 
 #pragma warning disable CS8602
-        result.Should().Equal(new[] {@event}, (resolvedEvent, e) => resolvedEvent.Event.Equals(e));
+        result.Should().Equal([@event], (resolvedEvent, e) => resolvedEvent.Event.Equals(e));
 #pragma warning restore CS8602
     }
 
@@ -44,9 +41,10 @@ public class EventStoreTests
         var @event = new TestEvent(42);
         var eventStore = CreateEventStore();
 
-        await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default);
+        await eventStore.AppendEventsAsync(aggregateId, new[] { @event }, default);
 
-        var appendedEvents = await _fixture.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
+        var appendedEvents = await _fixture
+            .ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
             .ToListAsync();
 
         appendedEvents.Count.Should().Be(1);
@@ -95,10 +93,10 @@ public class EventStoreTests
 
         var eventStore = CreateEventStore();
 
-        await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default, correlationId: correlationId);
+        await eventStore.AppendEventsAsync(aggregateId, new[] { @event }, default, correlationId: correlationId);
 
         var metadata = await ReadEventMetadata(aggregateId).FirstAsync();
-            
+
         metadata?.CorrelationId.Should().Be(correlationId.Id);
     }
 
@@ -108,11 +106,17 @@ public class EventStoreTests
         var aggregateId = new TestId();
         var @event = new TestEvent(42);
         var correlationId = new CorrelationId();
-        var eventData = EventDataHelper.CreateEventData(aggregateId, @event, correlationId: correlationId);
+
+        var eventData = EventDataHelper.CreateEventData(
+            aggregateId,
+            @event,
+            correlationId: correlationId);
+
         await _fixture.AppendEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId), eventData);
         var eventStore = CreateEventStore();
 
-        var result = await eventStore.ReadEventsAsync(aggregateId, default)
+        var result = await eventStore
+            .ReadEventsAsync(aggregateId, default)
             .Select(x => x.CorrelationId)
             .ToListAsync();
 
@@ -128,21 +132,21 @@ public class EventStoreTests
 
         var eventStore = CreateEventStore();
 
-        await eventStore.AppendEventsAsync(aggregateId, new[] {@event}, default, causationId: causationId);
+        await eventStore.AppendEventsAsync(aggregateId, [@event], default, causationId: causationId);
 
         var metadata = await ReadEventMetadata(aggregateId).FirstAsync();
-            
+
         metadata?.CausationId.Should().Be(causationId.Id);
     }
 
     private EventStore<TestId> CreateEventStore(IEventSerializer? eventSerializer = null)
         => new(
-            eventSerializer ?? new EventSerializer(EventTypeResolver, _serializerSettingsFactory),
+            eventSerializer ?? new EventSerializer(),
             new KurrentDBClient(_fixture.ClientSettings));
 
-    private IAsyncEnumerable<EventMetadata?> ReadEventMetadata(TestId aggregateId) 
-        => _fixture.ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
-            .Select(
-                resolvedEvent => JsonConvert.DeserializeObject<EventMetadata>(
-                    Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span)));
+    private IAsyncEnumerable<EventMetadata?> ReadEventMetadata(TestId aggregateId)
+        => _fixture
+            .ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
+            .Select(resolvedEvent => JsonConvert.DeserializeObject<EventMetadata>(
+                Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span)));
 }

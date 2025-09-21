@@ -2,7 +2,7 @@ namespace EventSourcingDotNet;
 
 public interface IAggregateId
 {
-    static abstract string AggregateName { get; }
+    public static abstract string AggregateName { get; }
 
-    string? AsString();
+    public string? AsString();
 }

@@ -2,5 +2,5 @@ namespace EventSourcingDotNet;
 
 public interface IEventTypeResolver
 {
-    Type? GetEventType(string eventName);
+    public Type? GetEventType(string eventName);
 }

@@ -13,7 +13,7 @@ internal sealed class EventReader : IEventReader
         _client = client;
     }
 
-    public IAsyncEnumerable<ResolvedEvent> ByAggregate<TAggregateId>(
+    public IAsyncEnumerable<IResolvedEvent> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
@@ -21,7 +21,7 @@ internal sealed class EventReader : IEventReader
             StreamNamingConvention.GetAggregateStreamName(aggregateId),
             fromStreamPosition);
 
-    public IAsyncEnumerable<ResolvedEvent> ByCategory<TAggregateId>(
+    public IAsyncEnumerable<IResolvedEvent> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => ReadEventsAsync(
@@ -29,7 +29,7 @@ internal sealed class EventReader : IEventReader
             fromStreamPosition,
             resolveLinkTos: true);
 
-    public IAsyncEnumerable<ResolvedEvent> ByEventType<TEvent>(
+    public IAsyncEnumerable<IResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent
         => ReadEventsAsync(
@@ -40,7 +40,7 @@ internal sealed class EventReader : IEventReader
     private static global::KurrentDB.Client.StreamPosition GetRevision(StreamPosition streamPosition)
         => global::KurrentDB.Client.StreamPosition.FromStreamRevision(streamPosition.Position);
 
-    private async IAsyncEnumerable<ResolvedEvent> ReadEventsAsync(
+    private async IAsyncEnumerable<IResolvedEvent> ReadEventsAsync(
         string streamName,
         StreamPosition fromStreamPosition,
         bool resolveLinkTos = false)
@@ -56,14 +56,16 @@ internal sealed class EventReader : IEventReader
         }
 
         if (await result.ReadState.ConfigureAwait(false) == ReadState.StreamNotFound)
+        {
             yield break;
+        }
 
         await foreach (var @event in result.ConfigureAwait(false))
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (@event.Event is null) continue;
+            if (await _eventSerializer.DeserializeAsync(@event).ConfigureAwait(false) is not {} resolvedEvent) continue;
 
-            yield return await _eventSerializer.DeserializeAsync(@event).ConfigureAwait(false);
+            yield return resolvedEvent;
         }
     }
 }

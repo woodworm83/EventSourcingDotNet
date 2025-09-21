@@ -43,7 +43,7 @@ public sealed record Aggregate<TId, TState>(TId Id)
         };
 
     [Pure]
-    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent resolvedEvent)
+    public Aggregate<TId, TState> ApplyEvent(IResolvedEvent resolvedEvent)
         => resolvedEvent.Event switch
         {
             null => this,

@@ -3,5 +3,5 @@
 public interface IAggregateBuilder<out TBuilder>
     where TBuilder : IAggregateBuilder<TBuilder>
 {
-    TBuilder UseSnapshotProvider(ISnapshotProvider provider);
+    public TBuilder UseSnapshotProvider(ISnapshotProvider provider);
 }

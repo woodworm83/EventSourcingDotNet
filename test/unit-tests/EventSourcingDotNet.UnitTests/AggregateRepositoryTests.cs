@@ -1,13 +1,12 @@
 using FluentAssertions;
 using Moq;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 #pragma warning disable CS1998
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class AggregateRepositoryTests
+public sealed class AggregateRepositoryTests
 {
     [Fact]
     public async Task ShouldCreateNewAggregate()
@@ -107,17 +106,17 @@ public class AggregateRepositoryTests
             .Returns<TestId, AggregateVersion>(ResolveEvents);
         return mock;
 
-        async IAsyncEnumerable<ResolvedEvent> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
+        async IAsyncEnumerable<IResolvedEvent> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
         {
             var streamPosition = currentVersion.Version;
             foreach (var @event in events)
             {
-                yield return new ResolvedEvent(
-                    new EventId(Guid.NewGuid()),
+                yield return new ResolvedEvent<TestId>(
+                    new(Guid.NewGuid()),
                     "",
-                    JToken.FromObject(aggregateId),
+                    aggregateId,
                     ++currentVersion,
-                    new StreamPosition(streamPosition++),
+                    new(streamPosition++),
                     @event,
                     DateTime.UtcNow,
                     new CorrelationId(),

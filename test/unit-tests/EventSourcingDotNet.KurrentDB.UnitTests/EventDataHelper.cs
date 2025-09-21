@@ -1,39 +1,30 @@
 ﻿using System.Globalization;
-using System.Text;
+using System.Text.Json;
 using KurrentDB.Client;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 internal static class EventDataHelper
 {
-    private static readonly JsonSerializerSettings SerializerSettings = new()
-    {
-        ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
-        NullValueHandling = NullValueHandling.Ignore,
-    };
-
-    public static EventData CreateEventData<TAggregateId>(
+    public static EventData CreateEventData<TAggregateId, TEvent>(
         TAggregateId aggregateId,
-        IDomainEvent @event,
+        TEvent @event,
         Guid? eventId = null,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
         where TAggregateId : IAggregateId
+    where TEvent : IDomainEvent
         => new(
             eventId is null ? Uuid.NewUuid() : Uuid.FromGuid(eventId.Value),
             StreamNamingConvention.GetEventTypeName(@event),
-            Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, SerializerSettings)),
-            Encoding.UTF8.GetBytes(
-                JsonConvert.SerializeObject(
-                    new EventMetadata(JToken.FromObject(aggregateId), correlationId?.Id ?? Guid.NewGuid(),
-                        causationId?.Id),
-                    SerializerSettings)));
+            JsonSerializer.SerializeToUtf8Bytes(@event),
+            JsonSerializer.SerializeToUtf8Bytes(
+                new EventMetadata(JsonSerializer.SerializeToElement(aggregateId),
+                    correlationId?.Id ?? Guid.NewGuid(),
+                    causationId?.Id)));
 
 
-    public static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
+    public static ResolvedEvent CreateResolvedEvent(
         string eventStreamId = "",
         Uuid? uuid = null,
         ulong streamPosition = 0,
@@ -51,7 +42,7 @@ internal static class EventDataHelper
             Serialize(@event ?? new TestEvent()),
             invalidMetadata
                 ? new ReadOnlyMemory<byte>()
-                : Serialize(new EventMetadata(JToken.FromObject(aggregateId ?? new TestId()),
+                : Serialize(new EventMetadata(JsonSerializer.SerializeToElement(aggregateId ?? new TestId()),
                     correlationId?.Id ?? Guid.NewGuid(), causationId?.Id)),
             eventStreamId,
             uuid,
@@ -59,7 +50,7 @@ internal static class EventDataHelper
             created);
     }
 
-    private static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
+    private static ResolvedEvent CreateResolvedEvent(
         string eventType,
         ReadOnlyMemory<byte> data,
         ReadOnlyMemory<byte> metadata,
@@ -68,11 +59,11 @@ internal static class EventDataHelper
         ulong streamPosition,
         DateTime? created)
         => new(
-            new EventRecord(
+            new(
                 eventStreamId,
                 uuid ?? Uuid.NewUuid(),
-                new global::KurrentDB.Client.StreamPosition(streamPosition),
-                new Position(streamPosition, streamPosition),
+                new(streamPosition),
+                new(streamPosition, streamPosition),
                 new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { "type", eventType },
@@ -84,7 +75,7 @@ internal static class EventDataHelper
             link: null,
             commitPosition: null);
 
-    public static global::KurrentDB.Client.ResolvedEvent CreateResolvedEvent(
+    public static ResolvedEvent CreateResolvedEvent(
         EventData eventData,
         string eventStreamId = "",
         ulong streamPosition = 0,
@@ -102,5 +93,5 @@ internal static class EventDataHelper
         => dateTime.Ticks - DateTime.UnixEpoch.Ticks;
 
     private static ReadOnlyMemory<byte> Serialize(object value)
-        => Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value));
+        => JsonSerializer.SerializeToUtf8Bytes(value);
 }

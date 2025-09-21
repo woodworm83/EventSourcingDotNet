@@ -2,9 +2,9 @@
 
 public interface ICryptoProvider
 {
-    void Encrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey);
+    public void Encrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey);
 
-    bool TryDecrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey);
-    
-    EncryptionKey GenerateKey();
+    public bool TryDecrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey);
+
+    public EncryptionKey GenerateKey();
 }

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class StreamPositionTests
+public sealed class StreamPositionTests
 {
     [Fact]
     public void ShouldReturnInitializedPosition()

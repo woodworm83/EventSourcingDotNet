@@ -3,7 +3,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.UnitTests;
 
-public class AggregateVersionTests
+public sealed class AggregateVersionTests
 {
     [Fact]
     public void ShouldReturnInitializedAggregateId()

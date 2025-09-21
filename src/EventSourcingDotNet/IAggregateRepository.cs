@@ -17,7 +17,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// </summary>
     /// <param name="id">The id of the aggregate</param>
     /// <returns>The aggregate with all stored events replayed</returns>
-    Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id);
+    public Task<Aggregate<TAggregateId, TState>> GetByIdAsync(TAggregateId id);
 
     /// <summary>
     /// Save uncommitted events of an aggregate to an event store
@@ -30,7 +30,7 @@ public interface IAggregateRepository<TAggregateId, TState>
     /// Thrown when expected version of the aggregate does not match actual version of the event store.
     /// This indicates that new events were added to the stream since the aggregate was replayed.
     /// </exception>
-    Task<Aggregate<TAggregateId, TState>> SaveAsync(
+    public Task<Aggregate<TAggregateId, TState>> SaveAsync(
         Aggregate<TAggregateId, TState> aggregate,
         CorrelationId? correlationId = null,
         CausationId? causationId = null);

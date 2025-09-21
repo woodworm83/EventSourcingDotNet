@@ -11,24 +11,26 @@ internal sealed class EventListener : IEventListener
         _eventStream = eventStream;
     }
 
-    public IObservable<ResolvedEvent> ByAggregate<TAggregateId>(
+    public IObservable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
         => _eventStream.Listen(fromStreamPosition)
+            .OfType<ResolvedEvent<TAggregateId>>()
             .Where(resolvedEvent => resolvedEvent.StreamName.Equals(
                 $"{TAggregateId.AggregateName}-{aggregateId.AsString()}",
                 StringComparison.OrdinalIgnoreCase));
 
-    public IObservable<ResolvedEvent> ByCategory<TAggregateId>(
+    public IObservable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => _eventStream.Listen(fromStreamPosition)
+            .OfType<ResolvedEvent<TAggregateId>>()
             .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith(
                 $"{TAggregateId.AggregateName}-",
                 StringComparison.OrdinalIgnoreCase));
 
-    public IObservable<ResolvedEvent> ByEventType<TEvent>(
+    public IObservable<IResolvedEvent> ByEventType<TEvent>(
         StreamPosition fromStreamPosition = default)
         where TEvent : IDomainEvent
         => _eventStream.Listen(fromStreamPosition)

@@ -2,9 +2,9 @@
 
 public interface IEncryptionKeyStore
 {
-    ValueTask<EncryptionKey> GetOrCreateKeyAsync(string encryptionKeyName);
+    public ValueTask<EncryptionKey> GetOrCreateKeyAsync(string encryptionKeyName);
 
-    ValueTask<EncryptionKey?> GetKeyAsync(string encryptionKeyName);
+    public ValueTask<EncryptionKey?> GetKeyAsync(string encryptionKeyName);
 
-    ValueTask DeleteKeyAsync(string encryptionKeyName);
+    public ValueTask DeleteKeyAsync(string encryptionKeyName);
 }

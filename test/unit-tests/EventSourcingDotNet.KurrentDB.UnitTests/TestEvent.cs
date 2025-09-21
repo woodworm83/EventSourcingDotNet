@@ -1,3 +1,3 @@
-namespace EventSourcingDotNet.KurrentDB.UnitTests;
+﻿namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
-public sealed record TestEvent(int Value = default) : IDomainEvent;
+public sealed record TestEvent(int Value = 0) : IDomainEvent;

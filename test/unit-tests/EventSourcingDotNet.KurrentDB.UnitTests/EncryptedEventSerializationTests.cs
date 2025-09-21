@@ -1,36 +1,23 @@
-﻿using EventSourcingDotNet.Serialization.Json;
-using FluentAssertions;
-using Microsoft.Extensions.Logging.Abstractions;
+﻿using FluentAssertions;
 using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
-public class EncryptedEventSerializationTests
+public sealed class EncryptedEventSerializationTests
 {
-    private readonly EventSerializer _serializer = new(
-        new TestEventTypeResolver(),
-        CreateSerializerSettingsFactory());
+    private readonly EventSerializer _serializer = new();
 
     [Fact]
     public async Task ShouldDecryptEncryptedProperties()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId(1);
         var @event = new EncryptedTestEvent("secret");
         var streamName = StreamNamingConvention.GetAggregateStreamName(aggregateId);
 
-        var serialized = await _serializer.SerializeAsync(aggregateId, @event);
+        var serialized = await _serializer.SerializeAsync(aggregateId, @event, correlationId: null, causationId: null);
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(serialized, streamName);
         var deserialized = await _serializer.DeserializeAsync(resolvedEvent);
 
-        deserialized.Event.Should().Be(@event);
-    }
-
-    private static JsonSerializerSettingsFactory CreateSerializerSettingsFactory()
-    {
-        var cryptoProvider = new AesCryptoProvider();
-        return new JsonSerializerSettingsFactory(
-            NullLoggerFactory.Instance,
-            cryptoProvider,
-            new TestEncryptionKeyStore(cryptoProvider));
+        deserialized?.Event.Should().Be(@event);
     }
 }

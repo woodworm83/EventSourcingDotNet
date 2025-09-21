@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using KurrentDB.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -6,7 +7,7 @@ using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
-public class EventStoreRegistrationTests
+public sealed class EventStoreRegistrationTests
 {
     [Fact]
     public void ShouldResolveEventStore()
@@ -43,9 +44,8 @@ public class EventStoreRegistrationTests
     private static IServiceProvider BuildServiceProvider()
         => new ServiceCollection()
             .AddEventSourcing(builder => builder
-                .UseKurrentDB("esdb://localhost:2113")
+                .UseKurrentDB(KurrentDBClientSettings.Create("esdb://localhost:2113"))
                 .AddAggregate<TestId>())
-            .AddSingleton<IEventTypeResolver>(new TestEventTypeResolver())
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 }
