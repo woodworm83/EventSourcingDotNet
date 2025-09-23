@@ -1,32 +1,53 @@
 ﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics.CodeAnalysis;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
 // ReSharper disable MemberHidesStaticFromOuterClass
 
 namespace EventSourcingDotNet.KurrentDB.SourceGenerator;
 
 public static partial class Definitions
 {
-    public static class System
+    public static partial class System
     {
         private static NameSyntax Namespace { get; }
-            = SyntaxFactory.IdentifierName("global::System");
+            = IdentifierName("global::System");
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         public static class IServiceProvider
         {
             public static NameSyntax Type { get; }
-                = SyntaxFactory.QualifiedName(
+                = QualifiedName(
                     Namespace,
-                    SyntaxFactory.IdentifierName("IServiceProvider"));
+                    IdentifierName("IServiceProvider"));
+        }
+
+        public static class ReadOnlyMemory
+        {
+            public static NameSyntax GenericType(TypeSyntax type)
+                => QualifiedName(
+                    Namespace,
+                    GenericName("ReadOnlyMemory")
+                        .AddTypeArgumentListArguments(type));
+        }
+
+        public static class Object
+        {
+            public static InvocationExpressionSyntax GetType(ExpressionSyntax instance)
+                => InvocationExpression(
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        instance,
+                        IdentifierName("GetType")));
         }
 
         public static class Diagnostics
         {
             private static NameSyntax Namespace { get; }
-                = SyntaxFactory.QualifiedName(
+                = QualifiedName(
                     Definitions.System.Namespace,
-                    SyntaxFactory.IdentifierName("Diagnostics"));
+                    IdentifierName("Diagnostics"));
 
             [SuppressMessage(
                 "Major Code Smell",
@@ -34,80 +55,59 @@ public static partial class Definitions
             public static class UnreachableException
             {
                 public static NameSyntax Type { get; } =
-                    SyntaxFactory.QualifiedName(
+                    QualifiedName(
                         Namespace,
-                        SyntaxFactory.IdentifierName("UnreachableException"));
+                        IdentifierName("UnreachableException"));
+
+                public static ThrowExpressionSyntax Throw { get; }
+                    = ThrowExpression(ObjectCreationExpression(Type).AddArgumentListArguments());
             }
         }
 
-        public static class Text
+        public static partial class Text
         {
             private static QualifiedNameSyntax Namespace { get; }
-                = SyntaxFactory.QualifiedName(
+                = QualifiedName(
                     Definitions.System.Namespace,
-                    SyntaxFactory.IdentifierName("Text"));
+                    IdentifierName("Text"));
+        }
 
-            public static class Json
+        public static class Threading
+        {
+            private static NameSyntax Namespace { get; }
+                = QualifiedName(Definitions.System.Namespace, IdentifierName("Threading"));
+
+            public static class Tasks
             {
-                private static QualifiedNameSyntax Namespace { get; }
-                    = SyntaxFactory.QualifiedName(
-                        Definitions.System.Text.Namespace,
-                        SyntaxFactory.IdentifierName("Json"));
+                private static NameSyntax Namespace { get; }
+                    = QualifiedName(Definitions.System.Threading.Namespace, IdentifierName("Tasks"));
 
-                public static class JsonSerializer
+                public static class ValueTask
                 {
                     public static NameSyntax Type { get; }
-                        = SyntaxFactory.QualifiedName(
-                            Namespace,
-                            SyntaxFactory.IdentifierName("JsonSerializer"));
+                        = QualifiedName(Namespace, IdentifierName("ValueTask"));
 
-                    public static NameSyntax SerializeToUtf8BytesMethod { get; }
-                        = SyntaxFactory.QualifiedName(
-                            Type,
-                            SyntaxFactory.IdentifierName("SerializeToUtf8Bytes"));
-                }
+                    public static NameSyntax GenericType(TypeSyntax type)
+                        => QualifiedName(Namespace, GenericName("ValueTask").AddTypeArgumentListArguments(type));
 
-                public static class JsonSerializerOptions
-                {
-                    public static NameSyntax Type { get; }
-                        = SyntaxFactory.QualifiedName(
-                            Namespace,
-                            SyntaxFactory.IdentifierName("JsonSerializerOptions"));
-                }
+                    public static ObjectCreationExpressionSyntax GenericNew(
+                        TypeSyntax type,
+                        ExpressionSyntax value)
+                        => ObjectCreationExpression(GenericType(type))
+                            .AddArgumentListArguments(Argument(value));
 
-                public static class Serialization
-                {
-                    private static NameSyntax Namespace { get; }
-                        = SyntaxFactory.QualifiedName(
-                            Definitions.System.Text.Json.Namespace,
-                            SyntaxFactory.IdentifierName("Serialization"));
-
-                    public static class JsonSerializerContext
-                    {
-                        public static NameSyntax Type { get; }
-                            = SyntaxFactory.QualifiedName(
-                                Namespace,
-                                SyntaxFactory.IdentifierName("JsonSerializerContext"));
-
-                        public static SimpleNameSyntax GetTypeInfoMethod { get; }
-                            = SyntaxFactory.IdentifierName("GetTypeInfo");
-                    }
-
-                    public static class Metadata
-                    {
-                        public static NameSyntax Namespace { get; }
-                            = SyntaxFactory.QualifiedName(
-                                Definitions.System.Text.Json.Serialization.Namespace,
-                                SyntaxFactory.IdentifierName("Metadata"));
-
-                        public static class JsonTypeInfo
-                        {
-                            public static NameSyntax Type { get; }
-                                = SyntaxFactory.QualifiedName(
-                                    Namespace,
-                                    SyntaxFactory.IdentifierName("JsonTypeInfo"));
-                        }
-                    }
+                    public static ExpressionSyntax ConfigureAwait(ExpressionSyntax task, bool continueOnCapturedContext)
+                        => InvocationExpression(
+                                MemberAccessExpression(
+                                    SyntaxKind.SimpleMemberAccessExpression,
+                                    task,
+                                    IdentifierName("ConfigureAwait")))
+                            .AddArgumentListArguments(
+                                Argument(
+                                    LiteralExpression(
+                                        continueOnCapturedContext
+                                            ? SyntaxKind.TrueLiteralExpression
+                                            : SyntaxKind.FalseLiteralExpression)));
                 }
             }
         }

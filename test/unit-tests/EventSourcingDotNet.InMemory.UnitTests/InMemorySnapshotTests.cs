@@ -1,5 +1,5 @@
 ﻿using System.Reactive.Concurrency;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace EventSourcingDotNet.InMemory.UnitTests;

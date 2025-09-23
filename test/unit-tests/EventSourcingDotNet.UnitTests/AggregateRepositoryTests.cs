@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using Moq;
 using Xunit;
 
@@ -62,7 +62,7 @@ public sealed class AggregateRepositoryTests
 
         eventStoreMock.Verify(x => x.AppendEventsAsync(
             aggregate.Id,
-            It.Is<IEnumerable<IDomainEvent>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
+            It.Is<IEnumerable<IDomainEvent<TestId>>>(l => l.SequenceEqual(aggregate.UncommittedEvents)),
             aggregate.Version,
             It.IsAny<CorrelationId?>(),
             It.IsAny<CausationId?>()));
@@ -87,7 +87,7 @@ public sealed class AggregateRepositoryTests
         var eventStoreMock = new Mock<IEventStore<TestId>>();
         eventStoreMock.Setup(x => x.AppendEventsAsync(
                 It.IsAny<TestId>(),
-                It.IsAny<IEnumerable<IDomainEvent>>(),
+                It.IsAny<IEnumerable<IDomainEvent<TestId>>>(),
                 It.IsAny<AggregateVersion>(),
                 null,
                 null))
@@ -99,19 +99,19 @@ public sealed class AggregateRepositoryTests
         result.Version.Version.Should().Be(42);
     }
 
-    private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent[] events)
+    private static Mock<IEventStore<TestId>> MockEventStore(params IDomainEvent<TestId>[] events)
     {
         var mock = new Mock<IEventStore<TestId>>();
         mock.Setup(x => x.ReadEventsAsync(It.IsAny<TestId>(), It.IsAny<AggregateVersion>()))
             .Returns<TestId, AggregateVersion>(ResolveEvents);
         return mock;
 
-        async IAsyncEnumerable<IResolvedEvent> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
+        async IAsyncEnumerable<ResolvedEvent<TestId>> ResolveEvents(TestId aggregateId, AggregateVersion currentVersion)
         {
             var streamPosition = currentVersion.Version;
             foreach (var @event in events)
             {
-                yield return new ResolvedEvent<TestId>(
+                yield return new(
                     new(Guid.NewGuid()),
                     "",
                     aggregateId,

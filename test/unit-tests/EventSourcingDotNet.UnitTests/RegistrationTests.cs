@@ -1,7 +1,10 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
+using TestLogging;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace EventSourcingDotNet.UnitTests;
 
@@ -11,16 +14,20 @@ public sealed class RegistrationTests
     private readonly Mock<IEventStoreProvider> _eventStoreProviderMock = new();
     private readonly Mock<ISnapshotStore<TestId, TestState>> _snapshotStoreMock = new();
     private readonly Mock<ISnapshotProvider> _snapshotProviderMock = new();
+    private readonly ILoggerProvider _loggerProvider;
 
-    public RegistrationTests()
+    public RegistrationTests(ITestOutputHelper outputHelper)
     {
         _eventStoreProviderMock
             .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>()))
             .Callback<IServiceCollection>(services => services.AddSingleton(_eventStoreMock.Object));
+
         _snapshotProviderMock
             .Setup(x => x.RegisterServices(It.IsAny<IServiceCollection>(), typeof(TestId), typeof(TestState)))
-            .Callback<IServiceCollection, Type, Type>(
-                (services, _, _) => services.AddSingleton(_snapshotStoreMock.Object));
+            .Callback<IServiceCollection, Type, Type>((services, _, _)
+                => services.AddSingleton(_snapshotStoreMock.Object));
+
+        _loggerProvider = new TestOutputLoggerProvider(outputHelper);
     }
 
     [Fact]
@@ -28,9 +35,14 @@ public sealed class RegistrationTests
     {
         var builder = new EventSourcingBuilder();
 
-        builder.Invoking(x => x.AddAggregate<TestId>(typeof(object), typeof(int)))
-            .Should().Throw<AggregateException>()
-            .And.InnerExceptions.Should().AllBeOfType<InvalidOperationException>();
+        builder
+            .Invoking(x => x.AddAggregate<TestId>(typeof(object), typeof(int)))
+            .Should()
+            .Throw<AggregateException>()
+            .And
+            .InnerExceptions
+            .Should()
+            .AllBeOfType<InvalidOperationException>();
     }
 
     [Fact]
@@ -38,8 +50,10 @@ public sealed class RegistrationTests
     {
         var builder = new EventSourcingBuilder();
 
-        builder.Invoking(x => x.AddAggregate<TestId>(typeof(TestState), typeof(int)))
-            .Should().Throw<InvalidOperationException>();
+        builder
+            .Invoking(x => x.AddAggregate<TestId>(typeof(TestState), typeof(int)))
+            .Should()
+            .Throw<InvalidOperationException>();
     }
 
     [Fact]
@@ -48,12 +62,11 @@ public sealed class RegistrationTests
         var builder = new EventSourcingBuilder();
         var serviceCollectionMock = new Mock<IServiceCollection>();
 
-        builder.Invoking(
-                x => x.ConfigureServices(serviceCollectionMock.Object))
+        builder
+            .Invoking(x => x.ConfigureServices(serviceCollectionMock.Object))
             .Should()
             .Throw<InvalidOperationException>();
     }
-
 
     [Fact]
     public void ShouldResolveEventStore()
@@ -81,8 +94,10 @@ public sealed class RegistrationTests
     {
         var serviceProvider = BuildServiceProvider();
 
-        serviceProvider.GetService<ICryptoProvider>()
-            .Should().BeOfType<AesCryptoProvider>();
+        serviceProvider
+            .GetService<ICryptoProvider>()
+            .Should()
+            .BeOfType<AesCryptoProvider>();
     }
 
     [Fact]
@@ -90,8 +105,10 @@ public sealed class RegistrationTests
     {
         var serviceProvider = BuildServiceProvider(useAesCryptoProvider: true);
 
-        serviceProvider.GetService<ICryptoProvider>()
-            .Should().BeOfType<AesCryptoProvider>();
+        serviceProvider
+            .GetService<ICryptoProvider>()
+            .Should()
+            .BeOfType<AesCryptoProvider>();
     }
 
     [Fact]
@@ -99,8 +116,10 @@ public sealed class RegistrationTests
     {
         var serviceProvider = BuildServiceProvider(useTestCryptoProvider: true);
 
-        serviceProvider.GetService<ICryptoProvider>()
-            .Should().BeOfType<TestCryptoProvider>();
+        serviceProvider
+            .GetService<ICryptoProvider>()
+            .Should()
+            .BeOfType<TestCryptoProvider>();
     }
 
     private IServiceProvider BuildServiceProvider(
@@ -109,21 +128,18 @@ public sealed class RegistrationTests
         bool useTestCryptoProvider = false,
         bool useAesCryptoProvider = false)
         => new ServiceCollection()
-            .AddEventSourcing(
-                builder =>
-                {
-                    builder.UseEventStoreProvider(_eventStoreProviderMock.Object);
-                    var aggregate = addAggregateCallback?.Invoke(builder);
+            .AddLogging(logging => logging.AddProvider(_loggerProvider))
+            .AddEventSourcing(builder =>
+            {
+                builder.UseEventStoreProvider(_eventStoreProviderMock.Object);
+                var aggregate = addAggregateCallback?.Invoke(builder);
 
-                    if (useSnapshotProvider)
-                        aggregate?.UseSnapshotProvider(_snapshotProviderMock.Object);
+                if (useSnapshotProvider) aggregate?.UseSnapshotProvider(_snapshotProviderMock.Object);
 
-                    if (useTestCryptoProvider)
-                        builder.UseCryptoProvider<TestCryptoProvider>();
+                if (useTestCryptoProvider) builder.UseCryptoProvider<TestCryptoProvider>();
 
-                    if (useAesCryptoProvider)
-                        builder.UseAesCryptoProvider();
-                })
+                if (useAesCryptoProvider) builder.UseAesCryptoProvider();
+            })
             .BuildServiceProvider();
 
     public static IEnumerable<object[]> GetAddAggregateMethods()
@@ -133,7 +149,7 @@ public sealed class RegistrationTests
                 builder => builder.AddAggregate<TestId>(typeof(TestState)),
                 builder => builder.Scan(typeof(RegistrationTests)),
             }
-            .Select(method => new object[] {method});
+            .Select(method => new object[] { method });
 
     // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class TestCryptoProvider : ICryptoProvider

@@ -9,18 +9,20 @@ internal sealed class EventReader : IEventReader
         _eventStream = eventStream;
     }
 
-    public IAsyncEnumerable<IResolvedEvent> ByAggregate<TAggregateId>(
+    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByAggregate<TAggregateId>(
         TAggregateId aggregateId,
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId, IEquatable<TAggregateId>
         => _eventStream.ReadEventsAsync(fromStreamPosition)
+            .OfType<ResolvedEvent<TAggregateId>>()
             .Where(resolvedEvent => resolvedEvent.StreamName.Equals(
                 $"{TAggregateId.AggregateName}-{aggregateId.AsString()}"));
 
-    public IAsyncEnumerable<IResolvedEvent> ByCategory<TAggregateId>(
+    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ByCategory<TAggregateId>(
         StreamPosition fromStreamPosition = default)
         where TAggregateId : IAggregateId
         => _eventStream.ReadEventsAsync(fromStreamPosition)
+            .OfType<ResolvedEvent<TAggregateId>>()
             .Where(resolvedEvent => resolvedEvent.StreamName.StartsWith(
                 $"{TAggregateId.AggregateName}-",
                 StringComparison.OrdinalIgnoreCase));

@@ -4,7 +4,7 @@ internal interface IInMemoryEventStream
 {
     public ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId,
         CausationId? causationId)

@@ -9,7 +9,7 @@ public sealed record ResolvedEvent<TAggregateId>(
     TAggregateId AggregateId,
     AggregateVersion AggregateVersion,
     StreamPosition StreamPosition,
-    IDomainEvent Event,
+    IDomainEvent<TAggregateId>? Event,
     DateTime Timestamp,
     CorrelationId? CorrelationId,
     CausationId? CausationId)
@@ -17,5 +17,5 @@ public sealed record ResolvedEvent<TAggregateId>(
     where TAggregateId : IAggregateId
 {
     IAggregateId IResolvedEvent.AggregateId => AggregateId;
-    IDomainEvent IResolvedEvent.Event => Event;
+    IDomainEvent? IResolvedEvent.Event => Event;
 }

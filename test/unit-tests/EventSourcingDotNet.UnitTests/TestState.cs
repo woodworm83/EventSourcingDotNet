@@ -6,15 +6,15 @@ internal sealed record TestState(int Value) : IAggregateState<TestState, TestId>
     {
     }
 
-    public TestState ApplyEvent(IDomainEvent @event)
+    public TestState ApplyEvent(IDomainEvent<TestId> @event)
         => @event switch
         {
-            TestEvent testEvent => new TestState(testEvent.NewValue),
-            ValueUpdatedEvent valueUpdated => new TestState(valueUpdated.NewValue),
+            TestEvent testEvent => new(testEvent.NewValue),
+            ValueUpdatedEvent valueUpdated => new(valueUpdated.NewValue),
             _ => this,
         };
     
-    public EventValidationResult ValidateEvent(IDomainEvent @event) 
+    public EventValidationResult ValidateEvent(IDomainEvent<TestId> @event) 
         => @event switch
         {
             ValueUpdatedEvent valueUpdated => valueUpdated.ValidationResult,

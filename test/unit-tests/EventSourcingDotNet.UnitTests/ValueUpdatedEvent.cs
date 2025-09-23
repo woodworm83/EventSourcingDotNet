@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace EventSourcingDotNet.UnitTests;
 
 [SuppressMessage("ReSharper", "WithExpressionModifiesAllMembers")]
-internal sealed record ValueUpdatedEvent(int NewValue) : IDomainEvent
+internal sealed record ValueUpdatedEvent(int NewValue) : IDomainEvent<TestId>
 {
     public EventValidationResult ValidationResult { get; init; } = EventValidationResult.Fire;
 

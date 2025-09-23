@@ -18,8 +18,8 @@ public sealed record Aggregate<TId, TState>(TId Id)
     /// Collection of uncommitted events.
     /// Use <see cref="IAggregateRepository&lt;TId, TState&gt;"/>.Save to store the events in the event stream
     /// </summary>
-    public ImmutableList<IDomainEvent> UncommittedEvents { get; internal init; }
-        = ImmutableList<IDomainEvent>.Empty;
+    public ImmutableList<IDomainEvent<TId>> UncommittedEvents { get; internal init; }
+        = ImmutableList<IDomainEvent<TId>>.Empty;
 
     /// <summary>
     /// Adds an event to the collection of uncommitted events
@@ -28,7 +28,7 @@ public sealed record Aggregate<TId, TState>(TId Id)
     /// <param name="event">The event to apply and to be added to the collection of uncommitted events</param>
     /// <returns></returns>
     [Pure]
-    public Aggregate<TId, TState> AddEvent([Pure]IDomainEvent @event)
+    public Aggregate<TId, TState> AddEvent([Pure] IDomainEvent<TId> @event)
         => State.ValidateEvent(@event) switch
         {
             EventValidationResult.Fired
@@ -43,15 +43,15 @@ public sealed record Aggregate<TId, TState>(TId Id)
         };
 
     [Pure]
-    public Aggregate<TId, TState> ApplyEvent(IResolvedEvent resolvedEvent)
+    public Aggregate<TId, TState> ApplyEvent(ResolvedEvent<TId> resolvedEvent)
         => resolvedEvent.Event switch
         {
-            null => this,
-            var @event => this with
+            { } @event => this with
             {
                 State = State.ApplyEvent(@event),
-                Version = resolvedEvent.AggregateVersion
+                Version = resolvedEvent.AggregateVersion,
             },
+            _ => this,
         };
 
     /// <summary>

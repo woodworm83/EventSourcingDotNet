@@ -1,6 +1,6 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -102,7 +102,7 @@ public sealed class EventListenerTests
 
     private EventListener CreateEventListener()
         => new(
-            new EventSerializer(),
+            new EventSerializer(TestJsonSerializerContext.Default),
             new(Options.Create(_fixture.ClientSettings)));
 
     private static async Task<IReadOnlyList<IResolvedEvent>> WaitForEvents(

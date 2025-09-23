@@ -1,11 +1,11 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
 public sealed class EncryptedEventSerializationTests
 {
-    private readonly EventSerializer _serializer = new();
+    private readonly EventSerializer _serializer = new(TestJsonSerializerContext.Default);
 
     [Fact]
     public async Task ShouldDecryptEncryptedProperties()

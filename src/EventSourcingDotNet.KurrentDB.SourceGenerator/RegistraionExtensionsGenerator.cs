@@ -62,29 +62,14 @@ public sealed class RegistraionExtensionsGenerator : IIncrementalGenerator
                     .Parameter(SyntaxFactory.Identifier("clientSettings"))
                     .WithType(Definitions.KurrentDB.Client.KurrentDBClientSettings.Type),
                 SyntaxFactory
-                    .Parameter(SyntaxFactory.Identifier("eventTypeInfoResolver"))
-                    .WithType(
-                        SyntaxFactory.NullableType(
-                            Definitions.System.Text.Json.Serialization.JsonSerializerContext.Type))
-                    .WithDefault(
-                        SyntaxFactory.EqualsValueClause(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression))))
+                    .Parameter(SyntaxFactory.Identifier("serializerContext"))
+                    .WithType(Definitions.System.Text.Json.Serialization.JsonSerializerContext.Type))
             .AddBodyStatements(
                 SyntaxFactory.ExpressionStatement(
-                    SyntaxFactory
-                        .InvocationExpression(
-                            SyntaxFactory.MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                SyntaxFactory.IdentifierName("builder"),
-                                Definitions.EventSourcingDotNet.EventSourcingBuilder.UseEventStoreProviderMethod))
-                        .AddArgumentListArguments(
-                            SyntaxFactory.Argument(
-                                SyntaxFactory
-                                    .ObjectCreationExpression(
-                                        Definitions.EventSourcingDotNet.KurrentDB.KurrentDBProvider.Type)
-                                    .AddArgumentListArguments(
-                                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName("clientSettings")),
-                                        SyntaxFactory.Argument(
-                                            SyntaxFactory.IdentifierName("eventTypeInfoResolver")))))),
+                    Definitions.EventSourcingDotNet.EventSourcingBuilder.UseEventStoreProvider(
+                        SyntaxFactory.IdentifierName("builder"),
+                        Definitions.EventSourcingDotNet.KurrentDB.KurrentDBProvider.New(
+                            SyntaxFactory.IdentifierName("clientSettings"),
+                            SyntaxFactory.IdentifierName("serializerContext")))),
                 SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName("builder")));
 }

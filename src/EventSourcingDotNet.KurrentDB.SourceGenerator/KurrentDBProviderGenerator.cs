@@ -45,9 +45,8 @@ public sealed class KurrentDBProviderGenerator : IIncrementalGenerator
             .AddParameterListParameters(
                 Parameter(Identifier("clientSettings"))
                     .WithType(Definitions.KurrentDB.Client.KurrentDBClientSettings.Type),
-                Parameter(Identifier("eventSerializerContext"))
-                    .WithType(NullableType(Definitions.System.Text.Json.Serialization.JsonSerializerContext.Type))
-                    .WithDefault(EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression))))
+                Parameter(Identifier("serializerContext"))
+                    .WithType(Definitions.System.Text.Json.Serialization.JsonSerializerContext.Type))
             .AddMembers(
                 CreateRegisterServicesMethod(),
                 CreateEventSerializerFactoryMethod());
@@ -87,6 +86,6 @@ public sealed class KurrentDBProviderGenerator : IIncrementalGenerator
             .WithExpressionBody(
                 ArrowExpressionClause(
                     ObjectCreationExpression(Definitions.EventSourcingDotNet.KurrentDB.EventSerializer.Type)
-                        .AddArgumentListArguments(Argument(IdentifierName("eventSerializerContext")))))
+                        .AddArgumentListArguments(Argument(IdentifierName("serializerContext")))))
             .WithSemicolonToken(Token(SyntaxKind.SemicolonToken));
 }

@@ -13,16 +13,18 @@ internal static class EventDataHelper
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
         where TAggregateId : IAggregateId
-    where TEvent : IDomainEvent
+        where TEvent : IDomainEvent
         => new(
-            eventId is null ? Uuid.NewUuid() : Uuid.FromGuid(eventId.Value),
+            eventId is null
+                ? Uuid.NewUuid()
+                : Uuid.FromGuid(eventId.Value),
             StreamNamingConvention.GetEventTypeName(@event),
             JsonSerializer.SerializeToUtf8Bytes(@event),
             JsonSerializer.SerializeToUtf8Bytes(
-                new EventMetadata(JsonSerializer.SerializeToElement(aggregateId),
+                new EventMetadata<TAggregateId>(
+                    aggregateId,
                     correlationId?.Id ?? Guid.NewGuid(),
                     causationId?.Id)));
-
 
     public static ResolvedEvent CreateResolvedEvent(
         string eventStreamId = "",
@@ -33,7 +35,7 @@ internal static class EventDataHelper
         CausationId? causationId = null,
         CorrelationId? correlationId = null,
         bool invalidMetadata = false,
-        TestId? aggregateId = null)
+        TestAggregateId? aggregateId = null)
     {
         return CreateResolvedEvent(
             @event is not null
@@ -41,9 +43,12 @@ internal static class EventDataHelper
                 : StreamNamingConvention.GetEventTypeName(typeof(TestEvent)),
             Serialize(@event ?? new TestEvent()),
             invalidMetadata
-                ? new ReadOnlyMemory<byte>()
-                : Serialize(new EventMetadata(JsonSerializer.SerializeToElement(aggregateId ?? new TestId()),
-                    correlationId?.Id ?? Guid.NewGuid(), causationId?.Id)),
+                ? new()
+                : Serialize(
+                    new EventMetadata<TestAggregateId>(
+                        aggregateId ?? new TestAggregateId(),
+                        correlationId?.Id ?? Guid.NewGuid(),
+                        causationId?.Id)),
             eventStreamId,
             uuid,
             streamPosition,
@@ -89,9 +94,7 @@ internal static class EventDataHelper
             streamPosition,
             created);
 
-    private static long ToUnixEpochTime(DateTime dateTime)
-        => dateTime.Ticks - DateTime.UnixEpoch.Ticks;
+    private static long ToUnixEpochTime(DateTime dateTime) => dateTime.Ticks - DateTime.UnixEpoch.Ticks;
 
-    private static ReadOnlyMemory<byte> Serialize(object value)
-        => JsonSerializer.SerializeToUtf8Bytes(value);
+    private static ReadOnlyMemory<byte> Serialize(object value) => JsonSerializer.SerializeToUtf8Bytes(value);
 }

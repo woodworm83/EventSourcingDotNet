@@ -1,5 +1,5 @@
 using System.Text;
-using FluentAssertions;
+using AwesomeAssertions;
 using KurrentDB.Client;
 using Newtonsoft.Json;
 using Xunit;
@@ -19,7 +19,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldReadEventsFromEventStore()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var @event = new TestEvent(42);
 
         var eventData = EventDataHelper.CreateEventData(aggregateId, @event);
@@ -37,7 +37,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldWriteEventsToEventStore()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var @event = new TestEvent(42);
         var eventStore = CreateEventStore();
 
@@ -53,10 +53,10 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldReturnCurrentAggregateVersionWhenAddingZeroEvents()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var eventStore = CreateEventStore();
 
-        var result = await eventStore.AppendEventsAsync(aggregateId, Array.Empty<IDomainEvent>(), default);
+        var result = await eventStore.AppendEventsAsync(aggregateId, [], default);
 
         result.Version.Should().Be(0);
     }
@@ -64,7 +64,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldReturnNextExpectedAggregateVersionWhenAddingEvents()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var eventStore = CreateEventStore();
         var events = Enumerable.Range(0, 5).Select(i => new TestEvent(i)).ToList();
 
@@ -76,7 +76,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldReturnEmptyEnumerableWhenStreamDoesNotExist()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var eventStore = CreateEventStore();
 
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
@@ -87,7 +87,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldWriteCorrelationIdInMetadata()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var correlationId = new CorrelationId(Guid.NewGuid());
         var @event = new TestEvent();
 
@@ -103,7 +103,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldReadCorrelationId()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var @event = new TestEvent(42);
         var correlationId = new CorrelationId();
 
@@ -126,7 +126,7 @@ public sealed class EventStoreTests
     [Fact]
     public async Task ShouldWriteCausationIdInMetadata()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var causationId = new CausationId(Guid.NewGuid());
         var @event = new TestEvent();
 
@@ -139,14 +139,14 @@ public sealed class EventStoreTests
         metadata?.CausationId.Should().Be(causationId.Id);
     }
 
-    private EventStore<TestId> CreateEventStore(IEventSerializer? eventSerializer = null)
+    private EventStore<TestAggregateId> CreateEventStore(IEventSerializer? eventSerializer = null)
         => new(
-            eventSerializer ?? new EventSerializer(),
+            eventSerializer ?? new EventSerializer(TestJsonSerializerContext.Default),
             new KurrentDBClient(_fixture.ClientSettings));
 
-    private IAsyncEnumerable<EventMetadata?> ReadEventMetadata(TestId aggregateId)
+    private IAsyncEnumerable<EventMetadata<TestAggregateId>?> ReadEventMetadata(TestAggregateId aggregateId)
         => _fixture
             .ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
-            .Select(resolvedEvent => JsonConvert.DeserializeObject<EventMetadata>(
+            .Select(resolvedEvent => JsonConvert.DeserializeObject<EventMetadata<TestAggregateId>>(
                 Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span)));
 }

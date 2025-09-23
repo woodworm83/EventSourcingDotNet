@@ -12,7 +12,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
         _eventReader = new EventReader(eventStream);
     }
 
-    public IAsyncEnumerable<IResolvedEvent> ReadEventsAsync(
+    public IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(
         TAggregateId aggregateId,
         AggregateVersion fromVersion)
         => _eventReader.ByAggregate(aggregateId)
@@ -20,7 +20,7 @@ internal sealed class InMemoryEventStore<TAggregateId> : IEventStore<TAggregateI
 
     public async ValueTask<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)

@@ -57,7 +57,7 @@ internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepo
 
         aggregate = aggregate with
         {
-            UncommittedEvents = ImmutableList<IDomainEvent>.Empty,
+            UncommittedEvents = ImmutableList<IDomainEvent<TAggregateId>>.Empty,
             Version = version,
         };
 

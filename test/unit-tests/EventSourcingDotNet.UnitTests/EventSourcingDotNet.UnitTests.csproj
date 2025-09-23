@@ -9,7 +9,8 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="FluentAssertions"/>
+        <PackageReference Include="AwesomeAssertions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging" />
         <PackageReference Include="Microsoft.NET.Test.Sdk"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
         <PackageReference Include="Moq"/>
@@ -22,6 +23,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\src\EventSourcingDotNet\EventSourcingDotNet.csproj"/>
+        <ProjectReference Include="..\..\utils\TestLogging\TestLogging.csproj" />
     </ItemGroup>
 
 </Project>

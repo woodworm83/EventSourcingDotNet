@@ -85,9 +85,9 @@ public sealed class EventListenerTests
     }
 
 
-    private static IInMemoryEventStream MockEventStream(out Action<TestId, IDomainEvent> publishEvent)
+    private static IInMemoryEventStream MockEventStream(out Action<TestId, IDomainEvent<TestId>> publishEvent)
     {
-        var eventSubject = new Subject<IResolvedEvent>();
+        var eventSubject = new Subject<ResolvedEvent<TestId>>();
         var eventStreamMock = new Mock<IInMemoryEventStream>();
         eventStreamMock.Setup(x => x.Listen(It.IsAny<StreamPosition>()))
             .Returns(eventSubject);

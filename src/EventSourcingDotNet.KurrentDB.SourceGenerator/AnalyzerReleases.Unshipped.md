@@ -1,5 +1,6 @@
 ﻿### New Rules
 
- Rule ID  | Category         | Severity | Notes                
-----------|------------------|----------|----------------------
- ESDN0001 | SourceGeneration | Error    | CodeGenerationFailed 
+ Rule ID  | Category         | Severity | Notes                 
+----------|------------------|----------|-----------------------
+ ESDN0001 | SourceGeneration | Error    | CodeGenerationFailed  
+ ESDN0002 | SourceGeneration | Warning  | DiagnosticDescriptors 

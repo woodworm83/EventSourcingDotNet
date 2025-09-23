@@ -18,7 +18,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
 
     public async ValueTask<AggregateVersion> AppendEventsAsync<TAggregateId>(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId,
         CausationId? causationId)
@@ -66,7 +66,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
 
     private AggregateVersion AppendEventsUnsafe<TAggregateId>(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         AggregateVersion currentVersion,
         CorrelationId correlationId,
         CausationId? causationId)
@@ -93,7 +93,7 @@ internal sealed class InMemoryEventStream : IInMemoryEventStream
         ref AggregateVersion currentVersion,
         CorrelationId correlationId,
         CausationId? causationId,
-        IDomainEvent @event,
+        IDomainEvent<TAggregateId> @event,
         ref ulong streamPosition)
         where TAggregateId : IAggregateId
         => new(

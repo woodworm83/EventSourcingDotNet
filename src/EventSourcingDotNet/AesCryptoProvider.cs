@@ -1,19 +1,27 @@
-﻿using System.Security.Cryptography;
+﻿using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace EventSourcingDotNet;
 
-public sealed class AesCryptoProvider : ICryptoProvider
+public sealed class AesCryptoProvider(ILogger<AesCryptoProvider> logger) : ICryptoProvider
 {
     public void Encrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey)
     {
-        using var cryptoStream = new CryptoStream(outputStream, new ToBase64Transform(), CryptoStreamMode.Write);
-        using var jsonWriter = new Utf8JsonWriter(outputStream, new JsonWriterOptions { Indented = false });
+        using var cryptoStream = new CryptoStream(
+            outputStream,
+            new ToBase64Transform(),
+            CryptoStreamMode.Write,
+            leaveOpen: true);
+
+        using var jsonWriter = new Utf8JsonWriter(cryptoStream, new() { Indented = false });
 
         JsonSerializer.Serialize(
             jsonWriter,
             EncryptValue(inputStream, encryptionKey),
             AesCryptoProviderSerializerContext.Default.AesEncryptedValue);
+        
+        cryptoStream.FlushFinalBlock();
     }
 
     private static AesEncryptedValue EncryptValue(Stream inputStream, EncryptionKey encryptionKey)
@@ -25,7 +33,7 @@ public sealed class AesCryptoProvider : ICryptoProvider
         using var cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
         inputStream.CopyTo(cryptoStream);
         cryptoStream.FlushFinalBlock();
-        return new AesEncryptedValue(aes.IV, memoryStream.ToArray());
+        return new(aes.IV, memoryStream.ToArray());
     }
 
     public bool TryDecrypt(Stream inputStream, Stream outputStream, EncryptionKey encryptionKey)
@@ -33,6 +41,7 @@ public sealed class AesCryptoProvider : ICryptoProvider
         if (GetEncryptedValue(inputStream) is not { } encryptedValue) return false;
 
         using var aes = Aes.Create();
+
         using var cryptoStream = new CryptoStream(
             new MemoryStream(encryptedValue.CypherText),
             aes.CreateDecryptor(encryptionKey.Key, encryptedValue.InitializationVector),
@@ -43,7 +52,7 @@ public sealed class AesCryptoProvider : ICryptoProvider
         return true;
     }
 
-    private static AesEncryptedValue? GetEncryptedValue(Stream inputStream)
+    private AesEncryptedValue? GetEncryptedValue(Stream inputStream)
     {
         using var cryptoStream = new CryptoStream(
             inputStream,
@@ -51,9 +60,17 @@ public sealed class AesCryptoProvider : ICryptoProvider
             CryptoStreamMode.Read,
             leaveOpen: true);
 
-        return JsonSerializer.Deserialize(
-            cryptoStream,
-            AesCryptoProviderSerializerContext.Default.NullableAesEncryptedValue);
+        try
+        {
+            return JsonSerializer.Deserialize(
+                cryptoStream,
+                AesCryptoProviderSerializerContext.Default.NullableAesEncryptedValue);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Failed to read encrypted value");
+            return null;
+        }
     }
 
     public EncryptionKey GenerateKey()

@@ -8,19 +8,16 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace EventSourcingDotNet.KurrentDB.SourceGenerator;
 
-using Event = (INamedTypeSymbol Symbol, NameSyntax Type);
-
 [Generator]
-public sealed class EventSerializerGenerator : IIncrementalGenerator
+public sealed partial class EventSerializerGenerator : IIncrementalGenerator
 {
-    private static readonly ThrowExpressionSyntax _throwUnreachableExpression = ThrowExpression(
-        ObjectCreationExpression(Definitions.System.Diagnostics.UnreachableException.Type)
-            .AddArgumentListArguments());
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         context.RegisterSourceOutput(
-            context.CompilationProvider.SelectMany(GetDomainEvents).Collect(),
+            context
+                .CompilationProvider
+                .SelectMany(GetDomainEvents)
+                .Collect(),
             GenerateSource);
     }
 
@@ -37,29 +34,36 @@ public sealed class EventSerializerGenerator : IIncrementalGenerator
             {
                 if (semanticModel.GetDeclaredSymbol(classDeclaration, cancellationToken) is not { } symbol) continue;
                 if (symbol.IsAbstract) continue;
-                if (!symbol.AllInterfaces.Any(IsDomainEventInterface)) continue;
 
-                yield return (symbol, GetEventType(symbol));
+                if (symbol.AllInterfaces.FirstOrDefault(IsDomainEventInterface) is not { } domainEventInterface)
+                {
+                    continue;
+                }
+
+                if (GetAggregateIdType(domainEventInterface) is not { } aggregateIdType)
+                {
+                    continue;
+                }
+
+                yield return new(symbol, aggregateIdType);
             }
         }
     }
 
-    private static QualifiedNameSyntax GetEventType(INamedTypeSymbol eventType)
-        => QualifiedName(
-            GetNamespace(eventType.ContainingNamespace),
-            IdentifierName(eventType.Name));
+    private static NameSyntax GetEventType(INamedTypeSymbol eventType) => ParseName($"global::{eventType}");
 
-    private static NameSyntax GetNamespace(INamespaceSymbol symbol)
-        => symbol.ContainingNamespace is not { Name: "" }
-            ? QualifiedName(
-                GetNamespace(symbol.ContainingNamespace),
-                IdentifierName(symbol.Name))
-            : IdentifierName(symbol.Name);
+    private static NameSyntax? GetAggregateIdType(INamedTypeSymbol domainEventInterface)
+        => domainEventInterface switch
+        {
+            { IsGenericType: true, TypeArguments.Length: 1 }
+                => ParseName($"global::{domainEventInterface.TypeArguments[0]}"),
+            _ => null,
+        };
 
     private static bool IsDomainEventInterface(INamedTypeSymbol @interface)
         => string.Equals(@interface.Name, "IDomainEvent", StringComparison.Ordinal)
             && string.Equals(
-                GetNamespace(@interface.ContainingNamespace).ToString(),
+                @interface.ContainingNamespace.ToString(),
                 "EventSourcingDotNet",
                 StringComparison.Ordinal);
 
@@ -73,13 +77,13 @@ public sealed class EventSerializerGenerator : IIncrementalGenerator
                 "EventSerializer.g",
                 SourceText.From(
                     CompilationUnit()
+                        .AddMembers(CreateNamespace(domainEvents))
                         .WithLeadingTrivia(
                             Trivia(
                                 NullableDirectiveTrivia(
                                     Token(SyntaxKind.EnableKeyword),
                                     isActive: true)))
-                        .AddMembers(CreateNamespace(domainEvents))
-                        .NormalizeWhitespace(elasticTrivia: true)
+                        .NormalizeWhitespace()
                         .ToFullString(),
                     Encoding.UTF8));
         }
@@ -88,12 +92,12 @@ public sealed class EventSerializerGenerator : IIncrementalGenerator
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     DiagnosticDescriptors.SourceGenerationFailed,
-                    location: null,
+                    Location.None,
                     exception));
         }
     }
 
-    private static FileScopedNamespaceDeclarationSyntax CreateNamespace(ImmutableArray<Event> domainEvents)
+    private static BaseNamespaceDeclarationSyntax CreateNamespace(ImmutableArray<Event> domainEvents)
         => FileScopedNamespaceDeclaration(IdentifierName("EventSourcingDotNet.KurrentDB"))
             .AddMembers(CreateEventSerializerClass(domainEvents))
             .NormalizeWhitespace();
@@ -106,157 +110,26 @@ public sealed class EventSerializerGenerator : IIncrementalGenerator
             .AddBaseListTypes(SimpleBaseType(Definitions.EventSourcingDotNet.KurrentDB.IEventSerializer.Type))
             .AddParameterListParameters(
                 Parameter(Identifier("serializerContext"))
-                    .WithType(NullableType(Definitions.System.Text.Json.Serialization.JsonSerializerContext.Type))
-                    .WithDefault(EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression))))
-            .AddMembers(
-                CreateSerializeMethod(),
-                CreateDeserializeMethod(),
-                CreateEventDataSerializationMethodSelector(domainEvents))
-            .AddMembers(
-                domainEvents
-                    .Select(CreateSerializeEventDataMethod)
-                    .ToArray<MemberDeclarationSyntax>());
+                    .WithType(Definitions.System.Text.Json.Serialization.JsonSerializerContext.Type))
+            .AddMembers([..CreateSerializeMembers(domainEvents), ..CreateDeserializeMembers(domainEvents),]);
 
-    private static MethodDeclarationSyntax CreateSerializeMethod()
-        => MethodDeclaration(
-                GenericName("ValueTask")
-                    .AddTypeArgumentListArguments(Definitions.KurrentDB.Client.EventData.Type),
-                "SerializeAsync")
-            .AddTypeParameterListParameters(TypeParameter("TAggregateId"))
-            .AddConstraintClauses(
-                TypeParameterConstraintClause(IdentifierName("TAggregateId"))
-                    .AddConstraints(TypeConstraint(IdentifierName("IAggregateId"))))
-            .AddModifiers(
-                Token(SyntaxKind.PublicKeyword),
-                Token(SyntaxKind.AsyncKeyword))
-            .AddParameterListParameters(
-                Parameter(Identifier("aggregateId"))
-                    .WithType(IdentifierName("TAggregateId")),
-                Parameter(Identifier("@event"))
-                    .WithType(IdentifierName("IDomainEvent")),
-                Parameter(Identifier("correlationId"))
-                    .WithType(NullableType(IdentifierName("CorrelationId")))
-                    .WithDefault(EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression))),
-                Parameter(Identifier("causationId"))
-                    .WithType(NullableType(IdentifierName("CausationId")))
-                    .WithDefault(EqualsValueClause(LiteralExpression(SyntaxKind.NullLiteralExpression))))
-            .WithExpressionBody(
-                ArrowExpressionClause(
-                    ObjectCreationExpression(Definitions.KurrentDB.Client.EventData.Type)
-                        .AddArgumentListArguments(
-                            Argument(
-                                InvocationExpression(
-                                    QualifiedName(
-                                        Definitions.KurrentDB.Client.Uuid.Type,
-                                        IdentifierName("NewUuid")))),
-                            Argument(
-                                MemberAccessExpression(
-                                        SyntaxKind.SimpleMemberAccessExpression,
-                                        InvocationExpression(
-                                            QualifiedName(
-                                                IdentifierName("@event"),
-                                                IdentifierName("GetType"))),
-                                        IdentifierName("Name"))
-                                    .WithOperatorToken(Token(SyntaxKind.DotToken))),
-                            Argument(
-                                AwaitExpression(
-                                    InvocationExpression(
-                                            MemberAccessExpression(
-                                                SyntaxKind.SimpleMemberAccessExpression,
-                                                InvocationExpression(IdentifierName("SerializeEventData"))
-                                                    .AddArgumentListArguments(Argument(IdentifierName("@event"))),
-                                                IdentifierName("ConfigureAwait")))
-                                        .AddArgumentListArguments(
-                                            Argument(LiteralExpression(SyntaxKind.FalseLiteralExpression))))))))
-            .WithSemicolonToken(Token(SyntaxKind.SemicolonToken));
+    private sealed class Event(INamedTypeSymbol symbol, TypeSyntax aggregateIdType)
+    {
+        public INamedTypeSymbol Symbol { get; } = symbol;
 
-    private static MethodDeclarationSyntax CreateDeserializeMethod()
-        => MethodDeclaration(
-                GenericName("ValueTask")
-                    .AddTypeArgumentListArguments(NullableType(Definitions.EventSourcingDotNet.IResolvedEvent.Type)),
-                "DeserializeAsync")
-            .AddModifiers(Token(SyntaxKind.PublicKeyword))
-            .AddParameterListParameters(
-                Parameter(Identifier("resolvedEvent"))
-                    .WithType(Definitions.KurrentDB.Client.ResolvedEvent.Type))
-            .AddBodyStatements(
-                ReturnStatement(
-                    ImplicitObjectCreationExpression()
-                        .AddArgumentListArguments(
-                            Argument(
-                                CastExpression(
-                                    NullableType(Definitions.EventSourcingDotNet.IResolvedEvent.Type),
-                                    LiteralExpression(SyntaxKind.NullLiteralExpression))))));
+        public TypeSyntax Type { get; } = GetEventType(symbol);
 
-    private static MemberDeclarationSyntax CreateEventDataSerializationMethodSelector(
-        ImmutableArray<Event> domainEventTypes)
-        => MethodDeclaration(
-                GenericName("ValueTask")
-                    .AddTypeArgumentListArguments(
-                        ArrayType(
-                            PredefinedType(Token(SyntaxKind.ByteKeyword)),
-                            [ArrayRankSpecifier()])),
-                "SerializeEventData")
-            .AddModifiers(Token(SyntaxKind.PrivateKeyword))
-            .AddParameterListParameters(
-                Parameter(Identifier("@event"))
-                    .WithType(IdentifierName("IDomainEvent")))
-            .WithExpressionBody(
-                ArrowExpressionClause(
-                    SwitchExpression(IdentifierName("@event"))
-                        .AddArms(
-                        [
-                            ..CreateSerializeEventDataArms(domainEventTypes),
-                            SwitchExpressionArm(DiscardPattern(), _throwUnreachableExpression),
-                        ])))
-            .WithSemicolonToken(Token(SyntaxKind.SemicolonToken));
+        public TypeSyntax AggregateIdType { get; } = aggregateIdType;
 
-    private static IEnumerable<SwitchExpressionArmSyntax> CreateSerializeEventDataArms(
-        ImmutableArray<Event> domainEventTypes)
-        => domainEventTypes
-            .Select(eventType =>
-                SwitchExpressionArm(
-                    DeclarationPattern(
-                        eventType.Type,
-                        SingleVariableDesignation(Identifier("typedEvent"))),
-                    InvocationExpression(IdentifierName("SerializeEventData"))
-                        .AddArgumentListArguments(Argument(IdentifierName("typedEvent")))));
-
-    private static MethodDeclarationSyntax CreateSerializeEventDataMethod(Event domainEvent)
-        => MethodDeclaration(
-                GenericName("ValueTask")
-                    .AddTypeArgumentListArguments(
-                        ArrayType(
-                            PredefinedType(Token(SyntaxKind.ByteKeyword)),
-                            [ArrayRankSpecifier()])),
-                "SerializeEventData")
-            .AddModifiers(Token(SyntaxKind.PrivateKeyword))
-            .AddParameterListParameters(
-                Parameter(Identifier("@event"))
-                    .WithType(domainEvent.Type))
-            .WithExpressionBody(
-                ArrowExpressionClause(
-                    ImplicitObjectCreationExpression()
-                        .AddArgumentListArguments(Argument(CreateSerializeExpression(domainEvent)))))
-            .WithSemicolonToken(Token(SyntaxKind.SemicolonToken));
-
-    private static ConditionalExpressionSyntax CreateSerializeExpression(Event domainEvent)
-        => ConditionalExpression(
-            IsPatternExpression(
-                InvocationExpression(
-                        ConditionalAccessExpression(
-                            IdentifierName("serializerContext"),
-                            MemberBindingExpression(
-                                Definitions.System.Text.Json.Serialization.JsonSerializerContext
-                                    .GetTypeInfoMethod)))
-                    .AddArgumentListArguments(Argument(TypeOfExpression(domainEvent.Type))),
-                RecursivePattern()
-                    .WithPropertyPatternClause(PropertyPatternClause(SeparatedList<SubpatternSyntax>()))
-                    .WithDesignation(SingleVariableDesignation(Identifier("typeInfo")))),
-            InvocationExpression(Definitions.System.Text.Json.JsonSerializer.SerializeToUtf8BytesMethod)
-                .AddArgumentListArguments(
-                    Argument(IdentifierName("@event")),
-                    Argument(IdentifierName("typeInfo"))),
-            InvocationExpression(Definitions.System.Text.Json.JsonSerializer.SerializeToUtf8BytesMethod)
-                .AddArgumentListArguments(Argument(IdentifierName("@event"))));
+        public string SafeName { get; } = string.Join(
+            "_",
+            symbol
+                .ToDisplayParts(
+                    new SymbolDisplayFormat(
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle
+                            .NameAndContainingTypesAndNamespaces))
+                .Where(part => part.Kind is SymbolDisplayPartKind.ClassName
+                    or SymbolDisplayPartKind.RecordClassName
+                    or SymbolDisplayPartKind.NamespaceName));
+    }
 }

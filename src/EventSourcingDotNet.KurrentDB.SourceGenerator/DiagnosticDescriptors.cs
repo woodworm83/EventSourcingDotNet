@@ -12,4 +12,13 @@ public static class DiagnosticDescriptors
             "SourceGeneration",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
+    
+    public static readonly DiagnosticDescriptor DomainEventShouldImplementGenericInterface
+        = new(
+            DiagnosticIds.DomainEventShouldImplementGenericInterface,
+            "Domain event skipped",
+            "Domain event {0} should implement generic IDomainEvent<TAggregateId> interface",
+            "SourceGeneration",
+            DiagnosticSeverity.Warning,
+            isEnabledByDefault: true);
 }

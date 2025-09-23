@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 using KurrentDB.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,9 +14,9 @@ public sealed class EventStoreRegistrationTests
     {
         var serviceProvider = BuildServiceProvider();
 
-        var eventStore = serviceProvider.GetService<IEventStore<TestId>>();
+        var eventStore = serviceProvider.GetService<IEventStore<TestAggregateId>>();
 
-        eventStore.Should().BeOfType<EventStore<TestId>>();
+        eventStore.Should().BeOfType<EventStore<TestAggregateId>>();
     }
 
     [Fact]
@@ -44,8 +44,10 @@ public sealed class EventStoreRegistrationTests
     private static IServiceProvider BuildServiceProvider()
         => new ServiceCollection()
             .AddEventSourcing(builder => builder
-                .UseKurrentDB(KurrentDBClientSettings.Create("esdb://localhost:2113"))
-                .AddAggregate<TestId>())
+                .UseKurrentDB(
+                    KurrentDBClientSettings.Create("esdb://localhost:2113"),
+                    TestJsonSerializerContext.Default)
+                .AddAggregate<TestAggregateId>())
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 }

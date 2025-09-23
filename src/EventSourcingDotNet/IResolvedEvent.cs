@@ -10,7 +10,7 @@ public interface IResolvedEvent
     public IAggregateId AggregateId { get; }
     public AggregateVersion AggregateVersion { get; }
     public StreamPosition StreamPosition { get; }
-    public IDomainEvent Event { get; }
+    public IDomainEvent? Event { get; }
     public DateTime Timestamp { get; }
     public CorrelationId? CorrelationId { get; }
     public CausationId? CausationId { get; }

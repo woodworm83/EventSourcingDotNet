@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using FluentAssertions;
+using AwesomeAssertions;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -10,10 +10,10 @@ public sealed class EventSerializerTests
     [Fact]
     public async Task ShouldSetEventType()
     {
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
         var @event = new TestEvent();
 
-        var result = await serializer.SerializeAsync(new TestId(), @event, correlationId: null, causationId: null);
+        var result = await serializer.SerializeAsync(new(), @event, correlationId: null, causationId: null);
 
         result.Type.Should().Be(nameof(TestEvent));
     }
@@ -21,10 +21,10 @@ public sealed class EventSerializerTests
     [Fact]
     public async Task ShouldSerializeEventData()
     {
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
         var @event = new TestEvent(42);
 
-        var result = await serializer.SerializeAsync(new TestId(), @event);
+        var result = await serializer.SerializeAsync(new(), @event);
 
         Deserialize<TestEvent>(result.Data)
             .Should()
@@ -36,7 +36,7 @@ public sealed class EventSerializerTests
     {
         var @event = new TestEvent(42);
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(@event: @event);
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
@@ -53,7 +53,7 @@ public sealed class EventSerializerTests
     public async Task ShouldSetEventNullForUnknownEvents()
     {
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(@event: new UnknownEvent());
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
@@ -65,7 +65,7 @@ public sealed class EventSerializerTests
     {
         var timestamp = DateTime.UtcNow;
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(created: timestamp);
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
@@ -99,9 +99,9 @@ public sealed class EventSerializerTests
     [Fact]
     public async Task ShouldGetAggregateIdFromMetadata()
     {
-        var aggregateId = new TestId();
+        var aggregateId = new TestAggregateId();
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(aggregateId: aggregateId);
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
@@ -112,7 +112,7 @@ public sealed class EventSerializerTests
     public async Task ShouldNotFailWhenAggregateIdIsNotIncludedInMetadata()
     {
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(invalidMetadata: true);
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 
@@ -123,7 +123,7 @@ public sealed class EventSerializerTests
     public async Task ShouldSetStreamPosition()
     {
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(streamPosition: 5);
-        var serializer = new EventSerializer();
+        var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 
         var result = await serializer.DeserializeAsync(resolvedEvent);
 

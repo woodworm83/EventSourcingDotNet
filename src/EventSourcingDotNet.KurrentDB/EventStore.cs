@@ -16,7 +16,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
         _client = client;
     }
 
-    public async IAsyncEnumerable<IResolvedEvent> ReadEventsAsync(
+    public async IAsyncEnumerable<ResolvedEvent<TAggregateId>> ReadEventsAsync(
         TAggregateId aggregateId,
         AggregateVersion fromVersion)
     {
@@ -30,7 +30,8 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
         await foreach (var serializedEvent in result.ConfigureAwait(false))
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (await _eventSerializer.DeserializeAsync(serializedEvent).ConfigureAwait(false) is not { } resolvedEvent)
+            if (await _eventSerializer.DeserializeAsync(serializedEvent).ConfigureAwait(false)
+                is not ResolvedEvent<TAggregateId> resolvedEvent)
             {
                 continue;
             }
@@ -41,7 +42,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
 
     public async ValueTask<AggregateVersion> AppendEventsAsync(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         AggregateVersion expectedVersion,
         CorrelationId? correlationId = null,
         CausationId? causationId = null)
@@ -60,7 +61,7 @@ internal sealed class EventStore<TAggregateId> : IEventStore<TAggregateId>
 
     private async IAsyncEnumerable<EventData> SerializeEventsAsync(
         TAggregateId aggregateId,
-        IEnumerable<IDomainEvent> events,
+        IEnumerable<IDomainEvent<TAggregateId>> events,
         CorrelationId? correlationId,
         CausationId? causationId)
     {
