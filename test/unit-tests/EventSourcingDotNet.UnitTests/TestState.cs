@@ -5,6 +5,8 @@ internal sealed record TestState(int Value) : IAggregateState<TestState, TestId>
     public TestState() : this(0)
     {
     }
+    
+    public static TestState Create(TestId aggregateId) => new();
 
     public TestState ApplyEvent(IDomainEvent @event)
         => @event switch

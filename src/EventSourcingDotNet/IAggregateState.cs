@@ -1,10 +1,12 @@
 namespace EventSourcingDotNet;
 
-public interface IAggregateState<out TSelf, TId>
-    where TSelf : IAggregateState<TSelf, TId>
+public interface IAggregateState<out TSelf, in TId>
+    where TSelf : IAggregateState<TSelf, TId> 
+    where TId : IAggregateId
 {
-    TSelf ApplyEvent(IDomainEvent @event);
+    public static abstract TSelf Create(TId aggregateId);
+    
+    public TSelf ApplyEvent(IDomainEvent @event);
 
-    EventValidationResult ValidateEvent(IDomainEvent @event)
-        => EventValidationResult.Fire;
+    public EventValidationResult ValidateEvent(IDomainEvent @event) => EventValidationResult.Fire;
 }

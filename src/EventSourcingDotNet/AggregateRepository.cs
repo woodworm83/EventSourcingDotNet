@@ -4,7 +4,7 @@ namespace EventSourcingDotNet;
 
 internal sealed class AggregateRepository<TAggregateId, TState> : IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState, TAggregateId>, new()
+    where TState : IAggregateState<TState, TAggregateId>
 {
     private readonly IEventStore<TAggregateId> _eventStore;
     private readonly ISnapshotStore<TAggregateId, TState>? _snapshotStore;

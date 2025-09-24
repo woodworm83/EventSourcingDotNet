@@ -10,7 +10,7 @@ namespace EventSourcingDotNet;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public interface IAggregateRepository<TAggregateId, TState>
     where TAggregateId : IAggregateId
-    where TState : IAggregateState<TState, TAggregateId>, new()
+    where TState : IAggregateState<TState, TAggregateId>
 {
     /// <summary>
     /// Creates an aggregate and replays the events from the event store

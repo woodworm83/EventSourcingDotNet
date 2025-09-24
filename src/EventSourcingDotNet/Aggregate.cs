@@ -6,7 +6,7 @@ namespace EventSourcingDotNet;
 [Pure]
 public sealed record Aggregate<TId, TState>(TId Id)
     where TId : IAggregateId
-    where TState : IAggregateState<TState, TId>, new()
+    where TState : IAggregateState<TState, TId>
 {
     /// <summary>
     /// Current version of the aggregate
@@ -58,5 +58,5 @@ public sealed record Aggregate<TId, TState>(TId Id)
     /// The current state of the aggregate.
     /// You can update the state by adding new events.
     /// </summary>
-    public TState State { get; private init; } = new();
+    public TState State { get; private init; } = TState.Create(Id);
 }
