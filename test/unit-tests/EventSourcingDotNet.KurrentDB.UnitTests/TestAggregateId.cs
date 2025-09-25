@@ -1,8 +1,13 @@
 ﻿namespace EventSourcingDotNet.KurrentDB.UnitTests;
 
-public sealed record TestAggregateId(ulong Id = 0) : IAggregateId
+public sealed record TestAggregateId(Guid Id) : IAggregateId
 {
+    public TestAggregateId()
+        : this(Guid.NewGuid())
+    {
+    }
+
     public static string AggregateName => nameof(TestAggregate);
 
-    public string AsString() => Id.ToString();
+    public string AsString() => Id.ToString("N");
 }

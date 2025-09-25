@@ -22,7 +22,7 @@ public sealed class EventSerializerTests
     public async Task ShouldSerializeEventData()
     {
         var serializer = new EventSerializer(TestJsonSerializerContext.Default);
-        var @event = new TestEvent(42);
+        var @event = new TestEvent();
 
         var result = await serializer.SerializeAsync(new(), @event);
 
@@ -34,7 +34,7 @@ public sealed class EventSerializerTests
     [Fact]
     public async Task ShouldDeserializeEventData()
     {
-        var @event = new TestEvent(42);
+        var @event = new TestEvent();
         var resolvedEvent = EventDataHelper.CreateResolvedEvent(@event: @event);
         var serializer = new EventSerializer(TestJsonSerializerContext.Default);
 

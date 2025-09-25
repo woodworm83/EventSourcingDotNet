@@ -10,7 +10,7 @@ public sealed class EncryptedEventSerializationTests
     [Fact]
     public async Task ShouldDecryptEncryptedProperties()
     {
-        var aggregateId = new TestAggregateId(1);
+        var aggregateId = new TestAggregateId();
         var @event = new EncryptedTestEvent("secret");
         var streamName = StreamNamingConvention.GetAggregateStreamName(aggregateId);
 
