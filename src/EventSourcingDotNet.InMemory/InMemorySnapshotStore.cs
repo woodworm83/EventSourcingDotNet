@@ -6,7 +6,7 @@ namespace EventSourcingDotNet.InMemory;
 public sealed class InMemorySnapshotStore<TAggregateId, TState>(IEventListener eventListener)
     : BackgroundService, ISnapshotStore<TAggregateId, TState>
     where TAggregateId : struct, IAggregateId
-    where TState : IAggregateState<TState, TAggregateId>, new()
+    where TState : IAggregateState<TState, TAggregateId>
 {
     private State _state = State.InitialState;
 

@@ -25,7 +25,7 @@ public static class AggregateRepositoryExtensions
         CausationId? causationId,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .SaveAsync(
                 events.Aggregate(
@@ -53,7 +53,7 @@ public static class AggregateRepositoryExtensions
         CorrelationId? correlationId,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .UpdateAsync(aggregate, correlationId, causationId: null, events)
             .ConfigureAwait(false);
@@ -76,7 +76,7 @@ public static class AggregateRepositoryExtensions
         CausationId? causationId,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .UpdateAsync(aggregate, correlationId: null, causationId, events)
             .ConfigureAwait(false);
@@ -97,7 +97,7 @@ public static class AggregateRepositoryExtensions
         Aggregate<TAggregateId, TState> aggregate,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .UpdateAsync(aggregate, correlationId: null, causationId: null, events)
             .ConfigureAwait(false);
@@ -122,7 +122,7 @@ public static class AggregateRepositoryExtensions
         CausationId? causationId,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository.UpdateAsync(
                 await repository.GetByIdAsync(id).ConfigureAwait(false),
                 correlationId,
@@ -148,7 +148,7 @@ public static class AggregateRepositoryExtensions
         CorrelationId? correlationId,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .UpdateAsync(id, correlationId, causationId: null, events)
             .ConfigureAwait(false);
@@ -171,7 +171,7 @@ public static class AggregateRepositoryExtensions
         CausationId? causationId,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .UpdateAsync(id, correlationId: null, causationId, events)
             .ConfigureAwait(false);
@@ -192,7 +192,7 @@ public static class AggregateRepositoryExtensions
         TAggregateId id,
         params IEnumerable<IDomainEvent> events)
         where TAggregateId : IAggregateId
-        where TState : IAggregateState<TState, TAggregateId>, new()
+        where TState : IAggregateState<TState, TAggregateId>
         => await repository
             .UpdateAsync(id, correlationId: null, causationId: null, events)
             .ConfigureAwait(false);
