@@ -1,6 +1,6 @@
 using System.Text;
 using AwesomeAssertions;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
@@ -22,7 +22,8 @@ public sealed class EventStoreTests(EventStoreFixture fixture)
         var result = await eventStore.ReadEventsAsync(aggregateId, default).ToListAsync();
 
 #pragma warning disable CS8602
-        result.Select(resolvedEvent => resolvedEvent.Event)
+        result
+            .Select(resolvedEvent => resolvedEvent.Event)
             .Should()
             .Contain(@event);
 #pragma warning restore CS8602
@@ -141,6 +142,6 @@ public sealed class EventStoreTests(EventStoreFixture fixture)
     private IAsyncEnumerable<EventMetadata<TestAggregateId>?> ReadEventMetadata(TestAggregateId aggregateId)
         => fixture
             .ReadEvents(StreamNamingConvention.GetAggregateStreamName(aggregateId))
-            .Select(resolvedEvent => JsonConvert.DeserializeObject<EventMetadata<TestAggregateId>>(
-                Encoding.UTF8.GetString(resolvedEvent.Event.Metadata.Span)));
+            .Select(resolvedEvent => JsonSerializer.Deserialize<EventMetadata<TestAggregateId>>(
+                resolvedEvent.Event.Metadata.Span));
 }

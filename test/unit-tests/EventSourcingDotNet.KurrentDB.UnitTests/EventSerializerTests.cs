@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using AwesomeAssertions;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Xunit;
 
 namespace EventSourcingDotNet.KurrentDB.UnitTests;
@@ -138,5 +138,5 @@ public sealed class EventSerializerTests
     }
 
     private static T? Deserialize<T>(ReadOnlyMemory<byte> data)
-        => JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(data.Span));
+        => JsonSerializer.Deserialize<T>(data.Span);
 }
