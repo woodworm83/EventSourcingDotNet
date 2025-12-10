@@ -10,8 +10,7 @@
         <MinVerTagPrefix>v</MinVerTagPrefix>
         <MinVerAutoIncrement>patch</MinVerAutoIncrement>
         <MinVerDefaultPreReleaseIdentifiers>pre.0</MinVerDefaultPreReleaseIdentifiers>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <DebugType>embedded</DebugType>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
     </PropertyGroup>
 
