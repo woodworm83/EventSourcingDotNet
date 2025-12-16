@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
 
 namespace EventSourcingDotNet;
 
@@ -20,4 +21,7 @@ public static class RegistrationExtensions
 
     public static EventSourcingBuilder UseAesCryptoProvider(this EventSourcingBuilder builder)
         => builder.UseCryptoProvider<AesCryptoProvider>();
+    
+    public static TracerProviderBuilder AddEventSourcingInstrumentation(this TracerProviderBuilder builder)
+        => builder.AddSource(Instrumentation.ActivitySourceName);
 }

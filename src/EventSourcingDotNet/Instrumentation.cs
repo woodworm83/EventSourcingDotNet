@@ -2,7 +2,9 @@
 
 namespace EventSourcingDotNet;
 
-public static class Instrumentation
+internal static class Instrumentation
 {
-    public static ActivitySource ActivitySource { get; } = new ActivitySource("EventSourcingDotNet");
+    public const string ActivitySourceName = "EventSourcingDotNet";
+    
+    public static ActivitySource ActivitySource { get; } = new(ActivitySourceName);
 }
